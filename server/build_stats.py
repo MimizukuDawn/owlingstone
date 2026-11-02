@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 WINDOW_DAYS = 30      # stats use the last 30 days (about one patch)
 KEEP_DAYS = 60
+FEEDBACK_DAYS = 180     # feedback the maintainer has handled is deleted after this many days
 MIN_GAMES = int(__import__("os").environ.get("MIN_GAMES", 30))
 
 QUERIES = {
@@ -119,6 +120,7 @@ def main(argv):
     d1(f"DELETE FROM games WHERE day < date('now', '-{KEEP_DAYS} day')", where)
     d1(f"DELETE FROM day_count WHERE day < date('now', '-{KEEP_DAYS} day')", where)
     d1("DELETE FROM install_count WHERE day < date('now', '-2 day')", where)
+    d1(f"DELETE FROM feedback WHERE done = 1 AND day < date('now', '-{FEEDBACK_DAYS} day')", where)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(stats, f, indent=1, sort_keys=True)
     print(f"{stats['total_games']} games -> {path}")

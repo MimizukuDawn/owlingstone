@@ -14,13 +14,14 @@ Hearthstone writes on your PC, like other community trackers.
 
 ## Install
 
-1. Download **`Owlingstone.exe`** from the [latest release](https://github.com/MimizukuDawn/owlingstone/releases/latest).
+1. Download **`Owlingstone.exe`** from the [latest release](https://github.com/owlingstone/owlingstone/releases/latest).
 2. Put it anywhere you can write to (for example your Documents folder or Desktop) and run it. That's all.
 3. Windows may say "Windows protected your PC" because the app is not signed with a paid certificate:
    click **More info**, then **Run anyway**.
 
-Updates: when a new version is published, the app downloads it in the background, checks its SHA-256
-checksum and shows **Update to vX**: one click replaces the exe and restarts it, with no window to deal
+Updates: when a new version is published, the app downloads it in the background, checks that it carries
+the maintainer's signature (made with a key that is never on GitHub) and its SHA-256 checksum, and shows
+**Update to vX**: one click replaces the exe and restarts it, with no window to deal
 with. Your history and settings (in `%APPDATA%\Owlingstone`) are kept.
 
 ### Check your download (optional)
@@ -30,14 +31,15 @@ build attestation proving the exe was built by GitHub Actions from this reposito
 
 ```powershell
 Get-FileHash .\Owlingstone.exe -Algorithm SHA256   # compare with the SHA-256 in the release notes
-gh attestation verify .\Owlingstone.exe --repo MimizukuDawn/owlingstone
+gh attestation verify .\Owlingstone.exe --repo owlingstone/owlingstone
 ```
 
 ### Hearthstone logs
 
-The app reads `Power.log` in the game's `Logs` folder (default `C:\Program Files (x86)\Hearthstone\Logs`).
-If you have never used a deck tracker, Hearthstone may not write that log yet: start the game once with a
-tracker such as Hearthstone Deck Tracker or Firestone, which turns logging on.
+The app reads `Power.log` in the game's `Logs` folder. It finds the folder by itself, wherever Hearthstone
+is installed (from the running game or Battle.net's install record). If it can't, right-click the tray icon
+> **Choose Hearthstone folder…**. If Hearthstone's logging is off (you never used a deck tracker), the app
+turns it on; restart the game once if it was already open.
 
 ## Privacy
 
@@ -63,7 +65,8 @@ curves, economy and rules are plain YAML files in `data/`: edit them and the app
 
 ## Data sources and credits
 
-- Card data and art: [HearthstoneJSON](https://hearthstonejson.com/), downloaded at runtime.
+- Card data and art: [HearthstoneJSON](https://hearthstonejson.com/), downloaded at runtime (a copy of the
+  card data ships in `data/cards-fallback.json.gz` so the app also starts offline).
 - Comp, hero and trinket statistics in `data/`: community data from Firestone, as published by
   [bgbuddy.gg](https://bgbuddy.gg/).
 - The combat simulator is original code written from the game's rules.

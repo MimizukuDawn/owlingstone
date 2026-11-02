@@ -45,9 +45,10 @@ _BRACKET_ID = re.compile(r"\bid=(\d+)\b")
 class PowerLogParser:
     """Lit Power.log ligne par ligne et met à jour self.game (None tant qu'aucune partie)."""
 
-    def __init__(self, on_new_game=None):
+    def __init__(self, on_new_game=None, keep_games=True):
         self.game = None                # partie en cours (objet Game)
         self.games = []                 # toutes les parties vues (utile pour rejouer un vieux log)
+        self._keep_games = keep_games   # False en direct : seule la partie en cours reste en mémoire
         self._current = None            # entité dont on lit les lignes "tag=..." du bloc en cours
         self._on_new_game = on_new_game  # fonction appelée à chaque nouvelle partie (optionnel)
         self._time = None               # heure de la dernière ligne lue
@@ -129,7 +130,10 @@ class PowerLogParser:
         """CREATE_GAME : une nouvelle partie commence, on repart de zéro."""
         self.game = Game()
         self.game.start_time = (self._time or "")[:8]   # "12:00:41" : sert à reconnaître la partie
-        self.games.append(self.game)
+        if self._keep_games:
+            self.games.append(self.game)
+        else:
+            self.games = [self.game]
         if self._on_new_game:
             self._on_new_game(self.game)
 

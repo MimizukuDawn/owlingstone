@@ -11,8 +11,10 @@ Qui fait quoi :
 - whats_new() : les lignes de CHANGELOG.md pour une version, montrées après la mise à jour.
 
 Version téléchargée depuis GitHub (pas de projet à côté de l'exe) : voir RELEASES plus bas. Un fil en
-arrière-plan regarde la dernière version publiée (au plus toutes les 6 h), la télécharge, vérifie son
-empreinte SHA-256 et la pose à côté (Owlingstone.exe.new). Le bouton n'apparaît qu'une fois tout vérifié ;
+arrière-plan regarde la dernière version publiée (au plus toutes les 6 h), lit sa signature
+(Owlingstone.exe.sig, faite avec la clé secrète du mainteneur, qui n'est jamais sur GitHub), la vérifie
+avec la clé publique incluse dans l'appli (PUBLIC_KEYS), télécharge l'exe, vérifie que son SHA-256 est
+celui qui a été signé et le pose à côté (Owlingstone.exe.new). Sans signature valide : pas de mise à jour. Le bouton n'apparaît qu'une fois tout vérifié ;
 start_update() échange alors les deux exe et lance le nouveau, sans fenêtre ni script.
 """
 import hashlib
@@ -28,7 +30,7 @@ import time
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from . import __version__
+from . import __version__, ed25519
 from .paths import DATA_DIR, SOURCE_DIR, USER_DIR
 
 _VERSION = re.compile(r'__version__\s*=\s*"([^"]+)"')
@@ -127,10 +129,14 @@ def whats_new(version=__version__, changelog=None):
 
 
 # ------------------------------------------------------------ mises à jour depuis GitHub Releases
-REPO = "MimizukuDawn/owlingstone"
+REPO = "owlingstone/owlingstone"
 API_LATEST = f"https://api.github.com/repos/{REPO}/releases/latest"
 DOWNLOAD_PREFIX = f"https://github.com/{REPO}/releases/download/"
-ASSET_EXE = "Owlingstone.exe"       # le seul fichier d'une Release ; sa version = le tag (v1.2.3)
+ASSET_EXE = "Owlingstone.exe"       # le fichier que les joueurs téléchargent ; sa version = le tag (v1.2.3)
+ASSET_SIG = "Owlingstone.exe.sig"   # sa signature (tools/release_key.py), ajoutée à la Release après le build
+# Clés publiques des signatures de versions (Ed25519, hex). La clé secrète reste hors ligne chez le
+# mainteneur. Pour changer de clé : publier une version signée par l'ancienne qui contient la nouvelle.
+PUBLIC_KEYS = ("1fe80b4b9b1d67d1cf0bda79a7c1c3f7f6b60a97a71711e875021314377f8a59",)
 TAG = re.compile(r"^v(\d+(?:\.\d+){1,3})$")
 AFTER_UPDATE = "OWLINGSTONE_AFTER_UPDATE"   # dit au nouvel exe d'attendre que l'ancien soit fermé
 CHECK_EVERY = 6 * 3600              # secondes entre deux questions à GitHub
@@ -150,22 +156,39 @@ def _get(url, limit, timeout=20):
 
 
 def pick_release(release):
-    """Réponse de l'API "latest release" -> {version, url, sha256, size} ou None si rien d'utilisable.
-    L'empreinte SHA-256 est le champ "digest" que GitHub calcule lui-même pour chaque fichier publié :
-    sans elle, pas de mise à jour."""
+    """Réponse de l'API "latest release" -> {version, url, sig_url, digest, size} ou None si rien d'utilisable.
+    Il faut l'exe ET sa signature ; "digest" = le SHA-256 que GitHub calcule (vérifié en plus s'il est là)."""
     if not isinstance(release, dict) or release.get("draft") or release.get("prerelease"):
         return None
     tag = TAG.match(str(release.get("tag_name") or ""))
-    for asset in release.get("assets") or []:
-        if not tag or not isinstance(asset, dict) or asset.get("name") != ASSET_EXE:
-            continue
-        url = asset.get("browser_download_url") or ""
-        digest = str(asset.get("digest") or "")
-        sha = digest[7:].lower() if digest.startswith("sha256:") else ""
-        if not url.startswith(DOWNLOAD_PREFIX) or not re.fullmatch(r"[0-9a-f]{64}", sha):
-            return None
-        return {"version": tag.group(1), "url": url, "sha256": sha, "size": asset.get("size") or 0}
-    return None
+    if not tag:
+        return None
+    assets = {a.get("name"): a for a in release.get("assets") or [] if isinstance(a, dict)}
+    exe, sig = assets.get(ASSET_EXE), assets.get(ASSET_SIG)
+    if not exe or not sig:
+        return None                       # pas encore signée : on attend
+    url, sig_url = exe.get("browser_download_url") or "", sig.get("browser_download_url") or ""
+    if not url.startswith(DOWNLOAD_PREFIX) or not sig_url.startswith(DOWNLOAD_PREFIX):
+        return None
+    digest = str(exe.get("digest") or "")
+    digest = digest[7:].lower() if digest.startswith("sha256:") else ""
+    return {"version": tag.group(1), "url": url, "sig_url": sig_url, "digest": digest,
+            "size": exe.get("size") or 0}
+
+
+def signed_sha256(sig_text, version, keys=None):
+    """Texte de Owlingstone.exe.sig -> le SHA-256 signé pour cette version. ValueError si la signature
+    ne vient pas d'une de nos clés, ou si elle est pour une autre version (pas de retour en arrière)."""
+    lines = sig_text.replace("\r\n", "\n").strip().split("\n")
+    if len(lines) != 4 or lines[0] != "owlingstone-release 1" or lines[1] != f"version {version}":
+        raise ValueError("signature file is not for this version")
+    sha, sig = lines[2].removeprefix("sha256 "), lines[3].removeprefix("signature ")
+    if not re.fullmatch(r"[0-9a-f]{64}", sha) or not re.fullmatch(r"[0-9a-f]{128}", sig):
+        raise ValueError("malformed signature file")
+    message = ("\n".join(lines[:3]) + "\n").encode("ascii")
+    if not any(ed25519.verify(bytes.fromhex(k), message, bytes.fromhex(sig)) for k in keys or PUBLIC_KEYS):
+        raise ValueError("bad signature: update refused")
+    return sha
 
 
 def sha256_of(path):
@@ -230,11 +253,14 @@ class ReleaseUpdater:
             return None
         if info["size"] > MAX_DOWNLOAD:
             raise ValueError("release too large")
+        sha = signed_sha256(get(info["sig_url"], 4096).decode("ascii", errors="replace"), info["version"])
+        if info["digest"] and info["digest"] != sha:
+            raise ValueError("GitHub's checksum differs from the signed one: download refused")
         fd, tmp = tempfile.mkstemp(suffix=".exe", dir=self.state_path.parent)
         try:
             with os.fdopen(fd, "wb") as f:
                 f.write(get(info["url"], MAX_DOWNLOAD, timeout=300))
-            if sha256_of(tmp) != info["sha256"]:
+            if sha256_of(tmp) != sha:
                 raise ValueError("checksum mismatch: download refused")
             shutil.move(tmp, self.new_exe)           # vérifié : posé à côté de l'exe en cours
         finally:
@@ -242,8 +268,8 @@ class ReleaseUpdater:
                 os.remove(tmp)
             except OSError:
                 pass
-        self.ready = info
-        return info
+        self.ready = dict(info, sha256=sha)
+        return self.ready
 
     def install(self):
         """Échange les exe et lance le nouveau (l'appli doit ensuite se fermer). None si impossible."""

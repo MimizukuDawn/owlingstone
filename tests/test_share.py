@@ -85,3 +85,13 @@ def test_delete_remote_forgets_the_install_id():
     assert share.delete_remote(send=lambda m, url, body=None: calls.append((m, url)) or 200)
     assert calls == [("DELETE", "https://api.example.workers.dev/v1/installs/" + old)]
     assert not share.enabled() and "install" not in share.state()
+
+
+def test_feedback_typed_during_a_send_is_kept():
+    share.add_feedback("idea", "first idea")
+
+    def slow_send(method, url, body=None):
+        share.add_feedback("bug", "typed while sending")    # arrive pendant l'envoi
+        return 200
+    assert share.flush(send=slow_send) == 1
+    assert [i["data"]["text"] for i in share.pending()] == ["typed while sending"]

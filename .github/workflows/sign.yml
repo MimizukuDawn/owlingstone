@@ -1,0 +1,44 @@
+# Attaches a release signature to its Release. The signature is made on the maintainer's PC with the
+# offline key (tools/release_key.py sign) and pushed as signatures/v<version>.sig. This job only copies
+# it next to Owlingstone.exe after checking it is for that exact exe; the apps check the signature
+# themselves with the public key built into them, so this job is a convenience, not the protection.
+name: Attach signature
+on:
+  push:
+    branches: [main]
+    paths: ["signatures/*.sig"]
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: write            # upload Owlingstone.exe.sig to the Release
+concurrency: sign
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: main
+      - name: Attach every signature whose Release lacks it
+        shell: bash
+        run: |
+          shopt -s nullglob
+          for sig in signatures/v*.sig; do
+            tag=$(basename "$sig" .sig)
+            assets=$(gh release view "$tag" --json assets --jq '.assets[].name' 2>/dev/null) || { echo "$tag: no Release yet"; continue; }
+            grep -qx Owlingstone.exe <<<"$assets" || { echo "$tag: no exe yet"; continue; }
+            grep -qx Owlingstone.exe.sig <<<"$assets" && { echo "$tag: already signed"; continue; }
+            want=$(sed -n 's/^sha256 //p' "$sig")
+            have=$(gh release view "$tag" --json assets --jq '.assets[] | select(.name=="Owlingstone.exe") | .digest')
+            if [ "sha256:$want" != "$have" ]; then echo "::error::$sig is for another exe ($have)"; exit 1; fi
+            python3 -c "import sys; sys.path.insert(0, '.'); from bgtracker.update import signed_sha256; signed_sha256(open('$sig').read(), '${tag#v}')"
+            cp "$sig" Owlingstone.exe.sig
+            gh release upload "$tag" Owlingstone.exe.sig
+            echo "$tag: signature attached"
+          done

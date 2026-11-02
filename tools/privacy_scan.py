@@ -11,6 +11,7 @@ Cherche dans chaque fichier (texte et binaire) :
   %APPDATA%\\Owlingstone\\private_terms.txt), par exemple son pseudo ou son nom.
 Code de sortie 1 s'il trouve quelque chose : la publication doit s'arrêter.
 """
+import gzip
 import math
 import os
 import re
@@ -36,6 +37,7 @@ PATTERNS = [
     ("dashboard link", re.compile(r"https?://dash\.cloudflare\.com/\S+")),
 ]
 _RANDOM = re.compile(r"[A-Za-z0-9_\-+/=]{32,}")
+_CARD_ID = re.compile(r"^[A-Z]{2,}[A-Za-z0-9]*(?:_[A-Za-z0-9]+){2,}$")   # ex. BOM_07_Scabbs_EdwinVanCleef_008p
 _BINARY_ALLOWED = {".ico", ".png"}
 
 
@@ -71,6 +73,12 @@ def scan(root, terms=()):
             found.append((rel, 0, "forbidden file", path.name))
             continue
         data = path.read_bytes()
+        if path.suffix.lower() == ".gz":            # données compressées : on lit ce qu'elles contiennent
+            try:
+                data = gzip.decompress(data)
+            except OSError:
+                found.append((rel, 0, "unreadable archive", path.name))
+                continue
         text = data.decode("utf-8", errors="replace")
         if b"\0" in data[:4096] and path.suffix.lower() not in _BINARY_ALLOWED:
             found.append((rel, 0, "unexpected binary", f"{len(data)} bytes"))
@@ -85,6 +93,8 @@ def scan(root, terms=()):
                     found.append((rel, no, "personal term", term))
             for m in _RANDOM.finditer(line):
                 s = m.group(0)
+                if _CARD_ID.match(s):
+                    continue
                 if entropy(s) > 4.3 and any(c.isdigit() for c in s) and any(c.isupper() for c in s):
                     found.append((rel, no, "random-looking string", s[:40]))
     return found

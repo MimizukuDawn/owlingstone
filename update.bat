@@ -19,7 +19,8 @@ rem Owlingstone.spec : la meme recette que les Releases, sans les parties de Qt 
 rem Pas de --clean : PyInstaller reutilise ce qui n'a pas change (build\work), bien plus rapide.
 .venv\Scripts\pyinstaller --noconfirm --log-level WARN --distpath build\new --workpath build\work Owlingstone.spec || goto failed
 echo Replacing the old version...
-taskkill /im Owlingstone.exe /f >nul 2>&1
+rem Ferme seulement l'Owlingstone de ce projet (dist\), pas un exe telecharge qui tourne ailleurs.
+powershell -NoProfile -Command "Get-Process Owlingstone -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '%~dp0dist\*' } | Stop-Process -Force" >nul 2>&1
 set KILLED=1
 rem Ancien nom de l'appli (BG Tracker) : on ferme et on range l'ancienne version.
 taskkill /im BGTracker.exe /f >nul 2>&1

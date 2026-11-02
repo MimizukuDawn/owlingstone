@@ -79,3 +79,50 @@ def test_all_local_logs(path):
     for g in games:
         assert g.races_complete, f"races incomplètes : {g.available_races} / {g.possible_races}"
         assert g.my_placement in range(1, 9)
+
+
+def test_watcher_finds_a_new_game_folder_and_reads_in_chunks(tmp_path, monkeypatch):
+    """Dossier recherché toutes les RESCAN secondes seulement ; gros fichier lu par blocs sans couper
+    une ligne ni un caractère."""
+    import bgtracker.watcher as watcher
+    clock = [0.0]
+    w = LogWatcher(logs_dir=tmp_path, clock=lambda: clock[0])
+    assert not w.poll() and w.status == "no_log"
+    folder = tmp_path / "Hearthstone_2026_01_01_00_00_00"
+    folder.mkdir()
+    lines = "".join(f"D 00:00:00.0 GameState.DebugPrintPower() - TAG_CHANGE Entity=1 tag=TURN value={i} é\n"
+                    for i in range(1, 50))
+    (folder / "Power.log").write_text("D 00:00:00.0 GameState.DebugPrintPower() - CREATE_GAME\n"
+                                      "D 00:00:00.0 GameState.DebugPrintPower() -     GameEntity EntityID=1\n"
+                                      + lines, encoding="utf-8")
+    assert not w.poll()                    # pas encore recherché (moins de RESCAN secondes)
+    clock[0] += watcher.RESCAN
+    monkeypatch.setattr(watcher, "CHUNK", 37)
+    while w.poll():
+        pass
+    assert w.status == "ok" and w.game.game_entity.get("TURN") == 49
+
+
+def test_logs_dir_found_outside_default_path(tmp_path):
+    from bgtracker import hslogs
+    settings = tmp_path / "settings.json"
+    install = tmp_path / "Games" / "Hearthstone"
+    (install / "Logs").mkdir(parents=True)
+    none = lambda: None
+    assert hslogs.find_logs_dir(settings_path=settings, running=lambda: install, registry=none) == install / "Logs"
+    assert hslogs.find_logs_dir(settings_path=settings, running=none, registry=lambda: install) == install / "Logs"
+    settings.write_text('{"hearthstone_dir": "%s"}' % (install / "Logs").as_posix(), encoding="utf-8")
+    assert hslogs.find_logs_dir(settings_path=settings, running=none, registry=none) == install / "Logs"
+
+
+def test_log_config_gets_power_section_once(tmp_path):
+    from bgtracker import hslogs
+    cfg = tmp_path / "Blizzard" / "Hearthstone" / "log.config"
+    assert hslogs.ensure_log_config(cfg) == "written"
+    assert "[Power]" in cfg.read_text(encoding="utf-8")
+    assert hslogs.ensure_log_config(cfg) == "ok"
+    other = tmp_path / "other.config"
+    other.write_text("[Zone]\nLogLevel=1", encoding="utf-8")
+    assert hslogs.ensure_log_config(other) == "written"
+    text = other.read_text(encoding="utf-8")
+    assert text.startswith("[Zone]") and text.count("[Power]") == 1

@@ -1,5 +1,7 @@
-# Builds and publishes a Release like v1.8.4: tests, single-file Windows exe, a start-up test of that exe,
-# provenance attestation. The exe is the Release's only file; GitHub records its SHA-256 (the app checks it).
+# Builds and publishes a Release like v1.9.0: tests, single-file Windows exe, a start-up test of that exe,
+# provenance attestation. Players' apps install it only once its signature (Owlingstone.exe.sig, made
+# with the maintainer's offline key by tools/release_key.py) is attached: see sign.yml.
+# The build job has read-only rights; only the small publish job can write to the repository.
 # Runs by itself when a push to main raises __version__ (no Release with that tag yet), or when a
 # Release / tag vX.Y.Z is published by hand.
 name: Release
@@ -47,9 +49,7 @@ jobs:
     env:
       TAG: ${{ needs.check.outputs.tag }}
     permissions:
-      contents: write        # create the Release
-      id-token: write        # sign the build attestation
-      attestations: write
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,7 +63,7 @@ jobs:
       - name: Privacy scan
         run: python tools/privacy_scan.py .
       - name: Install
-        run: python -m pip install --disable-pip-version-check -r requirements.txt
+        run: python -m pip install --disable-pip-version-check --require-hashes -r requirements.txt
       - name: Tests
         run: python -m pytest -q -m "not slow"
         env:
@@ -82,6 +82,33 @@ jobs:
           if (-not $p.WaitForExit(120000)) { $p.Kill(); throw "Owlingstone.exe did not close by itself" }
           if ($p.ExitCode -ne 0) { throw "Owlingstone.exe exited with code $($p.ExitCode)" }
           "started and closed fine; size: {0:N1} MB" -f ((Get-Item dist\Owlingstone.exe).Length / 1MB)
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: exe
+          path: dist/Owlingstone.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
+    permissions:
+      contents: write        # create the Release
+      id-token: write        # sign the build attestation
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: exe
+          path: dist
+      - name: Version
+        shell: bash
+        run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
       - name: Attest build provenance
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
@@ -100,7 +127,8 @@ jobs:
           notes = "\n".join(out).strip() or "See CHANGELOG.md"
           print("**Download `Owlingstone.exe` below and run it.** That's all: it updates itself.\n\n" + notes +
                 "\n\n<details><summary>Check the download (optional)</summary>\n\nSHA-256: `" + os.environ["SHA"] +
-                "`\n\nThe app checks this by itself before every update.</details>")
+                "`\n\nThe app checks this, and the maintainer's signature (Owlingstone.exe.sig), by itself before"
+                " every update.</details>")
           PY
       - name: Publish the Release
         shell: bash
