@@ -4,7 +4,7 @@ import json
 import pytest
 
 from bgtracker.advice import load_heroes, non_golden, rank_heroes, shop_advice, target_comps
-from bgtracker.cards import CARDS_PATH
+from bgtracker.cards import CARDS_PATH, get_db
 from bgtracker.comps import load_comps
 from bgtracker.powerlog import PowerLogParser
 from tests.test_comps import _cards
@@ -13,6 +13,7 @@ from tests.test_powerlog import GAME1
 
 def test_heroes_file_matches_card_names():
     """Chaque héros de heroes.yaml porte un nom exact de cards.json (sinon il ne serait jamais trouvé)."""
+    get_db()                     # télécharge cards.json s'il manque (installation neuve, CI)
     with open(CARDS_PATH, encoding="utf-8") as f:
         names = {c["name"] for c in json.load(f) if c.get("battlegroundsHero")}
     heroes = load_heroes()
