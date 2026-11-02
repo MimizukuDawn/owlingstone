@@ -872,3 +872,32 @@ impl Game {
         })
     }
 }
+
+impl Fight {
+    /// A frozen fight made up for tests.
+    #[doc(hidden)]
+    pub fn for_tests(turn: i64, opp_tier: i64, board: Vec<MinionSnap>) -> Fight {
+        Fight {
+            turn,
+            opponent: None,
+            entered: Vec::new(),
+            board: Some(board),
+            my_hp: None,
+            opp_hp: None,
+            frozen: Some(Frozen {
+                my_board: Vec::new(),
+                my_tier: 1,
+                opp_tier,
+                first: None,
+                counters: (Counters::default(), Counters::default()),
+                deity_stats: (None, None),
+                gem: (1, 1),
+                spell: (0, 0),
+                cap: None,
+            }),
+            result: 'T',
+            damage: 0,
+            sim: None,
+        }
+    }
+}
