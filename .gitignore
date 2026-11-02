@@ -1,0 +1,20 @@
+ref/
+testdata/
+data/cards.json
+__pycache__/
+.venv/
+.pytest_cache/
+shots/
+data/settings.json
+data/history.jsonl
+data/tiles/
+data/error.log
+build/
+dist/
+Owlingstone.spec
+
+# Never published
+data/subsets.json
+NOTES.md
+.env
+private_terms.txt

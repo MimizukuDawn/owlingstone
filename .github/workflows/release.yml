@@ -1,0 +1,76 @@
+# Push a tag like v1.7.0: tests, Windows build, zip + SHA-256, provenance attestation, GitHub Release.
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write        # create the Release
+      id-token: write        # sign the build attestation
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Check the tag matches __version__
+        shell: bash
+        run: |
+          v=$(python -c "import re;print(re.search(r'__version__\s*=\s*\"([^\"]+)\"',open('bgtracker/__init__.py').read()).group(1))")
+          test "v$v" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME but __version__ $v"; exit 1; }
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+      - name: Privacy scan
+        run: python tools/privacy_scan.py .
+      - name: Install
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Tests
+        run: python -m pytest -q -m "not slow"
+        env:
+          QT_QPA_PLATFORM: offscreen
+      - name: Build
+        run: >
+          pyinstaller --noconfirm --clean --windowed --log-level WARN --name Owlingstone
+          --distpath dist --workpath build --specpath build
+          --icon "${{ github.workspace }}\bgtracker\icon.ico"
+          --add-data "${{ github.workspace }}\bgtracker\icon.ico;bgtracker"
+          --add-data "${{ github.workspace }}\data\*.yaml;data"
+          --add-data "${{ github.workspace }}\CHANGELOG.md;."
+          Owlingstone.pyw
+      - name: Zip and checksum
+        shell: bash
+        run: |
+          cp LICENSE.md README.md dist/Owlingstone/
+          cd dist
+          7z a -tzip "Owlingstone-$VERSION-windows.zip" Owlingstone >/dev/null
+          sha256sum "Owlingstone-$VERSION-windows.zip" > "Owlingstone-$VERSION-windows.zip.sha256"
+          cat "Owlingstone-$VERSION-windows.zip.sha256"
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/Owlingstone-*-windows.zip
+      - name: Release notes from CHANGELOG.md
+        shell: bash
+        run: |
+          python - <<'PY' > notes.md
+          import os
+          v, out, inside = os.environ["VERSION"], [], False
+          for line in open("CHANGELOG.md", encoding="utf-8"):
+              if line.startswith("## "):
+                  inside = line[3:].split()[0] == v
+              elif inside:
+                  out.append(line.rstrip())
+          print("\n".join(out).strip() or "See CHANGELOG.md")
+          PY
+      - name: Publish the Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" --title "Owlingstone $VERSION" --notes-file notes.md
+          dist/Owlingstone-$VERSION-windows.zip dist/Owlingstone-$VERSION-windows.zip.sha256

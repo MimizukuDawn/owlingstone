@@ -1,0 +1,10 @@
+[project]
+name = "bgtracker"
+version = "1.7.0"
+description = "Standalone Hearthstone Battlegrounds helper that reads Power.log"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["slow: replays every local Hearthstone log (long)"]

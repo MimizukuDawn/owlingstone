@@ -1,0 +1,124 @@
+# Placement moyen de chaque héros (plus bas = mieux) — modifiable à la main.
+#
+# Source (27/10/2026, patch 36.6.3) : https://bgbuddy.gg/heroes (données communautaires Firestone,
+# Solo, tous MMR, patch en cours). Les noms sont ceux de cards.json (un test le vérifie).
+# À rafraîchir après chaque gros patch ; un héros absent d'ici est affiché sans chiffre.
+
+Lord Jaraxxus: {avg: 3.55, games: 18500}
+Death Speaker Blackthorn: {avg: 3.64, games: 12500}
+Patchwerk: {avg: 3.66, games: 28300}
+Cariel Roame: {avg: 3.68, games: 23100}
+"Drest'agath": {avg: 3.69, games: 25100}
+"Tras'tath, Soul Parasite": {avg: 3.76, games: 42800}
+Nightmare Lord Xavius: {avg: 3.78, games: 43500}
+A. F. Kay: {avg: 3.78, games: 39400}
+Buttons: {avg: 3.78, games: 41600}
+Marin the Manager: {avg: 3.79, games: 43600}
+Illidan Stormrage: {avg: 3.79, games: 11200}
+"Al'Akir": {avg: 3.80, games: 21600}
+The Jailer: {avg: 3.83, games: 8980}
+Teron Gorefiend: {avg: 3.84, games: 12400}
+Lady Vashj: {avg: 3.84, games: 7570}
+Deathwing: {avg: 3.84, games: 8810}
+"Vol'jin": {avg: 3.85, games: 12700}
+"Dancin' Deryl": {avg: 3.85, games: 17300}
+"Thorim, Stormlord": {avg: 3.86, games: 35500}
+"Yogg-Saron, Hope's End": {avg: 3.87, games: 23100}
+"Drek'Thar": {avg: 3.87, games: 21500}
+Mister Clocksworth: {avg: 3.88, games: 29600}
+"Inge, the Iron Hymn": {avg: 3.89, games: 15400}
+Vanndar Stormpike: {avg: 3.89, games: 22200}
+The Lich King: {avg: 3.90, games: 15400}
+King Mukla: {avg: 3.90, games: 11200}
+The Great Akazamzarak: {avg: 3.91, games: 17600}
+Alexstrasza: {avg: 3.91, games: 7940}
+"Loh, the Living Legend": {avg: 3.92, games: 24100}
+George the Fallen: {avg: 3.92, games: 18100}
+Sylvanas Windrunner: {avg: 3.93, games: 14800}
+Queen Wagtoggle: {avg: 3.93, games: 10500}
+The Curator: {avg: 3.94, games: 8910}
+Tavish Stormpike: {avg: 3.95, games: 16600}
+"Lich Baz'hial": {avg: 3.95, games: 7470}
+Exarch Othaar: {avg: 3.95, games: 12900}
+Queen Azshara: {avg: 3.96, games: 9780}
+Mr. Bigglesworth: {avg: 3.96, games: 15800}
+"N'Zoth": {avg: 3.96, games: 6720}
+Overlord Saurfang: {avg: 3.97, games: 11800}
+Mutanus the Devourer: {avg: 3.97, games: 19600}
+Murloc Holmes: {avg: 3.98, games: 17900}
+Morchie: {avg: 3.98, games: 17700}
+"Murozond, Unbounded": {avg: 3.98, games: 16700}
+Tickatus: {avg: 3.98, games: 22800}
+Sir Finley Mrrgglton: {avg: 3.99, games: 30800}
+"Y'Shaarj": {avg: 3.99, games: 14500}
+Ysera: {avg: 4.00, games: 7190}
+Enhance-o Mechano: {avg: 4.00, games: 19100}
+Galakrond: {avg: 4.00, games: 27300}
+"Bru'kan": {avg: 4.01, games: 8820}
+"C'Thun": {avg: 4.01, games: 4630}
+Rakanishu: {avg: 4.01, games: 14400}
+The Rat King: {avg: 4.01, games: 15100}
+Captain Eudora: {avg: 4.01, games: 23500}
+"Tae'thelan Bloodwatcher": {avg: 4.02, games: 11700}
+Silas Darkmoon: {avg: 4.04, games: 18100}
+Shudderwock: {avg: 4.04, games: 23500}
+"Kael'thas Sunstrider": {avg: 4.04, games: 12100}
+Master Nguyen: {avg: 4.05, games: 33500}
+"Skycap'n Kragg": {avg: 4.05, games: 14200}
+Rokara: {avg: 4.05, games: 6990}
+Rock Master Voone: {avg: 4.06, games: 17500}
+Farseer Nobundo: {avg: 4.06, games: 14000}
+Scabbs Cutterbutter: {avg: 4.07, games: 16400}
+Galewing: {avg: 4.07, games: 15600}
+"Doctor Holli'dae": {avg: 4.07, games: 12600}
+Captain Hooktusk: {avg: 4.07, games: 12800}
+"Zephrys, the Great": {avg: 4.08, games: 10500}
+Snake Eyes: {avg: 4.08, games: 24600}
+Greybough: {avg: 4.09, games: 7250}
+Varden Dawngrasp: {avg: 4.09, games: 13500}
+Chenvaala: {avg: 4.09, games: 11100}
+Reno Jackson: {avg: 4.10, games: 30700}
+Ambassador Faelin: {avg: 4.10, games: 30200}
+Malygos: {avg: 4.10, games: 12200}
+Infinite Toki: {avg: 4.11, games: 17600}
+Patches the Pirate: {avg: 4.11, games: 7730}
+Millhouse Manastorm: {avg: 4.12, games: 7440}
+Cookie the Cook: {avg: 4.13, games: 15400}
+Ini Stormcoil: {avg: 4.13, games: 6700}
+Arch-Villain Rafaam: {avg: 4.13, games: 6150}
+Time Twister Chromie: {avg: 4.14, games: 13900}
+Onyxia: {avg: 4.14, games: 6230}
+Elise Starseeker: {avg: 4.14, games: 9940}
+Ozumat: {avg: 4.14, games: 5740}
+Dinotamer Brann: {avg: 4.15, games: 24500}
+Xyrella: {avg: 4.15, games: 13100}
+Nozdormu: {avg: 4.15, games: 11000}
+"Genn, Worgen King": {avg: 4.16, games: 32700}
+Forest Warden Omu: {avg: 4.16, games: 18200}
+Lord Barov: {avg: 4.16, games: 14200}
+Heistbaron Togwaggle: {avg: 4.16, games: 9700}
+Maiev Shadowsong: {avg: 4.18, games: 8510}
+Forest Lord Cenarius: {avg: 4.18, games: 27500}
+Millificent Manastorm: {avg: 4.19, games: 7900}
+Jandice Barov: {avg: 4.19, games: 5590}
+Pyramad: {avg: 4.20, games: 6810}
+Sneed: {avg: 4.20, games: 5900}
+Tamsin Roame: {avg: 4.21, games: 3420}
+Sire Denathrius: {avg: 4.21, games: 35600}
+Aranna Starseeker: {avg: 4.21, games: 11400}
+"E.T.C., Band Manager": {avg: 4.22, games: 18200}
+Kurtrus Ashfallen: {avg: 4.23, games: 7820}
+"Cap'n Hoggarr": {avg: 4.23, games: 7090}
+Trade Prince Gallywix: {avg: 4.24, games: 10400}
+"Zerek, Master Cloner": {avg: 4.24, games: 21500}
+"Kerrigan, Queen of Blades": {avg: 4.24, games: 4059}
+Edwin VanCleef: {avg: 4.28, games: 4470}
+Tess Greymane: {avg: 4.28, games: 15900}
+Guff Runetotem: {avg: 4.29, games: 13000}
+"Kith'ix": {avg: 4.29, games: 24200}
+Sindragosa: {avg: 4.29, games: 12200}
+Ragnaros the Firelord: {avg: 4.32, games: 5310}
+Artanis: {avg: 4.36, games: 4520}
+Professor Putricide: {avg: 4.36, games: 3620}
+Jim Raynor: {avg: 4.39, games: 4250}
+Fungalmancer Flurgl: {avg: 4.47, games: 4130}

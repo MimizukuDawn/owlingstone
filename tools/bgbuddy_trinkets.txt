@@ -1,0 +1,264 @@
+Copper Coil|G|2.43|60.5|153
+Sludge Portrait|G|3.06|63.5|24100
+Eternal Portrait|G|3.09|24.5|5530
+Assembler Portrait|G|3.14|31.1|7500
+Weighted Gauntlet|L|3.16|30.5|33700
+Blessing Portrait|L|3.17|28.6|3850
+Tiger Carving|G|3.19|44.3|2760
+Eternal Portrait|L|3.19|28.0|6560
+Snarky Portrait|G|3.22|39.2|14400
+Bloodbound Earrings|G|3.35|42.0|25000
+Blood Golem Sticker|G|3.37|38.6|22700
+Hackerfin Portrait|G|3.37|40.1|6930
+Surveyor Portrait|G|3.39|52.5|31600
+Ironforge Anvil|G|3.40|12.7|627
+Hammer of Twilight|G|3.41|18.9|9980
+Bloodbound Earrings|L|3.42|41.1|19900
+Flaming Portrait|G|3.43|30.9|16700
+Beatboxer Portrait|G|3.47|81.4|26600
+Pocket Cyclone|G|3.47|42.3|10600
+Azerite Portrait|G|3.48|61.2|15000
+Myrmidon Sticker|G|3.49|18.8|2680
+Faerie Dragon Scale|G|3.49|23.8|9640
+Great Boar Sticker|G|3.50|25.5|9340
+Soul Fermenter|G|3.51|46.7|10500
+Errgl Sticker|G|3.51|24.5|3780
+Hoggy Bank|L|3.53|33.4|16300
+Tiger Carving|L|3.53|24.4|3360
+Cyclist Portrait|G|3.54|30.8|7770
+Pocket Cyclone|L|3.54|35.6|12600
+Groundbreaker Portrait|G|3.54|39.7|10600
+Tableware Portrait|G|3.55|8.1|4060
+Great Boar Sticker|L|3.55|19.6|9530
+Butcher's Sickle|G|3.55|44.0|10100
+Trailblazer Sticker|G|3.56|55.3|31000
+Rewinder Portrait|L|3.56|33.0|11900
+Dramaloc Sticker|G|3.57|31.4|3650
+Glass of Perspective|G|3.58|24.3|29100
+Corrupted Baton|G|3.58|41.7|15700
+Hammer of Twilight|L|3.58|16.1|5260
+Wand of Divination|L|3.58|49.5|24400
+Mecha-Jaraxxus Sticker|G|3.58|24.8|21100
+Training Certificate|L|3.60|21.8|8190
+Aggem Sticker|G|3.60|15.6|2080
+Nether Pendant|G|3.61|41.1|18900
+Enigmatic Headstone|L|3.61|22.9|5370
+Insurrectionist's Blade|G|3.61|25.2|15100
+Pilgrimp Sticker|L|3.61|33.5|12100
+Dragonwing Glider|L|3.62|21.3|7990
+Ur'zul Sticker|G|3.62|39.0|14000
+Jewelry Box|L|3.64|25.2|12100
+Bazaar Sticker|L|3.64|26.5|9550
+Beetle Band|G|3.65|18.6|6180
+Gold Mallet|G|3.65|16.4|11600
+Glass of Perspective|L|3.65|33.0|38500
+Evil Experiment|G|3.65|26.5|9550
+Willbreaker Sticker|L|3.66|28.4|36700
+Tome of the Ancients|G|3.68|32.1|12900
+Chromatic Tear|G|3.68|38.3|15600
+Rusty Trident|L|3.68|25.8|7810
+Reinforced Shield|G|3.68|20.5|4700
+Felsteel Cleaver|G|3.68|18.1|10300
+Plaguerunner Portrait|G|3.69|29.7|6900
+Converter Portrait|G|3.69|56.3|21300
+Artisanal Urn|G|3.69|22.3|5160
+Shath'Yar Shrine|G|3.70|33.0|12500
+Multilayered Shield|G|3.70|9.4|4760
+Baleful Incense|L|3.70|20.2|4690
+Bewitched Ribbon|G|3.70|31.7|8590
+Consuming Claw|L|3.70|46.4|16800
+Cursed Crystal|L|3.70|19.5|7040
+Maw Caster Portrait|G|3.71|44.7|9980
+The Eye of Sargeras|G|3.71|26.8|11600
+Dalaran Cheese Wheel|G|3.71|33.3|18900
+Upstart Embers|G|3.71|27.0|6600
+Fancy Spellbook|G|3.72|13.2|2950
+Lorewalker Scroll|G|3.74|38.3|10500
+Quilligraphy Set|L|3.74|20.1|9720
+Glowing Gauntlet|L|3.75|27.6|30200
+Mask of Ancient Ones|G|3.75|39.8|15200
+Ruby Tusk|L|3.75|63.1|31000
+Maldraxxus Dagger|G|3.75|35.4|92300
+Dragon's Eye|G|3.76|36.5|14700
+Makeshift Master|G|3.76|18.8|7060
+Fang Anklet|G|3.76|21.0|7450
+Jailer Sticker|L|3.76|40.3|9410
+Bronze Timepiece|G|3.76|24.4|9850
+Ghastly Sticker|G|3.76|14.8|12400
+Holy Mallet|L|3.77|15.3|5690
+Ophidian Staff|L|3.77|25.6|9470
+Sky Golem Portrait|G|3.77|7.9|8170
+Booty Bay Brew|L|3.77|17.4|6470
+Corrupted Baton|L|3.78|37.9|23900
+Wolfhead Flail|G|3.78|27.6|23000
+Herald Sticker|G|3.78|28.9|24100
+Boom's Monster Portrait|G|3.78|39.0|12800
+Miniature Ship|G|3.78|22.2|7110
+Gold Mallet|L|3.78|20.2|6050
+Bloodfury Shield|G|3.79|25.2|14300
+Honeycomb Ring|G|3.79|7.0|11200
+Water Wheel|L|3.79|23.7|8400
+Orb of the Unknown|G|3.80|17.0|29100
+Colorful Compass|L|3.80|33.5|52700
+Scraper Sticker|L|3.80|53.3|16400
+Automaton Portrait|L|3.81|18.5|4810
+Murky Sticker|G|3.81|11.8|3130
+Poet Portrait|G|3.81|42.6|17200
+Comfy Coffin|L|3.81|26.3|6220
+Nazjatar Postcard|G|3.81|17.6|4860
+Staff of the Scourge|L|3.81|27.2|6290
+Nomi Sticker|L|3.81|51.7|18300
+Ominous Stone|L|3.82|32.3|56000
+Bronzebeard Portrait|G|3.82|53.4|29400
+Manipulator Portrait|G|3.82|15.4|41900
+Colorful Compass|G|3.82|34.1|82400
+Gold-plated Compass|G|3.83|16.0|36800
+Jailer Sticker|G|3.83|43.6|10000
+Sinstone Sticker|G|3.83|19.9|7840
+Curator Sticker|G|3.83|10.1|7460
+Designer Eyepatch|G|3.84|43.5|12900
+Funeral Wreath|G|3.84|28.1|6280
+Spitescale Sushi Roll|G|3.84|23.2|2700
+Volumizer Portrait|L|3.84|51.8|17400
+Sphere of Memory|G|3.84|14.2|35800
+Bob's Tip Jar|G|3.84|21.3|36200
+Dragon Skull|L|3.85|10.2|10500
+Bleeding Heart|L|3.85|29.6|6900
+Rivendare Portrait|G|3.86|52.5|18500
+Lorewalker Scroll|L|3.86|30.2|9150
+Demonic Tapestry|L|3.86|28.6|6840
+Wicked Tome|G|3.86|22.5|5010
+Book of Medivh|G|3.86|14.0|23900
+Chillmere Mosaic|G|3.87|16.4|26300
+Mama Bear Sticker|L|3.87|16.8|6180
+Flighty Portrait|L|3.87|25.4|5440
+Chromatic Tear|L|3.87|16.1|16300
+Lionfish Portrait|L|3.88|31.1|11500
+Sinister Invitation|G|3.88|20.8|54100
+Mindslasher Portrait|L|3.88|25.5|15900
+Soul Battery|L|3.88|47.5|11100
+Comfy Coffin|G|3.88|26.5|5930
+Nomi Sticker|G|3.88|47.5|12100
+Avalanche Sticker|G|3.89|23.5|6630
+Warband Whistle|G|3.89|14.7|35600
+Volumizer Portrait|G|3.89|45.1|14800
+Wax Lance|G|3.90|25.4|66500
+Bassgill Portrait|G|3.90|24.3|4330
+All-Purpose Kibble|G|3.90|20.0|7320
+Lightfeather Sticker|G|3.91|17.4|5890
+Slamma Sticker|G|3.91|19.3|6800
+Morgl Portrait|G|3.92|13.3|12500
+Ornate Clock|L|3.92|19.0|18500
+Guiding Candle|G|3.93|29.5|50200
+Escapee Portrait|G|3.93|21.4|10500
+Corrupted Tome|G|3.93|16.4|25800
+Surprise Portrait|G|3.93|37.2|9210
+Mystery Cube|L|3.94|30.3|33000
+Demonic Bloodletter|L|3.94|33.4|12200
+Book of Medivh|L|3.94|17.7|19500
+Transcribing Typewriter|G|3.94|16.7|43500
+Beetle Band|L|3.94|22.1|8040
+Glowing Crystal|L|3.95|13.8|4610
+Portable Factory|L|3.95|16.2|17800
+Deathly Phylactery|L|3.95|27.0|46100
+Booty Bay Brew|G|3.95|25.2|8050
+Corrupted Coin Portrait|L|3.95|42.6|54900
+Kaleidoscope|G|3.96|12.8|15400
+Protective Ring|G|3.96|17.0|5180
+Jar o' Gems|G|3.96|17.5|10600
+Azeroth Model Globe|L|3.96|34.5|38100
+Thaumaturgist Portrait|G|3.96|18.7|5200
+Mysterious Orb|L|3.96|8.1|8850
+Sous Chef Sticker|L|3.97|36.7|3350
+Safety Patch|G|3.97|38.3|15900
+Young Murk-Eye Sticker|G|3.97|26.2|4500
+Electrode Attractor|G|3.97|40.3|12800
+Tickatus Sticker|L|3.98|25.4|28100
+Bubble Crown|L|3.98|11.4|9000
+Czarina Portrait|G|3.98|11.1|3790
+Gold Pendant|L|3.98|26.4|25100
+Kaleidoscope|L|3.98|33.5|27000
+Archaic Scroll|L|3.98|24.1|7350
+Recycling Sticker|G|3.99|22.7|5460
+Magicfin Sticker|G|3.99|10.1|8920
+Pagle's Fishing Rod|G|3.99|24.2|38500
+Timeworn Candelabra|G|4.00|16.4|27900
+Putricide Sticker|L|4.00|26.0|2450
+Minion Bait|L|4.00|37.6|8500
+Innkeeper's Hearth|G|4.00|23.7|38200
+Orb of the Unknown|L|4.00|14.7|16300
+Trip Vouchers|L|4.00|44.0|107000
+Reinvigorating Light|L|4.00|39.5|39800
+Dragonhead Staff|L|4.01|47.2|17600
+Floating Candle Set|L|4.01|15.8|16800
+Warcry Totem|L|4.01|14.8|24100
+Inductive Gyroblade|L|4.01|24.7|8440
+Baller Portrait|G|4.01|29.4|2370
+Quilligraphy Set|G|4.02|17.1|10300
+Trusty Crowbar|G|4.02|22.0|7090
+Sunken Anchor|L|4.02|15.7|14900
+Fish Portrait|L|4.02|17.7|10400
+Bluegill Flippers|L|4.02|20.7|4420
+Lava Lamp|G|4.02|23.3|5510
+Accord-o-Tron Portrait|G|4.03|49.4|16100
+Spell-powered Wrench|L|4.03|26.2|8920
+Explorer's Binoculars|L|4.03|24.9|27400
+Amplifying Essence|G|4.03|31.2|8510
+Fridge Magnet|G|4.03|17.4|5920
+Transcribing Typewriter|L|4.04|17.0|38400
+Inductive Gyroblade|G|4.04|18.7|6410
+Lens Case|L|4.04|19.4|16900
+Privateer Portrait|G|4.05|22.7|20600
+War Drum|L|4.05|11.7|19100
+Magician's Top Hat|L|4.05|12.3|7340
+Worn Treasure Map|L|4.06|17.1|18900
+Ancient Wishbone|L|4.06|41.8|6650
+Jarred Frostling|G|4.07|22.1|5600
+Vibrant Bubble|L|4.07|31.1|6590
+Lucky Tabby|L|4.07|25.4|9420
+Conch Portrait|L|4.07|36.0|7400
+Shark Cannon|G|4.08|28.2|9040
+Wildfeather Duster|G|4.08|17.4|6310
+Wisdomball Supply|G|4.08|40.4|16700
+Souvenir Stand|L|4.08|40.0|99900
+Goblin Wallet|L|4.08|43.3|47500
+Innkeeper's Stein|L|4.08|26.6|29500
+Cookie's Stirring Rod|G|4.08|16.7|2930
+Bob-blehead|L|4.09|16.8|8780
+Rendle Sticker|L|4.09|13.3|14700
+Vinespeaker Portrait|G|4.09|51.1|8280
+Reflective Pendant|L|4.10|24.4|55300
+Nerglish Phrasebook|L|4.10|22.8|4890
+Baller Portrait|L|4.10|13.6|14500
+Behemoth Portrait|G|4.10|40.0|10100
+Grifter Portrait|L|4.11|47.1|17400
+Goldenizer Supply|L|4.11|36.1|40000
+Splinter of Aurum|L|4.12|13.6|12900
+Rockin' Music Box|L|4.12|12.0|13200
+Secret Schematic|G|4.12|15.2|5150
+Stuffed Coin Purse|L|4.13|15.2|16800
+Stormcoil Sticker|L|4.15|23.7|8080
+Timeworn Candelabra|L|4.15|28.4|31500
+Bartend-o-Tron's Oilcan|L|4.15|28.2|31100
+Shrine of Evolution|L|4.16|24.7|891
+Lockbox Portrait|L|4.16|22.1|20900
+The Eye of Dalaran|L|4.16|19.8|192
+Trickster's Sleeve|L|4.17|11.6|12500
+Nerglish Phrasebook|G|4.17|21.7|3880
+Heart of the Forest|G|4.17|21.5|1660
+Sellemental Portrait|L|4.18|23.1|8160
+Defensive Shell|L|4.18|6.9|7710
+Reusable Batteries|L|4.19|21.9|7510
+Yogg-Tastic Pastry|L|4.19|12.8|14000
+Lovely Locket|L|4.20|14.5|16100
+Emergency Gearblade|L|4.20|11.4|3780
+Sacrificial Altar|L|4.22|21.2|1160
+Herding Horn|L|4.23|18.9|2130
+Replica Cathedral|L|4.24|10.3|11100
+Token of the Old Gods|L|4.24|18.9|20900
+Portable Factory|G|4.25|12.1|20600
+Writhing Tentacles|G|4.25|6.6|2600
+Frigid Blossom|L|4.27|20.4|21900
+Quartermaster's Hook|L|4.29|31.2|11600
+Alliance Keychain|L|4.35|7.5|7090
+Rascal Sticker|L|4.38|6.5|6130

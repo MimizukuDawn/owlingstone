@@ -1,0 +1,321 @@
+# Base de compositions (comps) Battlegrounds — modifiable à la main.
+#
+# Même structure que les guides de comps de HDT (core cards / addon cards / when to commit / how to play).
+# Champs :
+#   id           identifiant court, unique (sert aux règles de préférence de data/rules.yaml)
+#   name         nom affiché
+#   races        races nécessaires : la comp n'est proposée que si TOUTES sont dans la partie
+#                ([] = jouable dans tous les lobbies)
+#   core         cartes clés (noms anglais exacts) : elles définissent la comp (3 points chacune)
+#   addons       cartes qui la renforcent (1 point chacune)
+#   difficulty   easy / medium / hard
+#   when_to_commit  quand s'engager dans cette comp
+#   how_to_play  conseil de jeu en une ou deux phrases
+#   stats        placement moyen (avg, plus bas = mieux) et nombre de parties (games)
+#
+# Source (27/10/2026, patch 36.6.3, saison 14) : guides et stats de https://bgbuddy.gg/comps
+# (données communautaires Firestone, Solo, tous MMR). Une comp n'est comptée qu'une fois construite,
+# donc toutes ont une moyenne meilleure que 4,5 : comparer les comps entre elles, pas à 4,5.
+# Sans "stats" = comp sans chiffres publics (avis seulement).
+# Un test vérifie que chaque nom de carte existe dans le pool Solo actuel (ni Duos, ni Naga).
+
+# ---------------------------------------------------------------- Aberrations
+- id: aberration-discard
+  name: Aberration Discard
+  races: [ABERRATION]
+  core: [Harbinger Aph'lass, Mysterious K'Thir]
+  addons: [Nightmare Corroder, N'raqi Frostcaller, Drakkari Enchanter, Felfire Conjurer, Faceless Converter, Cataclysmic Harbinger, De-volition-ist, Cutthroat K'Thir, Mindbender Ghur'sha, Vicious Mindslasher, Sha of Fear, Mindbending Recruiter, Abyssal Envoy]
+  difficulty: medium
+  when_to_commit: Nightmare Corroder + Mysterious K'Thir + Harbinger Aph'lass (+ Drakkari Enchanter).
+  how_to_play: Corroder gives a Sludge Corrosion each turn and K'Thir discards it (cast twice). Boost Tavern spells with Frostcaller or Felfire Conjurer; Aph'lass grows the Deity on every discard.
+  stats: {avg: 3.23, games: 39600}
+
+- id: aberration-deathrattle
+  name: Aberration Deathrattle
+  races: [ABERRATION]
+  core: [Faceless Converter, Titus Rivendare]
+  addons: [Unwilling Slacker, N'raqi Sapper, Nightmare Corroder, The Shadow of Doubt, Deathstrider, Drifting Sacrifice, Dark Puppeteer]
+  difficulty: easy
+  when_to_commit: Faceless Converter + Titus Rivendare.
+  how_to_play: Cast many Tavern spells so Converter's Deathrattle grows, then Titus doubles it in combat to feed the Deity.
+  stats: {avg: 3.56, games: 30900}
+
+- id: aberration-apm
+  name: Aberration APM (Pirate bounties)
+  races: [ABERRATION, PIRATE]
+  core: [Sky Admiral Rogers, Proud Privateer, Faceless Converter]
+  addons: [Titus Rivendare, Vicious Mindslasher, The Shadow of Doubt, Brann Bronzebeard]
+  difficulty: hard
+  when_to_commit: Rogers + Privateer with a Faceless Converter.
+  how_to_play: Spend all your gold for Bounties (cast twice with Privateer); every spell grows Converter and Mindslasher.
+  # Pas de stats séparées : bgbuddy la range dans Aberration Deathrattle (Rogers/Privateer = add-ons).
+
+# ---------------------------------------------------------------- Bêtes
+- id: beast-lobster
+  name: Beast Lobster
+  races: [BEAST]
+  core: [Tasty Lobster, Titus Rivendare, Deathstrider, Headhunter Gryphon]
+  addons: [Hoarding Hyena, Sin'dorei Straight Shot, Lurking Lionfish, Snarky Shark, Sprightly Scarab]
+  difficulty: medium
+  when_to_commit: Headhunter Gryphon + Tasty Lobster + Deathstrider.
+  how_to_play: Trigger Tasty Lobster as often as possible (Reborn, Titus); Gryphon + Deathstrider retrigger Deathrattles, Shark and Lionfish give extra attacks.
+  stats: {avg: 3.76, games: 59100}
+
+- id: beast-beetles
+  name: Beast Beetles
+  races: [BEAST]
+  core: [Ravaging Scorpid, Turquoise Skitterer, Headhunter Gryphon, Banana Slamma]
+  addons: [Forest Rover, Buzzing Vermin, Titus Rivendare, Lurking Lionfish, Deathstrider, Sprightly Scarab, Snarky Shark]
+  difficulty: medium
+  when_to_commit: Scorpid or Skitterer with Headhunter Gryphon.
+  how_to_play: Beetle buffs last the whole game; Banana Slamma doubles the Attack of every Beetle summoned in combat.
+  stats: {avg: 3.75, games: 25200}
+
+- id: beast-leviathan
+  name: Beast Leviathan
+  races: [BEAST]
+  core: [Lurking Leviathan, Banana Slamma, Sewer Lord, Headhunter Gryphon]
+  addons: [Turquoise Skitterer, Ravaging Scorpid, Titus Rivendare, Lurking Lionfish, Ghastcoiler, Stalwart Kodo, Snarky Shark, Sprightly Scarab, Boon of Beetles]
+  difficulty: medium
+  when_to_commit: Lurking Leviathan + Sewer Lord + Banana Slamma.
+  how_to_play: Cycle Beasts (Shark, Lionfish) to grow Leviathan; protect it with Taunts, losing it usually loses the fight.
+  stats: {avg: 3.93, games: 7830}
+
+# ---------------------------------------------------------------- Démons
+- id: demon-boost-shop
+  name: Demon Boost Shop
+  races: [DEMON]
+  core: [Devilish Distractor, Balinda Stonehearth, Felboar, Imp-lusionist]
+  addons: [Insatiable Ur'zul, Deft Deserter, Soulkeeping Jailer, Brann Bronzebeard, Sacrificial Wrathguard, Hot-Air Surveyor, Champion of Sargeras]
+  difficulty: medium
+  when_to_commit: A shop booster (Wrathguard or Distractor) with Imp-lusionist.
+  how_to_play: Boost the Tavern, then Imp-lusionist's Methodical Madness with Balinda gives Reborn, Divine Shield or Venomous.
+  stats: {avg: 3.41, games: 36100}
+
+- id: demon-self-damage
+  name: Demon Self Damage
+  races: [DEMON]
+  core: [Wrath Weaver, Ashen Corruptor, Soul Rewinder, Eredar Escapist, Devilish Distractor, Brann Bronzebeard]
+  addons: ["Malchezaar, Prince of Dance", Balinda Stonehearth, Tichondrius, Felboar, Sacrificial Wrathguard, Imposing Percussionist]
+  difficulty: hard
+  when_to_commit: Wrath Weaver + Eredar Escapist + Soul Rewinder or Ashen Corruptor.
+  how_to_play: Cycle Demons through Weaver and Escapist, then spend Corrupted Cupcakes on Devilish Distractor with Balinda.
+  stats: {avg: 3.80, games: 82200}
+
+# ---------------------------------------------------------------- Dragons
+- id: dragon-shield
+  name: Dragon Shield
+  races: [DRAGON]
+  core: [Persistent Poet, Hopebringer, Heroic Broodmother, Nadina the Red]
+  addons: [Crimson Vindicator, Bronze Warden, Brood of Nozdormu, Amber Guardian]
+  difficulty: easy
+  when_to_commit: Hopebringer with Divine Shield minions.
+  how_to_play: Fill the board with Divine Shields to grow Hopebringer; Poet keeps combat stats, Nadina gives the Shields back.
+  stats: {avg: 3.16, games: 23300}
+
+- id: dragon-spell-power
+  name: Dragon Spell Power
+  races: [DRAGON]
+  core: [Crimson Vindicator, Persistent Poet, Runic Arcanist, Brann Bronzebeard]
+  addons: [Felfire Conjurer, Nadina the Red, Sky-hatch Runaway, Heroic Broodmother, Bronze Timewalker, Blue Whelp, Draconic Warden, Brood of Nozdormu]
+  difficulty: easy
+  when_to_commit: A Tavern spell boost + Runic Arcanist + Crimson Vindicator.
+  how_to_play: Build spell power (Chromadrakes, Felfire Conjurer), then Poet keeps what Vindicator or Arcanist give in combat.
+  stats: {avg: 3.78, games: 20000}
+
+- id: dragon-kalecgos
+  name: Dragon Kalecgos
+  races: [DRAGON]
+  core: ["Kalecgos, Arcane Aspect", Brann Bronzebeard]
+  addons: [Persistent Poet, Draconic Warden, Bronze Timewalker, Sky-hatch Runaway, Amber Guardian, Kelp Keeper, Magicfin Mycologist, Heroic Broodmother]
+  difficulty: easy
+  when_to_commit: Kalecgos + Brann.
+  how_to_play: Cycle strong Battlecries; keep Kelp Keeper to retrigger Draconic Warden.
+  stats: {avg: 3.96, games: 17000}
+
+# ---------------------------------------------------------------- Élémentaires
+- id: elemental-cycle
+  name: Elemental Cycle
+  races: [ELEMENTAL]
+  core: [Unbound Tempest, Brann Bronzebeard, Living Azerite, Air Revenant, Tavern Tempest]
+  addons: [Elemental of Surprise, Leyline Surfacer, Kelp Keeper, Refreshing Anomaly, Sellemental]
+  difficulty: medium
+  when_to_commit: Unbound Tempest + Living Azerite with Elemental generators.
+  how_to_play: Play many Elementals each turn (Tavern Tempest, Brann) so Unbound Tempest copies the biggest Tavern minion.
+  stats: {avg: 3.46, games: 7370}
+
+- id: elemental-azerite
+  name: Elemental Azerite
+  races: [ELEMENTAL]
+  core: [Living Azerite, Leyline Surfacer, Balinda Stonehearth, Brann Bronzebeard]
+  addons: [Kelp Keeper, Young Murk-Eye, Wildfire Elemental, Sky Admiral Rogers, Proud Privateer, Elemental of Surprise, Stone Age Slab, Ultraviolet Ascendant]
+  difficulty: hard
+  when_to_commit: Living Azerite + Leyline Surfacer + Balinda.
+  how_to_play: Cycle spells to buff Tavern Elementals with Azerite, then stack stats with Balinda + Leyline Surfacer.
+  stats: {avg: 3.54, games: 40400}
+
+- id: elemental-tempest
+  name: Elemental Tempest
+  races: [ELEMENTAL]
+  core: [Brann Bronzebeard, Unbound Tempest, Air Revenant]
+  addons: [Kelp Keeper, Elemental of Surprise, Tavern Tempest, Living Azerite, Young Murk-Eye, En-Djinn Blazer, Ichoron the Protector, Sellemental]
+  difficulty: hard
+  when_to_commit: Elemental generation + Brann + Unbound Tempest.
+  how_to_play: Scale the shop with Air Revenant and Azerite, then cycle Elementals to grow Unbound Tempest.
+  stats: {avg: 3.83, games: 13600}
+
+# ---------------------------------------------------------------- Mechs
+- id: mech-apm
+  name: Mech APM
+  races: [MECHANICAL]
+  core: [Auto Reveille, Spark Snapper]
+  addons: [Polarizing Beatboxer, Sky Admiral Rogers, Proud Privateer, Brann Bronzebeard, Drone Duplicator, Utility Drone, Resourceful Robot, Accord-o-Tron]
+  difficulty: hard
+  when_to_commit: Auto Reveille + economy.
+  how_to_play: Build economy, then buy every cheap minion and spell so Auto Reveille makes Volumizers. With Pirates, Greedy Conniver can find Beatboxer.
+  stats: {avg: 3.38, games: 21700}
+
+- id: mech-volumizer
+  name: Mech Volumizer
+  races: [MECHANICAL]
+  core: [Resourceful Robot, Utility Drone, Drakkari Enchanter]
+  addons: [Polarizing Beatboxer, Spark Snapper, Drone Duplicator, Conveyor Construct, Titus Rivendare, Auto Reveille, Prosthetic Hand, Annoy-o-Module, Auto Accelerator]
+  difficulty: easy
+  when_to_commit: Resourceful Robot + Utility Drone + Drakkari Enchanter.
+  how_to_play: Robot and Conveyor Construct make Volumizers; Utility Drone and Drakkari Enchanter turn them into board-wide stats.
+  stats: {avg: 3.36, games: 46300}
+
+- id: mech-glambot
+  name: Mech Glambot
+  races: [MECHANICAL]
+  core: [Glambot, Balinda Stonehearth, Utility Drone, Drakkari Enchanter]
+  addons: [Gearfin, Brann Bronzebeard, Rescue Bot, Fruit Vendor, Victorious Geomant, Polarizing Beatboxer, Hot-Air Surveyor, Prosthetic Hand]
+  difficulty: medium
+  when_to_commit: Glambot + Balinda + Utility Drone.
+  how_to_play: Pile spells (Blood Gems are best) onto one Mech with Glambot and Balinda. Weakest comp in the data.
+  stats: {avg: 4.23, games: 14300}
+
+# ---------------------------------------------------------------- Murlocs
+- id: murloc-end-of-turn
+  name: Murloc End of Turn
+  races: [MURLOC]
+  core: [Brann Bronzebeard, Young Murk-Eye, Drakkari Enchanter, Magicfin Mycologist]
+  addons: [Kelp Keeper, Felfire Conjurer, Azsharan Cutlassier, Shoalfin Mystic]
+  difficulty: hard
+  when_to_commit: Young Murk-Eye + Brann + a Magicfin Apprentice with Azerite Empowerment.
+  how_to_play: Murk-Eye retriggers the Apprentice next to it each turn; Brann and Drakkari Enchanter multiply it.
+  stats: {avg: 3.32, games: 2950}
+
+- id: murloc-hand
+  name: Murloc Hand Buff
+  races: [MURLOC]
+  core: [Choral Mrrrglr, Twilight Tidehunter, Flighty Scout, Diremuck Forager, Brann Bronzebeard]
+  addons: [Magicfin Mycologist, Balinda Stonehearth, Expert Aviator, Primalfin Lookout, Bile Spitter, Costume Enthusiast, Bream Counter, Kelp Keeper, Shamanic Tidecaller, Tad]
+  difficulty: hard
+  when_to_commit: Twilight Tidehunter + Brann + Flighty Scout.
+  how_to_play: Buff Flighty Scout in hand with Tidehunter, Balinda and Brann; Diremuck Forager or Expert Aviator summon it in combat, Choral adds the hand's stats.
+  stats: {avg: 3.55, games: 15500}
+
+- id: murloc-scam
+  name: Murloc Scam
+  races: [MURLOC]
+  core: [Expert Aviator, Sewer Escapee, Bile Spitter]
+  addons: [Leeroy the Reckless, Deadly Spore, Bubble Gunner, Heroic Underdog, Diremuck Forager]
+  difficulty: medium
+  when_to_commit: Sewer Escapee + Bile Spitter.
+  how_to_play: Play Sewer Escapee on Bile Spitter for Reborn and a Venomous Shield, then add Leeroy, Deadly Spore and Heroic Underdog.
+  stats: {avg: 3.69, games: 12500}
+
+# ---------------------------------------------------------------- Pirates
+- id: pirate-discover
+  name: Pirate Discover
+  races: [PIRATE]
+  core: ["Hooktusk, Master Marauder", Enterprising Escapee]
+  addons: [Locked-up Mutineer, Maritime Extortionist, Sky Admiral Rogers, Blade Collector, Brann Bronzebeard, Clever Castaway, Patient Scout, Eyes of the Earth Mother, Silent Deliverer, Greedy Conniver]
+  difficulty: hard
+  when_to_commit: Hooktusk with Enterprising Escapee.
+  how_to_play: Stack Enterprising Escapees; once Hooktusk is down, cycle gold and Discover cards.
+  stats: {avg: 3.80, games: 33600}
+
+- id: pirate-bounty
+  name: Pirate Bounty
+  races: [PIRATE]
+  core: [Sky Admiral Rogers, Proud Privateer]
+  addons: [Felfire Conjurer, Brann Bronzebeard, Blade Collector, Enterprising Escapee, Greedy Conniver, Shoalfin Mystic, Azsharan Cutlassier, Draconic Warden]
+  difficulty: hard
+  when_to_commit: Sky Admiral Rogers + Proud Privateer.
+  how_to_play: Generate Bounties, boost spell power, and put Selfish Bounty on a strong minion on your left. Better as the gold engine of another tribe.
+  stats: {avg: 4.10, games: 5780}
+
+# ---------------------------------------------------------------- Quilboars
+- id: quilboar-felboar
+  name: Quilboar Felboar Spam
+  races: [QUILBOAR]
+  core: [Felboar, Balinda Stonehearth, Brann Bronzebeard]
+  addons: [Devilish Distractor, Sky Admiral Rogers, Proud Privateer, Hot-Air Surveyor, Magicfin Mycologist, Razorfen Flapper, Veteran Brigand, Sanguine Champion]
+  difficulty: hard
+  when_to_commit: Balinda + Brann + Felboar + a shop boost.
+  how_to_play: Boost the shop (Blood Gem Barrage, Razorfen Flapper, Distractor), then cycle spells with Balinda and Brann to feed Felboar.
+  stats: {avg: 3.50, games: 61000}
+
+- id: quilboar-choose-one
+  name: Quilboar Choose One
+  races: [QUILBOAR]
+  core: [Turbo Hogrider, Bramble Tunneler]
+  addons: [Veteran Brigand, Fearless Foodie, Sanguine Champion, Hot-Air Surveyor, Geomagus Roogug]
+  difficulty: medium
+  when_to_commit: Turbo Hogrider + Bramble Tunneler.
+  how_to_play: Every Choose One card makes Hogrider play 2 Blood Gems on all your Quilboar.
+  stats: {avg: 3.4, games: 20100}
+
+- id: quilboar-gems
+  name: Quilboar Gem Spam
+  races: [QUILBOAR]
+  core: [Hot-Air Surveyor, Geomagus Roogug, Bramble Tunneler, Balinda Stonehearth]
+  addons: [Victorious Geomant, Sanguine Refiner, Trench Fighter, Mangled Bandit, Thorned Trailblazer, Fearless Foodie, Sly Infiltrator, Snare Trapper, Bonker]
+  difficulty: hard
+  when_to_commit: Hot-Air Surveyor + Geomagus Roogug + Bramble Tunneler.
+  how_to_play: Generate Blood Gems (Tunneler, Mangled Bandit) and play them on Roogug with Surveyor and Balinda.
+  stats: {avg: 3.86, games: 31700}
+
+# ---------------------------------------------------------------- Morts-vivants
+- id: undead-apm
+  name: Undead APM
+  races: [UNDEAD, PIRATE]
+  core: [Sky Admiral Rogers, Proud Privateer, Forsaken Weaver, Snazzy Phantom]
+  addons: [Deathly Striker, Handless Forsaken, Brann Bronzebeard, Dead Bellringer, Maw Caster, Disguised Graverobber, Greedy Conniver]
+  difficulty: medium
+  when_to_commit: Rogers + Privateer + Forsaken Weaver.
+  how_to_play: Bounties scale Undead through Forsaken Weaver; Reborn it and copy it with Disguised Graverobber, cycle Dead Bellringer for Snazzy Phantom.
+  stats: {avg: 3.58, games: 3680}
+
+- id: undead-eternal-knight
+  name: Undead Eternal Knight
+  races: [UNDEAD]
+  core: [Eternal Knight, Eternal Summoner]
+  addons: [Lichling Hoarder, Titus Rivendare, Mummifier, Snazzy Phantom, Dead Bellringer, Eternal Tycoon, Prosthetic Hand]
+  difficulty: easy
+  when_to_commit: Eternal Knight early with Eternal Summoner.
+  how_to_play: Summon and Reborn Eternal Knights as often as you can; Lichling Hoarder finds more Summoners and Tycoons.
+  stats: {avg: 3.60, games: 10300}
+
+- id: undead-butcher
+  name: Undead Butcher
+  races: [UNDEAD]
+  core: [Drustfallen Butcher, Snazzy Phantom]
+  addons: [Friendly Geist, Titus Rivendare, Mummifier, Dead Bellringer, Deathly Striker, Eternal Summoner, Handless Forsaken, Lichling Hoarder, Prosthetic Hand, Butchering]
+  difficulty: medium
+  when_to_commit: Friendly Geist + Drustfallen Butcher + Snazzy Phantom.
+  how_to_play: Butcher makes Butchering spells, Geist and Titus boost them; pair with Bellringer and Mummifier for Reborn loops into Snazzy Phantom.
+  stats: {avg: 3.65, games: 39300}
+
+# ---------------------------------------------------------------- Sans race
+- id: neutral-tea-set
+  name: Neutral Tea Set
+  races: []
+  core: [Gatekeeper Amalgam, Balinda Stonehearth, Brann Bronzebeard]
+  addons: [Felfire Conjurer, Victorious Geomant, Hot-Air Surveyor, Dark Puppeteer]
+  difficulty: medium
+  when_to_commit: Spell power + Gatekeeper Amalgam + Balinda.
+  how_to_play: Boost Tavern spells (Chromadrakes, Felfire Conjurer, Dark Puppeteer) and cast them on Gatekeeper Amalgam with Balinda and Brann.
+  stats: {avg: 3.16, games: 33400}

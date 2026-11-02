@@ -1,0 +1,2266 @@
+# Trinkets du pool actuel : stats + infos des cartes. Fichier refait par tools/make_trinkets.py (ne pas modifier
+# à la main : modifier tools/bgbuddy_trinkets.txt puis relancer l'outil).
+#
+# Source des stats : https://bgbuddy.gg/trinkets (données communautaires Firestone, Solo, tous rangs, patch actuel,
+# relevé le 02/11/2026, saison 14, patch 36.6.x).
+#   avg   = placement moyen des joueurs qui l'ont pris (plus bas = mieux)
+#   pick  = % de fois où il est choisi quand il est proposé
+#   games = nombre de parties (moins de 500 = chiffre peu fiable)
+# Champs des cartes : kind (lesser / greater), cost (prix de base en or ; -2 si c'est un Trinket "pivot"),
+# races (race liée : proposé surtout si on en a sur le plateau), gives (serviteur donné par un Portrait / Sticker).
+- id: BG35_MagicItem_300t
+  name: Copper Coil
+  kind: greater
+  cost: 3
+  avg: 2.43
+  pick: 60.5
+  games: 153
+  races:
+  - MECHANICAL
+- id: BG36_MagicItem_430
+  name: Sludge Portrait
+  kind: greater
+  cost: 5
+  avg: 3.06
+  pick: 63.5
+  games: 24100
+- id: BG36_MagicItem_216
+  name: Eternal Portrait
+  kind: greater
+  cost: 5
+  avg: 3.09
+  pick: 24.5
+  games: 5530
+  races:
+  - UNDEAD
+  gives: Eternal Knight
+- id: BG36_MagicItem_841
+  name: Assembler Portrait
+  kind: greater
+  cost: 2
+  avg: 3.14
+  pick: 31.1
+  games: 7500
+  races:
+  - MECHANICAL
+  gives: Auto Assembler
+- id: BG36_MagicItem_414
+  name: Weighted Gauntlet
+  kind: lesser
+  cost: 3
+  avg: 3.16
+  pick: 30.5
+  games: 33700
+- id: BG32_MagicItem_894
+  name: Blessing Portrait
+  kind: lesser
+  cost: 2
+  avg: 3.17
+  pick: 28.6
+  games: 3850
+  races:
+  - MURLOC
+- id: BG30_MagicItem_427t
+  name: Tiger Carving
+  kind: greater
+  cost: 2
+  avg: 3.19
+  pick: 44.3
+  games: 2760
+  races:
+  - BEAST
+- id: BG30_MagicItem_301
+  name: Eternal Portrait
+  kind: lesser
+  cost: 6
+  avg: 3.19
+  pick: 28.0
+  games: 6560
+  races:
+  - UNDEAD
+  gives: Eternal Knight
+- id: BG36_MagicItem_450
+  name: Snarky Portrait
+  kind: greater
+  cost: 2
+  avg: 3.22
+  pick: 39.2
+  games: 14400
+  races:
+  - BEAST
+  gives: Snarky Shark
+- id: BG32_MagicItem_808t
+  name: Bloodbound Earrings
+  kind: greater
+  cost: 6
+  avg: 3.35
+  pick: 42.0
+  games: 25000
+  races:
+  - QUILBOAR
+- id: BG30_MagicItem_442
+  name: Blood Golem Sticker
+  kind: greater
+  cost: 5
+  avg: 3.37
+  pick: 38.6
+  games: 22700
+  races:
+  - QUILBOAR
+- id: BG32_MagicItem_925
+  name: Hackerfin Portrait
+  kind: greater
+  cost: 6
+  avg: 3.37
+  pick: 40.1
+  games: 6930
+  races:
+  - MURLOC
+  gives: Hackerfin
+- id: BG30_MagicItem_943
+  name: Surveyor Portrait
+  kind: greater
+  cost: 1
+  avg: 3.39
+  pick: 52.5
+  games: 31600
+  races:
+  - QUILBOAR
+  gives: Hot-Air Surveyor
+- id: BG30_MagicItem_403
+  name: Ironforge Anvil
+  kind: greater
+  cost: 1
+  avg: 3.4
+  pick: 12.7
+  games: 627
+- id: BG36_MagicItem_403t
+  name: Hammer of Twilight
+  kind: greater
+  cost: 3
+  avg: 3.41
+  pick: 18.9
+  games: 9980
+- id: BG32_MagicItem_808
+  name: Bloodbound Earrings
+  kind: lesser
+  cost: 1
+  avg: 3.42
+  pick: 41.1
+  games: 19900
+  races:
+  - QUILBOAR
+- id: BG35_MagicItem_156
+  name: Flaming Portrait
+  kind: greater
+  cost: 7
+  avg: 3.43
+  pick: 30.9
+  games: 16700
+  races:
+  - DEMON
+  - ELEMENTAL
+  gives: Flaming Enforcer
+- id: BG35_MagicItem_741
+  name: Beatboxer Portrait
+  kind: greater
+  cost: 6
+  avg: 3.47
+  pick: 81.4
+  games: 26600
+  races:
+  - MECHANICAL
+  gives: Polarizing Beatboxer
+- id: BG35_MagicItem_850t
+  name: Pocket Cyclone
+  kind: greater
+  cost: 0
+  avg: 3.47
+  pick: 42.3
+  games: 10600
+  races:
+  - ELEMENTAL
+- id: BG30_MagicItem_431
+  name: Azerite Portrait
+  kind: greater
+  cost: 5
+  avg: 3.48
+  pick: 61.2
+  games: 15000
+  races:
+  - ELEMENTAL
+  gives: Living Azerite
+- id: BG36_MagicItem_361
+  name: Myrmidon Sticker
+  kind: greater
+  cost: 3
+  avg: 3.49
+  pick: 18.8
+  games: 2680
+  races:
+  - NAGA
+- id: BG32_MagicItem_363
+  name: Faerie Dragon Scale
+  kind: greater
+  cost: 4
+  avg: 3.49
+  pick: 23.8
+  games: 9640
+  races:
+  - DRAGON
+- id: BG30_MagicItem_988t
+  name: Great Boar Sticker
+  kind: greater
+  cost: 0
+  avg: 3.5
+  pick: 25.5
+  games: 9340
+  races:
+  - QUILBOAR
+- id: BG35_MagicItem_732
+  name: Soul Fermenter
+  kind: greater
+  cost: 6
+  avg: 3.51
+  pick: 46.7
+  games: 10500
+  races:
+  - UNDEAD
+- id: BG35_MagicItem_309
+  name: Errgl Sticker
+  kind: greater
+  cost: 2
+  avg: 3.51
+  pick: 24.5
+  games: 3780
+  races:
+  - MURLOC
+  gives: Mama Mrrglton
+- id: BG30_MagicItem_411
+  name: Hoggy Bank
+  kind: lesser
+  cost: 0
+  avg: 3.53
+  pick: 33.4
+  games: 16300
+  races:
+  - QUILBOAR
+- id: BG30_MagicItem_427
+  name: Tiger Carving
+  kind: lesser
+  cost: 1
+  avg: 3.53
+  pick: 24.4
+  games: 3360
+  races:
+  - BEAST
+- id: BG36_MagicItem_362
+  name: Cyclist Portrait
+  kind: greater
+  cost: 4
+  avg: 3.54
+  pick: 30.8
+  games: 7770
+  races:
+  - NAGA
+  gives: Showy Cyclist
+- id: BG35_MagicItem_850
+  name: Pocket Cyclone
+  kind: lesser
+  cost: 0
+  avg: 3.54
+  pick: 35.6
+  games: 12600
+  races:
+  - ELEMENTAL
+- id: BG35_MagicItem_924
+  name: Groundbreaker Portrait
+  kind: greater
+  cost: 6
+  avg: 3.54
+  pick: 39.7
+  games: 10600
+  races:
+  - NAGA
+  gives: Groundbreaker
+- id: BG36_MagicItem_611
+  name: Tableware Portrait
+  kind: greater
+  cost: 4
+  avg: 3.55
+  pick: 8.1
+  games: 4060
+- id: BG30_MagicItem_988
+  name: Great Boar Sticker
+  kind: lesser
+  cost: 0
+  avg: 3.55
+  pick: 19.6
+  games: 9530
+  races:
+  - QUILBOAR
+- id: BG30_MagicItem_406
+  name: Butcher's Sickle
+  kind: greater
+  cost: 1
+  avg: 3.55
+  pick: 44.0
+  games: 10100
+  races:
+  - UNDEAD
+- id: BG36_MagicItem_308
+  name: Trailblazer Sticker
+  kind: greater
+  cost: 4
+  avg: 3.56
+  pick: 55.3
+  games: 31000
+  races:
+  - QUILBOAR
+- id: BG30_MagicItem_868
+  name: Rewinder Portrait
+  kind: lesser
+  cost: 4
+  avg: 3.56
+  pick: 33.0
+  games: 11900
+  races:
+  - DEMON
+  gives: Soul Rewinder
+- id: BG35_MagicItem_754
+  name: Dramaloc Sticker
+  kind: greater
+  cost: 6
+  avg: 3.57
+  pick: 31.4
+  games: 3650
+  races:
+  - MURLOC
+- id: BG36_MagicItem_303t
+  name: Glass of Perspective
+  kind: greater
+  cost: 3
+  avg: 3.58
+  pick: 24.3
+  games: 29100
+  races:
+  - QUILBOAR
+- id: BG36_MagicItem_404t
+  name: Corrupted Baton
+  kind: greater
+  cost: 3
+  avg: 3.58
+  pick: 41.7
+  games: 15700
+- id: BG36_MagicItem_403
+  name: Hammer of Twilight
+  kind: lesser
+  cost: 2
+  avg: 3.58
+  pick: 16.1
+  games: 5260
+- id: BG36_MagicItem_307
+  name: Wand of Divination
+  kind: lesser
+  cost: 0
+  avg: 3.58
+  pick: 49.5
+  games: 24400
+  races:
+  - QUILBOAR
+  - NAGA
+- id: BG30_MagicItem_942
+  name: Mecha-Jaraxxus Sticker
+  kind: greater
+  cost: 3
+  avg: 3.58
+  pick: 24.8
+  games: 21100
+  races:
+  - DEMON
+  - MECHANICAL
+- id: BG30_MagicItem_962
+  name: Training Certificate
+  kind: lesser
+  cost: 3
+  avg: 3.6
+  pick: 21.8
+  games: 8190
+  races:
+  - DRAGON
+- id: BG32_MagicItem_284
+  name: Aggem Sticker
+  kind: greater
+  cost: 2
+  avg: 3.6
+  pick: 15.6
+  games: 2080
+  races:
+  - QUILBOAR
+- id: BG30_MagicItem_541
+  name: Nether Pendant
+  kind: greater
+  cost: 5
+  avg: 3.61
+  pick: 41.1
+  games: 18900
+  races:
+  - DEMON
+- id: BG32_MagicItem_276
+  name: Enigmatic Headstone
+  kind: lesser
+  cost: 0
+  avg: 3.61
+  pick: 22.9
+  games: 5370
+  races:
+  - UNDEAD
+- id: BG36_MagicItem_214
+  name: Insurrectionist's Blade
+  kind: greater
+  cost: 2
+  avg: 3.61
+  pick: 25.2
+  games: 15100
+  races:
+  - DRAGON
+  - QUILBOAR
+- id: BG32_MagicItem_821
+  name: Pilgrimp Sticker
+  kind: lesser
+  cost: 3
+  avg: 3.61
+  pick: 33.5
+  games: 12100
+  races:
+  - DEMON
+- id: BG30_MagicItem_900
+  name: Dragonwing Glider
+  kind: lesser
+  cost: 1
+  avg: 3.62
+  pick: 21.3
+  games: 7990
+  races:
+  - DRAGON
+- id: BG35_MagicItem_154
+  name: Ur'zul Sticker
+  kind: greater
+  cost: 0
+  avg: 3.62
+  pick: 39.0
+  games: 14000
+  races:
+  - DEMON
+- id: BG35_MagicItem_434
+  name: Jewelry Box
+  kind: lesser
+  cost: 0
+  avg: 3.64
+  pick: 25.2
+  games: 12100
+  races:
+  - QUILBOAR
+- id: BG32_MagicItem_822
+  name: Bazaar Sticker
+  kind: lesser
+  cost: 1
+  avg: 3.64
+  pick: 26.5
+  games: 9550
+  races:
+  - DEMON
+- id: BG32_MagicItem_860t
+  name: Beetle Band
+  kind: greater
+  cost: 5
+  avg: 3.65
+  pick: 18.6
+  games: 6180
+  races:
+  - BEAST
+- id: BG36_MagicItem_302t
+  name: Gold Mallet
+  kind: greater
+  cost: 2
+  avg: 3.65
+  pick: 16.4
+  games: 11600
+  races:
+  - PIRATE
+- id: BG36_MagicItem_303
+  name: Glass of Perspective
+  kind: lesser
+  cost: 2
+  avg: 3.65
+  pick: 33.0
+  games: 38500
+  races:
+  - QUILBOAR
+- id: BG36_MagicItem_416
+  name: Evil Experiment
+  kind: greater
+  cost: 4
+  avg: 3.65
+  pick: 26.5
+  games: 9550
+- id: BG36_MagicItem_852
+  name: Willbreaker Sticker
+  kind: lesser
+  cost: 2
+  avg: 3.66
+  pick: 28.4
+  games: 36700
+- id: BG36_MagicItem_418
+  name: Tome of the Ancients
+  kind: greater
+  cost: 2
+  avg: 3.68
+  pick: 32.1
+  games: 12900
+- id: BG35_MagicItem_840t
+  name: Chromatic Tear
+  kind: greater
+  cost: 1
+  avg: 3.68
+  pick: 38.3
+  games: 15600
+  races:
+  - DRAGON
+- id: BG30_MagicItem_917
+  name: Rusty Trident
+  kind: lesser
+  cost: 1
+  avg: 3.68
+  pick: 25.8
+  games: 7810
+  races:
+  - NAGA
+- id: BG30_MagicItem_886
+  name: Reinforced Shield
+  kind: greater
+  cost: 1
+  avg: 3.68
+  pick: 20.5
+  games: 4700
+  races:
+  - UNDEAD
+- id: BG36_MagicItem_831
+  name: Felsteel Cleaver
+  kind: greater
+  cost: 0
+  avg: 3.68
+  pick: 18.1
+  games: 10300
+  races:
+  - DEMON
+  - QUILBOAR
+- id: BG36_MagicItem_204
+  name: Plaguerunner Portrait
+  kind: greater
+  cost: 2
+  avg: 3.69
+  pick: 29.7
+  games: 6900
+  races:
+  - UNDEAD
+  gives: Plaguerunner
+- id: BG36_MagicItem_600
+  name: Converter Portrait
+  kind: greater
+  cost: 6
+  avg: 3.69
+  pick: 56.3
+  games: 21300
+  gives: Faceless Converter
+- id: BG30_MagicItem_989t
+  name: Artisanal Urn
+  kind: greater
+  cost: 0
+  avg: 3.69
+  pick: 22.3
+  games: 5160
+  races:
+  - UNDEAD
+- id: BG36_MagicItem_406
+  name: Shath'Yar Shrine
+  kind: greater
+  cost: 4
+  avg: 3.7
+  pick: 33.0
+  games: 12500
+- id: BG36_MagicItem_373
+  name: Multilayered Shield
+  kind: greater
+  cost: 5
+  avg: 3.7
+  pick: 9.4
+  games: 4760
+- id: BG32_MagicItem_360
+  name: Baleful Incense
+  kind: lesser
+  cost: 3
+  avg: 3.7
+  pick: 20.2
+  games: 4690
+  races:
+  - UNDEAD
+- id: BG35_MagicItem_923
+  name: Bewitched Ribbon
+  kind: greater
+  cost: 4
+  avg: 3.7
+  pick: 31.7
+  games: 8590
+  races:
+  - NAGA
+- id: BG36_MagicItem_801
+  name: Consuming Claw
+  kind: lesser
+  cost: 2
+  avg: 3.7
+  pick: 46.4
+  games: 16800
+  races:
+  - DEMON
+- id: BG35_MagicItem_150
+  name: Cursed Crystal
+  kind: lesser
+  cost: 3
+  avg: 3.7
+  pick: 19.5
+  games: 7040
+  races:
+  - DEMON
+- id: BG32_MagicItem_205
+  name: Maw Caster Portrait
+  kind: greater
+  cost: 5
+  avg: 3.71
+  pick: 44.7
+  games: 9980
+  races:
+  - UNDEAD
+  gives: Maw Caster
+- id: BG30_MagicItem_701
+  name: The Eye of Sargeras
+  kind: greater
+  cost: 5
+  avg: 3.71
+  pick: 26.8
+  games: 11600
+  races:
+  - DEMON
+- id: BG30_MagicItem_879t
+  name: Dalaran Cheese Wheel
+  kind: greater
+  cost: 0
+  avg: 3.71
+  pick: 33.3
+  games: 18900
+  races:
+  - DEMON
+- id: BG35_MagicItem_862
+  name: Upstart Embers
+  kind: greater
+  cost: 6
+  avg: 3.71
+  pick: 27.0
+  games: 6600
+  races:
+  - ELEMENTAL
+- id: BG30_MagicItem_999
+  name: Fancy Spellbook
+  kind: greater
+  cost: 0
+  avg: 3.72
+  pick: 13.2
+  games: 2950
+  races:
+  - NAGA
+- id: BG30_MagicItem_422t
+  name: Lorewalker Scroll
+  kind: greater
+  cost: 2
+  avg: 3.74
+  pick: 38.3
+  games: 10500
+  races:
+  - NAGA
+- id: BG30_MagicItem_410
+  name: Quilligraphy Set
+  kind: lesser
+  cost: 0
+  avg: 3.74
+  pick: 20.1
+  games: 9720
+  races:
+  - QUILBOAR
+- id: BG30_MagicItem_841
+  name: Glowing Gauntlet
+  kind: lesser
+  cost: 0
+  avg: 3.75
+  pick: 27.6
+  games: 30200
+  races:
+  - DEMON
+- id: BG36_MagicItem_602
+  name: Mask of Ancient Ones
+  kind: greater
+  cost: 4
+  avg: 3.75
+  pick: 39.8
+  games: 15200
+- id: BG36_MagicItem_409
+  name: Ruby Tusk
+  kind: lesser
+  cost: 0
+  avg: 3.75
+  pick: 63.1
+  games: 31000
+  races:
+  - QUILBOAR
+- id: BG36_MagicItem_370
+  name: Maldraxxus Dagger
+  kind: greater
+  cost: 6
+  avg: 3.75
+  pick: 35.4
+  games: 92300
+- id: BG36_MagicItem_215
+  name: Dragon's Eye
+  kind: greater
+  cost: 4
+  avg: 3.76
+  pick: 36.5
+  games: 14700
+  races:
+  - DRAGON
+- id: BG36_MagicItem_417
+  name: Makeshift Master
+  kind: greater
+  cost: 3
+  avg: 3.76
+  pick: 18.8
+  games: 7060
+- id: BG35_MagicItem_701
+  name: Fang Anklet
+  kind: greater
+  cost: 3
+  avg: 3.76
+  pick: 21.0
+  games: 7450
+  races:
+  - BEAST
+- id: BG35_MagicItem_306
+  name: Jailer Sticker
+  kind: lesser
+  cost: 2
+  avg: 3.76
+  pick: 40.3
+  games: 9410
+  races:
+  - UNDEAD
+- id: BG30_MagicItem_995
+  name: Bronze Timepiece
+  kind: greater
+  cost: 5
+  avg: 3.76
+  pick: 24.4
+  games: 9850
+  races:
+  - DRAGON
+- id: BG32_MagicItem_367
+  name: Ghastly Sticker
+  kind: greater
+  cost: 4
+  avg: 3.76
+  pick: 14.8
+  games: 12400
+- id: BG30_MagicItem_902
+  name: Holy Mallet
+  kind: lesser
+  cost: 0
+  avg: 3.77
+  pick: 15.3
+  games: 5690
+  races:
+  - DRAGON
+- id: BG35_MagicItem_872
+  name: Ophidian Staff
+  kind: lesser
+  cost: 4
+  avg: 3.77
+  pick: 25.6
+  games: 9470
+  races:
+  - BEAST
+- id: BG35_MagicItem_740
+  name: Sky Golem Portrait
+  kind: greater
+  cost: 3
+  avg: 3.77
+  pick: 7.9
+  games: 8170
+  races:
+  - MECHANICAL
+  gives: Falling Sky Golem
+- id: BG30_MagicItem_924
+  name: Booty Bay Brew
+  kind: lesser
+  cost: 2
+  avg: 3.77
+  pick: 17.4
+  games: 6470
+  races:
+  - PIRATE
+- id: BG36_MagicItem_404
+  name: Corrupted Baton
+  kind: lesser
+  cost: 2
+  avg: 3.78
+  pick: 37.9
+  games: 23900
+- id: BG36_MagicItem_212
+  name: Wolfhead Flail
+  kind: greater
+  cost: 4
+  avg: 3.78
+  pick: 27.6
+  games: 23000
+  races:
+  - BEAST
+- id: BG32_MagicItem_306
+  name: Herald Sticker
+  kind: greater
+  cost: 3
+  avg: 3.78
+  pick: 28.9
+  games: 24100
+  races:
+  - BEAST
+- id: BG32_MagicItem_172
+  name: Boom's Monster Portrait
+  kind: greater
+  cost: 6
+  avg: 3.78
+  pick: 39.0
+  games: 12800
+  races:
+  - MECHANICAL
+  gives: Dr. Boom's Monster
+- id: BG35_MagicItem_710
+  name: Miniature Ship
+  kind: greater
+  cost: 1
+  avg: 3.78
+  pick: 22.2
+  games: 7110
+  races:
+  - PIRATE
+- id: BG36_MagicItem_302
+  name: Gold Mallet
+  kind: lesser
+  cost: 2
+  avg: 3.78
+  pick: 20.2
+  games: 6050
+  races:
+  - PIRATE
+- id: BG36_MagicItem_830
+  name: Bloodfury Shield
+  kind: greater
+  cost: 2
+  avg: 3.79
+  pick: 25.2
+  games: 14300
+  races:
+  - DEMON
+- id: BG36_MagicItem_371
+  name: Honeycomb Ring
+  kind: greater
+  cost: 5
+  avg: 3.79
+  pick: 7.0
+  games: 11200
+- id: BG35_MagicItem_851
+  name: Water Wheel
+  kind: lesser
+  cost: 0
+  avg: 3.79
+  pick: 23.7
+  games: 8400
+  races:
+  - ELEMENTAL
+- id: BG35_MagicItem_816t
+  name: Orb of the Unknown
+  kind: greater
+  cost: 0
+  avg: 3.8
+  pick: 17.0
+  games: 29100
+- id: BG30_MagicItem_426
+  name: Colorful Compass
+  kind: lesser
+  cost: 2
+  avg: 3.8
+  pick: 33.5
+  games: 52700
+- id: BG35_MagicItem_301
+  name: Scraper Sticker
+  kind: lesser
+  cost: 1
+  avg: 3.8
+  pick: 53.3
+  games: 16400
+  races:
+  - MECHANICAL
+- id: BG30_MagicItem_303
+  name: Automaton Portrait
+  kind: lesser
+  cost: 0
+  avg: 3.81
+  pick: 18.5
+  games: 4810
+  races:
+  - MECHANICAL
+  gives: Ancestral Automaton
+- id: BG35_MagicItem_753
+  name: Murky Sticker
+  kind: greater
+  cost: 0
+  avg: 3.81
+  pick: 11.8
+  games: 3130
+  races:
+  - MURLOC
+- id: BG32_MagicItem_364
+  name: Poet Portrait
+  kind: greater
+  cost: 4
+  avg: 3.81
+  pick: 42.6
+  games: 17200
+  races:
+  - DRAGON
+  gives: Timewarped Poet
+- id: BG30_MagicItem_547
+  name: Comfy Coffin
+  kind: lesser
+  cost: 0
+  avg: 3.81
+  pick: 26.3
+  games: 6220
+  races:
+  - UNDEAD
+- id: BG30_MagicItem_919
+  name: Nazjatar Postcard
+  kind: greater
+  cost: 2
+  avg: 3.81
+  pick: 17.6
+  games: 4860
+  races:
+  - NAGA
+- id: BG30_MagicItem_437
+  name: Staff of the Scourge
+  kind: lesser
+  cost: 3
+  avg: 3.81
+  pick: 27.2
+  games: 6290
+  races:
+  - UNDEAD
+- id: BG30_MagicItem_544
+  name: Nomi Sticker
+  kind: lesser
+  cost: 0
+  avg: 3.81
+  pick: 51.7
+  games: 18300
+  races:
+  - ELEMENTAL
+- id: BG36_MagicItem_206
+  name: Ominous Stone
+  kind: lesser
+  cost: 3
+  avg: 3.82
+  pick: 32.3
+  games: 56000
+- id: BG30_MagicItem_418
+  name: Bronzebeard Portrait
+  kind: greater
+  cost: 3
+  avg: 3.82
+  pick: 53.4
+  games: 29400
+  races:
+  - DRAGON
+  - MURLOC
+  gives: Brann Bronzebeard
+- id: BG30_MagicItem_876
+  name: Manipulator Portrait
+  kind: greater
+  cost: 1
+  avg: 3.82
+  pick: 15.4
+  games: 41900
+  gives: Faceless Manipulator
+- id: BG30_MagicItem_426t
+  name: Colorful Compass
+  kind: greater
+  cost: 2
+  avg: 3.82
+  pick: 34.1
+  games: 82400
+- id: BG32_MagicItem_901
+  name: Gold-plated Compass
+  kind: greater
+  cost: 0
+  avg: 3.83
+  pick: 16.0
+  games: 36800
+- id: BG35_MagicItem_733
+  name: Jailer Sticker
+  kind: greater
+  cost: 2
+  avg: 3.83
+  pick: 43.6
+  games: 10000
+  races:
+  - UNDEAD
+- id: BG30_MagicItem_801
+  name: Sinstone Sticker
+  kind: greater
+  cost: 3
+  avg: 3.83
+  pick: 19.9
+  games: 7840
+- id: BG32_MagicItem_807
+  name: Curator Sticker
+  kind: greater
+  cost: 4
+  avg: 3.83
+  pick: 10.1
+  games: 7460
+  gives: Mishmash
+- id: BG30_MagicItem_439
+  name: Designer Eyepatch
+  kind: greater
+  cost: 7
+  avg: 3.84
+  pick: 43.5
+  games: 12900
+  races:
+  - PIRATE
+- id: BG36_MagicItem_217
+  name: Funeral Wreath
+  kind: greater
+  cost: 3
+  avg: 3.84
+  pick: 28.1
+  games: 6280
+  races:
+  - UNDEAD
+- id: BG30_MagicItem_920
+  name: Spitescale Sushi Roll
+  kind: greater
+  cost: 5
+  avg: 3.84
+  pick: 23.2
+  games: 2700
+  races:
+  - NAGA
+- id: BG36_MagicItem_423
+  name: Volumizer Portrait
+  kind: lesser
+  cost: 3
+  avg: 3.84
+  pick: 51.8
+  games: 17400
+  races:
+  - MECHANICAL
+- id: BG36_MagicItem_372
+  name: Sphere of Memory
+  kind: greater
+  cost: 2
+  avg: 3.84
+  pick: 14.2
+  games: 35800
+- id: BG30_MagicItem_996
+  name: Bob's Tip Jar
+  kind: greater
+  cost: 0
+  avg: 3.84
+  pick: 21.3
+  games: 36200
+- id: BG36_MagicItem_203
+  name: Dragon Skull
+  kind: lesser
+  cost: 2
+  avg: 3.85
+  pick: 10.2
+  games: 10500
+  races:
+  - DRAGON
+- id: BG30_MagicItem_713
+  name: Bleeding Heart
+  kind: lesser
+  cost: 2
+  avg: 3.85
+  pick: 29.6
+  games: 6900
+  races:
+  - UNDEAD
+- id: BG30_MagicItem_310
+  name: Rivendare Portrait
+  kind: greater
+  cost: 3
+  avg: 3.86
+  pick: 52.5
+  games: 18500
+  races:
+  - BEAST
+  gives: Titus Rivendare
+- id: BG30_MagicItem_422
+  name: Lorewalker Scroll
+  kind: lesser
+  cost: 2
+  avg: 3.86
+  pick: 30.2
+  games: 9150
+  races:
+  - NAGA
+- id: BG35_MagicItem_152
+  name: Demonic Tapestry
+  kind: lesser
+  cost: 2
+  avg: 3.86
+  pick: 28.6
+  games: 6840
+  races:
+  - DEMON
+- id: BG32_MagicItem_270t
+  name: Wicked Tome
+  kind: greater
+  cost: 5
+  avg: 3.86
+  pick: 22.5
+  games: 5010
+  races:
+  - UNDEAD
+- id: BG30_MagicItem_420t
+  name: Book of Medivh
+  kind: greater
+  cost: 2
+  avg: 3.86
+  pick: 14.0
+  games: 23900
+- id: BG35_MagicItem_755
+  name: Chillmere Mosaic
+  kind: greater
+  cost: 5
+  avg: 3.87
+  pick: 16.4
+  games: 26300
+  races:
+  - DRAGON
+  - MURLOC
+- id: BG35_MagicItem_871
+  name: Mama Bear Sticker
+  kind: lesser
+  cost: 0
+  avg: 3.87
+  pick: 16.8
+  games: 6180
+  races:
+  - BEAST
+- id: BG36_MagicItem_820
+  name: Flighty Portrait
+  kind: lesser
+  cost: 2
+  avg: 3.87
+  pick: 25.4
+  games: 5440
+  races:
+  - MURLOC
+  gives: Flighty Scout
+- id: BG35_MagicItem_840
+  name: Chromatic Tear
+  kind: lesser
+  cost: 3
+  avg: 3.87
+  pick: 16.1
+  games: 16300
+  races:
+  - DRAGON
+- id: BG36_MagicItem_201
+  name: Lionfish Portrait
+  kind: lesser
+  cost: 1
+  avg: 3.88
+  pick: 31.1
+  games: 11500
+  races:
+  - BEAST
+  gives: Lurking Lionfish
+- id: BG36_MagicItem_610
+  name: Sinister Invitation
+  kind: greater
+  cost: 4
+  avg: 3.88
+  pick: 20.8
+  games: 54100
+- id: BG36_MagicItem_402
+  name: Mindslasher Portrait
+  kind: lesser
+  cost: 4
+  avg: 3.88
+  pick: 25.5
+  games: 15900
+  gives: Vicious Mindslasher
+- id: BG36_MagicItem_410
+  name: Soul Battery
+  kind: lesser
+  cost: 0
+  avg: 3.88
+  pick: 47.5
+  games: 11100
+  races:
+  - UNDEAD
+- id: BG30_MagicItem_547t
+  name: Comfy Coffin
+  kind: greater
+  cost: 4
+  avg: 3.88
+  pick: 26.5
+  games: 5930
+  races:
+  - UNDEAD
+- id: BG30_MagicItem_544t
+  name: Nomi Sticker
+  kind: greater
+  cost: 1
+  avg: 3.88
+  pick: 47.5
+  games: 12100
+  races:
+  - ELEMENTAL
+- id: BG35_MagicItem_863
+  name: Avalanche Sticker
+  kind: greater
+  cost: 1
+  avg: 3.89
+  pick: 23.5
+  games: 6630
+  races:
+  - ELEMENTAL
+- id: BG35_MagicItem_930
+  name: Warband Whistle
+  kind: greater
+  cost: 2
+  avg: 3.89
+  pick: 14.7
+  games: 35600
+- id: BG36_MagicItem_423t
+  name: Volumizer Portrait
+  kind: greater
+  cost: 3
+  avg: 3.89
+  pick: 45.1
+  games: 14800
+  races:
+  - MECHANICAL
+- id: BG36_MagicItem_309
+  name: Wax Lance
+  kind: greater
+  cost: 3
+  avg: 3.9
+  pick: 25.4
+  games: 66500
+- id: BG32_MagicItem_301
+  name: Bassgill Portrait
+  kind: greater
+  cost: 1
+  avg: 3.9
+  pick: 24.3
+  games: 4330
+  races:
+  - MURLOC
+  gives: Bassgill
+- id: BG32_MagicItem_200
+  name: All-Purpose Kibble
+  kind: greater
+  cost: 2
+  avg: 3.9
+  pick: 20.0
+  games: 7320
+  races:
+  - BEAST
+- id: BG36_MagicItem_213
+  name: Lightfeather Sticker
+  kind: greater
+  cost: 0
+  avg: 3.91
+  pick: 17.4
+  games: 5890
+  races:
+  - BEAST
+- id: BG30_MagicItem_540
+  name: Slamma Sticker
+  kind: greater
+  cost: 5
+  avg: 3.91
+  pick: 19.3
+  games: 6800
+  races:
+  - BEAST
+- id: BG32_MagicItem_926
+  name: Morgl Portrait
+  kind: greater
+  cost: 1
+  avg: 3.92
+  pick: 13.3
+  games: 12500
+  races:
+  - MURLOC
+  gives: Tide Oracle Morgl
+- id: BG32_MagicItem_271
+  name: Ornate Clock
+  kind: lesser
+  cost: 0
+  avg: 3.92
+  pick: 19.0
+  games: 18500
+- id: BG32_MagicItem_366
+  name: Guiding Candle
+  kind: greater
+  cost: 1
+  avg: 3.93
+  pick: 29.5
+  games: 50200
+- id: BG36_MagicItem_363
+  name: Escapee Portrait
+  kind: greater
+  cost: 7
+  avg: 3.93
+  pick: 21.4
+  games: 10500
+  races:
+  - PIRATE
+  gives: Enterprising Escapee
+- id: BG35_MagicItem_812
+  name: Corrupted Tome
+  kind: greater
+  cost: 2
+  avg: 3.93
+  pick: 16.4
+  games: 25800
+- id: BG30_MagicItem_555
+  name: Surprise Portrait
+  kind: greater
+  cost: 5
+  avg: 3.93
+  pick: 37.2
+  games: 9210
+  races:
+  - ELEMENTAL
+  gives: Elemental of Surprise
+- id: BG30_MagicItem_703
+  name: Mystery Cube
+  kind: lesser
+  cost: 5
+  avg: 3.94
+  pick: 30.3
+  games: 33000
+- id: BG36_MagicItem_800
+  name: Demonic Bloodletter
+  kind: lesser
+  cost: 3
+  avg: 3.94
+  pick: 33.4
+  games: 12200
+  races:
+  - DEMON
+- id: BG30_MagicItem_420
+  name: Book of Medivh
+  kind: lesser
+  cost: 1
+  avg: 3.94
+  pick: 17.7
+  games: 19500
+- id: BG35_MagicItem_931t
+  name: Transcribing Typewriter
+  kind: greater
+  cost: 4
+  avg: 3.94
+  pick: 16.7
+  games: 43500
+- id: BG32_MagicItem_860
+  name: Beetle Band
+  kind: lesser
+  cost: 0
+  avg: 3.94
+  pick: 22.1
+  games: 8040
+  races:
+  - BEAST
+- id: BG36_MagicItem_220
+  name: Glowing Crystal
+  kind: lesser
+  cost: 0
+  avg: 3.95
+  pick: 13.8
+  games: 4610
+- id: BG32_MagicItem_361
+  name: Portable Factory
+  kind: lesser
+  cost: 5
+  avg: 3.95
+  pick: 16.2
+  games: 17800
+- id: BG30_MagicItem_700
+  name: Deathly Phylactery
+  kind: lesser
+  cost: 0
+  avg: 3.95
+  pick: 27.0
+  games: 46100
+  races:
+  - BEAST
+  - UNDEAD
+- id: BG30_MagicItem_924t
+  name: Booty Bay Brew
+  kind: greater
+  cost: 1
+  avg: 3.95
+  pick: 25.2
+  games: 8050
+  races:
+  - PIRATE
+- id: BG36_MagicItem_400
+  name: Corrupted Coin Portrait
+  kind: lesser
+  cost: 3
+  avg: 3.95
+  pick: 42.6
+  games: 54900
+- id: BG35_MagicItem_821t
+  name: Kaleidoscope
+  kind: greater
+  cost: 0
+  avg: 3.96
+  pick: 12.8
+  games: 15400
+- id: BG35_MagicItem_711
+  name: Protective Ring
+  kind: greater
+  cost: 2
+  avg: 3.96
+  pick: 17.0
+  games: 5180
+  races:
+  - PIRATE
+- id: BG30_MagicItem_546
+  name: Jar o' Gems
+  kind: greater
+  cost: 0
+  avg: 3.96
+  pick: 17.5
+  games: 10600
+  races:
+  - QUILBOAR
+- id: BG30_MagicItem_425
+  name: Azeroth Model Globe
+  kind: lesser
+  cost: 0
+  avg: 3.96
+  pick: 34.5
+  games: 38100
+- id: BG32_MagicItem_920
+  name: Thaumaturgist Portrait
+  kind: greater
+  cost: 2
+  avg: 3.96
+  pick: 18.7
+  games: 5200
+  races:
+  - NAGA
+  gives: Thaumaturgist
+- id: BG35_MagicItem_818
+  name: Mysterious Orb
+  kind: lesser
+  cost: 0
+  avg: 3.96
+  pick: 8.1
+  games: 8850
+- id: BG35_MagicItem_801
+  name: Sous Chef Sticker
+  kind: lesser
+  cost: 2
+  avg: 3.97
+  pick: 36.7
+  games: 3350
+- id: BG35_MagicItem_820
+  name: Safety Patch
+  kind: greater
+  cost: 0
+  avg: 3.97
+  pick: 38.3
+  games: 15900
+- id: BG35_MagicItem_752
+  name: Young Murk-Eye Sticker
+  kind: greater
+  cost: 4
+  avg: 3.97
+  pick: 26.2
+  games: 4500
+  races:
+  - MURLOC
+- id: BG35_MagicItem_743
+  name: Electrode Attractor
+  kind: greater
+  cost: 1
+  avg: 3.97
+  pick: 40.3
+  games: 12800
+  races:
+  - MECHANICAL
+- id: BG30_MagicItem_707
+  name: Tickatus Sticker
+  kind: lesser
+  cost: 2
+  avg: 3.98
+  pick: 25.4
+  games: 28100
+- id: BG35_MagicItem_920
+  name: Bubble Crown
+  kind: lesser
+  cost: 0
+  avg: 3.98
+  pick: 11.4
+  games: 9000
+  races:
+  - NAGA
+- id: BG32_MagicItem_283
+  name: Czarina Portrait
+  kind: greater
+  cost: 1
+  avg: 3.98
+  pick: 11.1
+  games: 3790
+  races:
+  - MECHANICAL
+  gives: Charging Czarina
+- id: BG32_MagicItem_951
+  name: Gold Pendant
+  kind: lesser
+  cost: 1
+  avg: 3.98
+  pick: 26.4
+  games: 25100
+  races:
+  - PIRATE
+- id: BG35_MagicItem_821
+  name: Kaleidoscope
+  kind: lesser
+  cost: 0
+  avg: 3.98
+  pick: 33.5
+  games: 27000
+- id: BG32_MagicItem_930
+  name: Archaic Scroll
+  kind: lesser
+  cost: 3
+  avg: 3.98
+  pick: 24.1
+  games: 7350
+  races:
+  - NAGA
+- id: BG32_MagicItem_888
+  name: Recycling Sticker
+  kind: greater
+  cost: 3
+  avg: 3.99
+  pick: 22.7
+  games: 5460
+  races:
+  - ELEMENTAL
+- id: BG35_MagicItem_750
+  name: Magicfin Sticker
+  kind: greater
+  cost: 4
+  avg: 3.99
+  pick: 10.1
+  games: 8920
+  races:
+  - MURLOC
+  gives: Magicfin Apprentice
+- id: BG30_MagicItem_993
+  name: Pagle's Fishing Rod
+  kind: greater
+  cost: 3
+  avg: 3.99
+  pick: 24.2
+  games: 38500
+- id: BG35_MagicItem_823t
+  name: Timeworn Candelabra
+  kind: greater
+  cost: 0
+  avg: 4.0
+  pick: 16.4
+  games: 27900
+- id: BG32_MagicItem_300
+  name: Putricide Sticker
+  kind: lesser
+  cost: 1
+  avg: 4.0
+  pick: 26.0
+  games: 2450
+  races:
+  - UNDEAD
+- id: BG30_MagicItem_973
+  name: Minion Bait
+  kind: lesser
+  cost: 0
+  avg: 4.0
+  pick: 37.6
+  games: 8500
+- id: BG32_MagicItem_362t
+  name: Innkeeper's Hearth
+  kind: greater
+  cost: 0
+  avg: 4.0
+  pick: 23.7
+  games: 38200
+- id: BG35_MagicItem_816
+  name: Orb of the Unknown
+  kind: lesser
+  cost: 0
+  avg: 4.0
+  pick: 14.7
+  games: 16300
+- id: BG30_MagicItem_891
+  name: Trip Vouchers
+  kind: lesser
+  cost: 1
+  avg: 4.0
+  pick: 44.0
+  games: 107000
+- id: BG36_MagicItem_411
+  name: Reinvigorating Light
+  kind: lesser
+  cost: 0
+  avg: 4.0
+  pick: 39.5
+  games: 39800
+- id: BG36_MagicItem_407
+  name: Dragonhead Staff
+  kind: lesser
+  cost: 0
+  avg: 4.01
+  pick: 47.2
+  games: 17600
+  races:
+  - DRAGON
+- id: BG36_MagicItem_208
+  name: Floating Candle Set
+  kind: lesser
+  cost: 4
+  avg: 4.01
+  pick: 15.8
+  games: 16800
+- id: BG36_MagicItem_202
+  name: Warcry Totem
+  kind: lesser
+  cost: 4
+  avg: 4.01
+  pick: 14.8
+  games: 24100
+  races:
+  - DRAGON
+  - MURLOC
+- id: BG36_MagicItem_810
+  name: Inductive Gyroblade
+  kind: lesser
+  cost: 0
+  avg: 4.01
+  pick: 24.7
+  games: 8440
+  races:
+  - MECHANICAL
+- id: BG35_MagicItem_861
+  name: Baller Portrait
+  kind: greater
+  cost: 5
+  avg: 4.01
+  pick: 29.4
+  games: 2370
+  races:
+  - ELEMENTAL
+- id: BG30_MagicItem_410t2
+  name: Quilligraphy Set
+  kind: greater
+  cost: 0
+  avg: 4.02
+  pick: 17.1
+  games: 10300
+  races:
+  - QUILBOAR
+- id: BG35_MagicItem_713
+  name: Trusty Crowbar
+  kind: greater
+  cost: 0
+  avg: 4.02
+  pick: 22.0
+  games: 7090
+  races:
+  - PIRATE
+- id: BG35_MagicItem_890
+  name: Sunken Anchor
+  kind: lesser
+  cost: 6
+  avg: 4.02
+  pick: 15.7
+  games: 14900
+  races:
+  - PIRATE
+- id: BG30_MagicItem_821
+  name: Fish Portrait
+  kind: lesser
+  cost: 1
+  avg: 4.02
+  pick: 17.7
+  games: 10400
+  races:
+  - BEAST
+  - UNDEAD
+  gives: Fish of N'Zoth
+- id: BG32_MagicItem_893
+  name: Bluegill Flippers
+  kind: lesser
+  cost: 2
+  avg: 4.02
+  pick: 20.7
+  games: 4420
+  races:
+  - MURLOC
+- id: BG30_MagicItem_951
+  name: Lava Lamp
+  kind: greater
+  cost: 2
+  avg: 4.02
+  pick: 23.3
+  games: 5510
+  races:
+  - ELEMENTAL
+- id: BG35_MagicItem_742
+  name: Accord-o-Tron Portrait
+  kind: greater
+  cost: 3
+  avg: 4.03
+  pick: 49.4
+  games: 16100
+  races:
+  - MECHANICAL
+  gives: Accord-o-Tron
+- id: BG32_MagicItem_170
+  name: Spell-powered Wrench
+  kind: lesser
+  cost: 0
+  avg: 4.03
+  pick: 26.2
+  games: 8920
+  races:
+  - MECHANICAL
+- id: BG32_MagicItem_858
+  name: Explorer's Binoculars
+  kind: lesser
+  cost: 1
+  avg: 4.03
+  pick: 24.9
+  games: 27400
+- id: BG36_MagicItem_380
+  name: Amplifying Essence
+  kind: greater
+  cost: 4
+  avg: 4.03
+  pick: 31.2
+  games: 8510
+  races:
+  - ELEMENTAL
+- id: BG30_MagicItem_545
+  name: Fridge Magnet
+  kind: greater
+  cost: 0
+  avg: 4.03
+  pick: 17.4
+  games: 5920
+  races:
+  - MECHANICAL
+- id: BG35_MagicItem_931
+  name: Transcribing Typewriter
+  kind: lesser
+  cost: 1
+  avg: 4.04
+  pick: 17.0
+  games: 38400
+- id: BG36_MagicItem_810t
+  name: Inductive Gyroblade
+  kind: greater
+  cost: 0
+  avg: 4.04
+  pick: 18.7
+  games: 6410
+  races:
+  - MECHANICAL
+- id: BG35_MagicItem_817
+  name: Lens Case
+  kind: lesser
+  cost: 3
+  avg: 4.04
+  pick: 19.4
+  games: 16900
+- id: BG35_MagicItem_712
+  name: Privateer Portrait
+  kind: greater
+  cost: 1
+  avg: 4.05
+  pick: 22.7
+  games: 20600
+  races:
+  - PIRATE
+  gives: Proud Privateer
+- id: BG32_MagicItem_416
+  name: War Drum
+  kind: lesser
+  cost: 2
+  avg: 4.05
+  pick: 11.7
+  games: 19100
+  races:
+  - DRAGON
+- id: BG35_MagicItem_815
+  name: Magician's Top Hat
+  kind: lesser
+  cost: 2
+  avg: 4.05
+  pick: 12.3
+  games: 7340
+- id: BG32_MagicItem_428
+  name: Worn Treasure Map
+  kind: lesser
+  cost: 0
+  avg: 4.06
+  pick: 17.1
+  games: 18900
+- id: BG30_MagicItem_804
+  name: Ancient Wishbone
+  kind: lesser
+  cost: 0
+  avg: 4.06
+  pick: 41.8
+  games: 6650
+- id: BG30_MagicItem_952
+  name: Jarred Frostling
+  kind: greater
+  cost: 2
+  avg: 4.07
+  pick: 22.1
+  games: 5600
+  races:
+  - ELEMENTAL
+  gives: Flourishing Frostling
+- id: BG32_MagicItem_892
+  name: Vibrant Bubble
+  kind: lesser
+  cost: 3
+  avg: 4.07
+  pick: 31.1
+  games: 6590
+  races:
+  - MURLOC
+- id: BG30_MagicItem_931
+  name: Lucky Tabby
+  kind: lesser
+  cost: 0
+  avg: 4.07
+  pick: 25.4
+  games: 9420
+  races:
+  - BEAST
+- id: BG35_MagicItem_305
+  name: Conch Portrait
+  kind: lesser
+  cost: 5
+  avg: 4.07
+  pick: 36.0
+  games: 7400
+  races:
+  - MURLOC
+- id: BG32_MagicItem_232
+  name: Shark Cannon
+  kind: greater
+  cost: 0
+  avg: 4.08
+  pick: 28.2
+  games: 9040
+  races:
+  - PIRATE
+- id: BG35_MagicItem_700
+  name: Wildfeather Duster
+  kind: greater
+  cost: 1
+  avg: 4.08
+  pick: 17.4
+  games: 6310
+  races:
+  - BEAST
+- id: BG31_MagicItem_903
+  name: Wisdomball Supply
+  kind: greater
+  cost: 2
+  avg: 4.08
+  pick: 40.4
+  games: 16700
+- id: BG30_MagicItem_888
+  name: Souvenir Stand
+  kind: lesser
+  cost: 0
+  avg: 4.08
+  pick: 40.0
+  games: 99900
+- id: BG30_MagicItem_847
+  name: Goblin Wallet
+  kind: lesser
+  cost: 1
+  avg: 4.08
+  pick: 43.3
+  games: 47500
+- id: BG30_MagicItem_423
+  name: Innkeeper's Stein
+  kind: lesser
+  cost: 0
+  avg: 4.08
+  pick: 26.6
+  games: 29500
+- id: BG36_MagicItem_850
+  name: Cookie's Stirring Rod
+  kind: greater
+  cost: 0
+  avg: 4.08
+  pick: 16.7
+  games: 2930
+  races:
+  - MURLOC
+- id: BG30_MagicItem_998
+  name: Bob-blehead
+  kind: lesser
+  cost: 0
+  avg: 4.09
+  pick: 16.8
+  games: 8780
+- id: BG32_MagicItem_817
+  name: Rendle Sticker
+  kind: lesser
+  cost: 0
+  avg: 4.09
+  pick: 13.3
+  games: 14700
+- id: BG35_MagicItem_433
+  name: Vinespeaker Portrait
+  kind: greater
+  cost: 6
+  avg: 4.09
+  pick: 51.1
+  games: 8280
+  races:
+  - QUILBOAR
+  gives: Vinespeaker
+- id: BG30_MagicItem_706
+  name: Reflective Pendant
+  kind: lesser
+  cost: 6
+  avg: 4.1
+  pick: 24.4
+  games: 55300
+- id: BG30_MagicItem_914
+  name: Nerglish Phrasebook
+  kind: lesser
+  cost: 0
+  avg: 4.1
+  pick: 22.8
+  games: 4890
+  races:
+  - MURLOC
+- id: BG36_MagicItem_390
+  name: Baller Portrait
+  kind: lesser
+  cost: 2
+  avg: 4.1
+  pick: 13.6
+  games: 14500
+  races:
+  - ELEMENTAL
+  gives: Fire Baller
+- id: BG32_MagicItem_998
+  name: Behemoth Portrait
+  kind: greater
+  cost: 0
+  avg: 4.1
+  pick: 40.0
+  games: 10100
+  races:
+  - ELEMENTAL
+  gives: Arcane Behemoth
+- id: BG32_MagicItem_957
+  name: Grifter Portrait
+  kind: lesser
+  cost: 2
+  avg: 4.11
+  pick: 47.1
+  games: 17400
+  races:
+  - PIRATE
+  gives: Doubloon Grifter
+- id: BG30_MagicItem_435
+  name: Goldenizer Supply
+  kind: lesser
+  cost: 0
+  avg: 4.11
+  pick: 36.1
+  games: 40000
+- id: BG32_MagicItem_350
+  name: Splinter of Aurum
+  kind: lesser
+  cost: 2
+  avg: 4.12
+  pick: 13.6
+  games: 12900
+  races:
+  - PIRATE
+- id: BG30_MagicItem_430
+  name: Rockin' Music Box
+  kind: lesser
+  cost: 1
+  avg: 4.12
+  pick: 12.0
+  games: 13200
+- id: BG36_MagicItem_840
+  name: Secret Schematic
+  kind: greater
+  cost: 0
+  avg: 4.12
+  pick: 15.2
+  games: 5150
+  races:
+  - MECHANICAL
+- id: BG35_MagicItem_814
+  name: Stuffed Coin Purse
+  kind: lesser
+  cost: 0
+  avg: 4.13
+  pick: 15.2
+  games: 16800
+- id: BG35_MagicItem_302
+  name: Stormcoil Sticker
+  kind: lesser
+  cost: 0
+  avg: 4.15
+  pick: 23.7
+  games: 8080
+  races:
+  - MECHANICAL
+- id: BG35_MagicItem_823
+  name: Timeworn Candelabra
+  kind: lesser
+  cost: 0
+  avg: 4.15
+  pick: 28.4
+  games: 31500
+- id: BG30_MagicItem_705
+  name: Bartend-o-Tron's Oilcan
+  kind: lesser
+  cost: 2
+  avg: 4.15
+  pick: 28.2
+  games: 31100
+- id: BG32_MagicItem_400
+  name: Shrine of Evolution
+  kind: lesser
+  cost: 0
+  avg: 4.16
+  pick: 24.7
+  games: 891
+- id: BG36_MagicItem_301
+  name: Lockbox Portrait
+  kind: lesser
+  cost: 1
+  avg: 4.16
+  pick: 22.1
+  games: 20900
+  races:
+  - PIRATE
+- id: BG30_MagicItem_981
+  name: The Eye of Dalaran
+  kind: lesser
+  cost: 2
+  avg: 4.16
+  pick: 19.8
+  games: 192
+- id: BG36_MagicItem_609
+  name: Trickster's Sleeve
+  kind: lesser
+  cost: 1
+  avg: 4.17
+  pick: 11.6
+  games: 12500
+- id: BG30_MagicItem_914t
+  name: Nerglish Phrasebook
+  kind: greater
+  cost: 1
+  avg: 4.17
+  pick: 21.7
+  games: 3880
+  races:
+  - MURLOC
+- id: BG32_MagicItem_801t
+  name: Heart of the Forest
+  kind: greater
+  cost: 3
+  avg: 4.17
+  pick: 21.5
+  games: 1660
+  races:
+  - PIRATE
+  - NAGA
+- id: BG32_MagicItem_831
+  name: Sellemental Portrait
+  kind: lesser
+  cost: 4
+  avg: 4.18
+  pick: 23.1
+  games: 8160
+  races:
+  - ELEMENTAL
+  gives: Sellemental
+- id: BG36_MagicItem_811
+  name: Defensive Shell
+  kind: lesser
+  cost: 1
+  avg: 4.18
+  pick: 6.9
+  games: 7710
+- id: BG32_MagicItem_278
+  name: Reusable Batteries
+  kind: lesser
+  cost: 0
+  avg: 4.19
+  pick: 21.9
+  games: 7510
+  races:
+  - MECHANICAL
+- id: BG30_MagicItem_994
+  name: Yogg-Tastic Pastry
+  kind: lesser
+  cost: 5
+  avg: 4.19
+  pick: 12.8
+  games: 14000
+- id: BG36_MagicItem_211
+  name: Lovely Locket
+  kind: lesser
+  cost: 0
+  avg: 4.2
+  pick: 14.5
+  games: 16100
+- id: BG36_MagicItem_812
+  name: Emergency Gearblade
+  kind: lesser
+  cost: 0
+  avg: 4.2
+  pick: 11.4
+  games: 3780
+  races:
+  - MECHANICAL
+- id: BG32_MagicItem_844
+  name: Sacrificial Altar
+  kind: lesser
+  cost: 1
+  avg: 4.22
+  pick: 21.2
+  games: 1160
+- id: BG36_MagicItem_200
+  name: Herding Horn
+  kind: lesser
+  cost: 3
+  avg: 4.23
+  pick: 18.9
+  games: 2130
+  races:
+  - BEAST
+- id: BG30_MagicItem_434
+  name: Replica Cathedral
+  kind: lesser
+  cost: 3
+  avg: 4.24
+  pick: 10.3
+  games: 11100
+- id: BG30_MagicItem_416
+  name: Token of the Old Gods
+  kind: lesser
+  cost: 2
+  avg: 4.24
+  pick: 18.9
+  games: 20900
+- id: BG32_MagicItem_361t
+  name: Portable Factory
+  kind: greater
+  cost: 0
+  avg: 4.25
+  pick: 12.1
+  games: 20600
+- id: BG36_MagicItem_606
+  name: Writhing Tentacles
+  kind: greater
+  cost: 0
+  avg: 4.25
+  pick: 6.6
+  games: 2600
+- id: BG36_MagicItem_300
+  name: Frigid Blossom
+  kind: lesser
+  cost: 0
+  avg: 4.27
+  pick: 20.4
+  games: 21900
+  races:
+  - ELEMENTAL
+- id: BG36_MagicItem_408
+  name: Quartermaster's Hook
+  kind: lesser
+  cost: 0
+  avg: 4.29
+  pick: 31.2
+  games: 11600
+  races:
+  - PIRATE
+- id: BG30_MagicItem_433
+  name: Alliance Keychain
+  kind: lesser
+  cost: 0
+  avg: 4.35
+  pick: 7.5
+  games: 7090
+  races:
+  - DRAGON
+- id: BG36_MagicItem_424
+  name: Rascal Sticker
+  kind: lesser
+  cost: 0
+  avg: 4.38
+  pick: 6.5
+  games: 6130
+  races:
+  - PIRATE

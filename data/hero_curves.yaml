@@ -1,0 +1,142 @@
+# Courbes et habitudes propres à certains héros, pour le plan du tour (planner.py).
+# Clé = nom exact du héros (ou du pouvoir héroïque, pour les héros qui en changent : Sir Finley, Nguyen, Genn).
+#
+#   curve       : tier à atteindre à la FIN de ces tours (les autres tours suivent le tour d'avant).
+#                 Absent = courbe standard (T2 tour 2, T3 tour 5, T4 tour 7, T5 tour 9, T6 tour 12).
+#   power       : every_turn = garder l'or du pouvoir chaque tour (prix lu dans le jeu) ;
+#                 from_turn: N = à partir du tour N ; until_turn: N = jusqu'au tour N ; never = ne rien garder.
+#                 Absent : un pouvoir à 1 ou 2 d'or est gardé à partir du tour 3 (règle automatique).
+#   level_bias  : + = monter plus volontiers (or en plus, vie en plus...), - = acheter plus.
+#   minion_cost : prix d'un serviteur s'il n'est pas de 3.
+#   buy_bonus   : points en plus pour acheter un serviteur de cette race (ex. PIRATE: 1.5).
+#   pair_bonus  : points en plus pour un 2e exemplaire (Mister Clocksworth : 2 exemplaires = doré).
+#   note        : conseil affiché dans le plan du tour.
+# Sources : textes des pouvoirs du patch actuel (HearthstoneJSON) et courbes connues des guides
+# (Rafaam : T2 au tour 4 puis montées enchaînées, hearthstonetopdecks "Battlegrounds Curves Explained").
+# À corriger librement : relu quand il change.
+
+# --- courbes à part
+Arch-Villain Rafaam:
+  curve: {3: 1, 4: 2, 5: 3, 6: 4, 8: 5, 11: 6}
+  power: {every_turn: true, from_turn: 2}
+  note: "Rafaam curve: hero power every turn from turn 2, Tier 2 on turn 4, then level back to back"
+Forest Warden Omu:
+  curve: {2: 2, 4: 3, 5: 4, 7: 5, 9: 6}
+  level_bias: 1.5
+  note: "+2 gold every time you level: level often"
+A. F. Kay:
+  curve: {3: 2, 5: 3, 7: 4, 9: 5, 12: 6}
+  note: "skips 2 turns, then a Tier 3 and a Tier 4 minion: level to Tier 2 on turn 3"
+Ambassador Faelin:
+  curve: {3: 2, 5: 3, 7: 4, 9: 5, 12: 6}
+  note: "skips turn 1 for Tier 6/4/2 minions later: level to Tier 2 on turn 3"
+Forest Lord Cenarius:
+  curve: {4: 2, 6: 3, 7: 4, 9: 5, 11: 6}
+  power: {every_turn: true, from_turn: 2, until_turn: 6}
+  note: "use the hero power early (+1 max gold each time), then level faster with the extra gold"
+Millhouse Manastorm:
+  curve: {2: 2, 6: 3, 8: 4, 10: 5, 13: 6}
+  minion_cost: 2
+  level_bias: -0.5
+  note: "minions and rolls cost 2, levels cost 1 more: buy wide, level a bit later"
+Sindragosa:
+  minion_cost: 2
+  note: "minions cost 2, the shop has one fewer and stays frozen: buy more, freeze what you want"
+Skycap'n Kragg:
+  level_bias: 0.5
+  note: "once per game gold (2 + 1 per turn): use it around turn 6-8 to level twice"
+
+# --- départ avec un serviteur ou beaucoup de vie : on peut être plus gourmand
+Sneed:
+  curve: {2: 2, 4: 3, 6: 4, 8: 5, 11: 6}
+  level_bias: 0.5
+  note: "starting Shredder gives tempo: you can level a turn earlier"
+Jim Raynor:
+  curve: {2: 2, 4: 3, 6: 4, 8: 5, 11: 6}
+  level_bias: 0.5
+  note: "starting Battlecruiser gives tempo: you can level a turn earlier"
+The Curator:
+  curve: {2: 2, 4: 3, 6: 4, 8: 5, 11: 6}
+  level_bias: 0.5
+  note: "starting Amalgam gives tempo: you can level a turn earlier"
+N'Zoth:
+  curve: {2: 2, 4: 3, 6: 4, 8: 5, 11: 6}
+  level_bias: 0.5
+  note: "starting Fish gives tempo: you can level a turn earlier"
+Patchwerk:
+  level_bias: 1
+  note: "30 extra health: you can afford greedy levels"
+
+# --- économie qui pousse à acheter / vendre
+Cap'n Hoggarr:
+  buy_bonus: {PIRATE: 1.5}
+  note: "+1 gold for each Pirate you buy"
+Trade Prince Gallywix:
+  note: "selling gives +1 gold next turn: buy and sell often"
+Kael'thas Sunstrider:
+  level_bias: -0.5
+  note: "buy 3 minions in a turn for a Tavern Coin"
+Kurtrus Ashfallen:
+  level_bias: -0.5
+  note: "after 3 buys in a turn, get a copy of one: buy 3 when you can"
+Overlord Saurfang:
+  level_bias: -0.5
+  note: "buying minions grows the shop buff"
+Aranna Starseeker:
+  note: "after 14 attacks your first minion each turn is free"
+Ragnaros the Firelord:
+  note: "Sulfuras after 12 cards bought"
+Guff Runetotem:
+  level_bias: 0.5
+  note: "higher Tier cards fill the 20 Tiers faster"
+Chenvaala:
+  level_bias: 0.5
+  note: "every 3 Elementals played: upgrading costs 3 less"
+Nozdormu:
+  note: "a free roll every turn: always use it"
+Mister Clocksworth:
+  pair_bonus: 2
+  note: "2 copies make a Golden: pairs are worth a lot"
+Snake Eyes:
+  power: {every_turn: true}
+  level_bias: 0.5
+  note: "roll the die whenever it is ready: the gold helps you level"
+
+# --- pouvoirs payants à utiliser chaque tour
+Infinite Toki:
+  power: {every_turn: true, from_turn: 2}
+  note: "use Temporal Tavern as your roll: it shows 2 higher-Tier minions"
+Galakrond:
+  power: {every_turn: true, from_turn: 2}
+  note: "upgrade a shop minion to a higher Tier each turn"
+Death Speaker Blackthorn:
+  power: {every_turn: true, from_turn: 2}
+  note: "2 Blood Gems twice per turn"
+Doctor Holli'dae:
+  power: {every_turn: true, from_turn: 2}
+Edwin VanCleef:
+  power: {every_turn: true, from_turn: 2}
+  note: "buff a minion every turn; it improves as you buy cards"
+Tess Greymane:
+  power: {every_turn: true, from_turn: 3}
+  note: "refresh with your last opponent's minions: good to find a comp's pieces"
+Maiev Shadowsong:
+  power: {every_turn: true, from_turn: 2}
+Captain Eudora:
+  power: {every_turn: true, from_turn: 2}
+  note: "dig every turn for a Golden minion"
+Patches the Pirate:
+  power: {from_turn: 4}
+  note: "use the hero power when Pirates made it cheap"
+Farseer Nobundo:
+  power: {from_turn: 5}
+  note: "the hero power gets 1 cheaper each turn: use it when it costs 1 or less"
+Heistbaron Togwaggle:
+  power: never
+  note: "steal the whole shop once it is cheap enough (1 cheaper each turn)"
+Kerrigan, Queen of Blades:
+  power: never
+  note: "unlock Tier 2 Zerg when it is cheap (1 cheaper each turn)"
+Zephrys, the Great:
+  power: never
+  note: "use a Wish when you have a pair to complete a triple"
