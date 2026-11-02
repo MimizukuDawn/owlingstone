@@ -2,6 +2,10 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 1.8.3
+- One file to download: each release now has **Owlingstone.exe**, the whole app in a single exe. Put it anywhere and run it. It updates itself in place (the new exe is checked with its SHA-256 before it replaces the old one). The zip is still there for those who prefer the folder version.
+- Updates run without a cmd window: click "Update to vX" and Owlingstone restarts by itself on the new version (when built from the project, it keeps working while the new version is tested and built in the background). If something goes wrong, a message says why and the current version keeps working (details in %APPDATA%\Owlingstone\update.log).
+
 ## 1.8.2
 - The Owlingstone server address is set: "Share my games" and "Send feedback" now work. If the server is offline, your games and feedback wait on your PC and leave with a later send.
 

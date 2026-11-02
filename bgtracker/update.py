@@ -5,14 +5,18 @@ Qui fait quoi :
   bgtracker/__init__.py. Owlingstone.exe connaît le sien (celui avec lequel il a été construit).
 - newer_version() relit le numéro du projet : s'il est plus grand, une mise à jour est prête
   (par exemple après que Claude a modifié le code).
-- start_update() lance update.bat dans sa propre fenêtre : il ferme Owlingstone, teste, reconstruit
-  l'exe et le relance. Mes données (historique, réglages...) sont ailleurs (USER_DIR) : rien n'est perdu.
+- start_update() lance update.bat en arrière-plan, sans fenêtre cmd (sortie dans USER_DIR/update.log) :
+  il teste et reconstruit pendant que l'appli reste ouverte, puis la ferme, remplace l'exe et le relance.
+  Mes données (historique, réglages...) sont ailleurs (USER_DIR) : rien n'est perdu.
 - whats_new() : les lignes de CHANGELOG.md pour une version, montrées après la mise à jour.
 
 Version téléchargée depuis GitHub (pas de projet à côté de l'exe) : voir RELEASES plus bas. Un fil en
-arrière-plan regarde la dernière version publiée (au plus toutes les 6 h), la télécharge, vérifie son
-empreinte SHA-256 et la décompresse à côté de l'appli. Le bouton n'apparaît qu'une fois tout vérifié ;
-start_update() remplace alors le dossier de l'appli et la relance (l'ancien dossier est gardé en cas d'échec).
+arrière-plan regarde la dernière version publiée (au plus toutes les 6 h), la télécharge et vérifie son
+empreinte SHA-256. Le bouton n'apparaît qu'une fois tout vérifié. Deux formes :
+- Owlingstone.exe seul (un seul fichier, la forme normale) : le nouvel exe est posé à côté
+  (Owlingstone.exe.new) ; start_update() renomme l'exe en cours en .old (Windows le permet), met le
+  nouveau à sa place et le lance ; le .old est supprimé au démarrage suivant.
+- dossier Owlingstone\\ (le zip) : le dossier est remplacé par un petit script sans fenêtre.
 """
 import hashlib
 import json
@@ -65,16 +69,49 @@ def update_script(source_dir=SOURCE_DIR):
     return path if path and path.exists() else None
 
 
+UPDATE_LOG = USER_DIR / "update.log"
+
+
+def run_hidden(args, cwd=None, log=UPDATE_LOG):
+    """Lance un script sans fenêtre cmd ; sa sortie va dans update.log. Renvoie le processus."""
+    log.parent.mkdir(parents=True, exist_ok=True)
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    with open(log, "w", encoding="utf-8") as out:
+        return subprocess.Popen(args, cwd=cwd, stdin=subprocess.DEVNULL, stdout=out,  # nosec B603 B607
+                                stderr=subprocess.STDOUT, creationflags=flags)
+
+
 def start_update(source_dir=SOURCE_DIR):
-    """Lance update.bat (ou le remplacement de la version GitHub). Renvoie False si impossible."""
+    """Lance update.bat (ou le remplacement de la version GitHub) sans fenêtre.
+    Renvoie le processus lancé, ou None si impossible."""
     if source_dir is None and getattr(sys, "frozen", False):
         return RELEASES.install()
     script = update_script(source_dir)
     if script is None:
+        return None
+    return run_hidden(["cmd", "/c", str(script), "quiet"], cwd=str(source_dir))
+
+
+FAILED_MARK = USER_DIR / "update_failed.txt"
+
+
+def take_failed_mark(mark=FAILED_MARK):
+    """True (une seule fois) si update.bat a dû nous fermer puis a échoué : l'appli le dit au démarrage."""
+    try:
+        mark.unlink()
+        return True
+    except OSError:
         return False
-    subprocess.Popen(["cmd", "/c", str(script)], cwd=str(source_dir),
-                     creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0))
-    return True
+
+
+def log_tail(lines=8, log=UPDATE_LOG):
+    """Les dernières lignes utiles de update.log (pour dire pourquoi une mise à jour a échoué)."""
+    try:
+        text = log.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+    keep = [line.rstrip() for line in text.splitlines() if line.strip()]
+    return "\n".join(keep[-lines:])
 
 
 def whats_new(version=__version__, changelog=None):
@@ -98,6 +135,9 @@ REPO = "MimizukuDawn/owlingstone"
 API_LATEST = f"https://api.github.com/repos/{REPO}/releases/latest"
 DOWNLOAD_PREFIX = f"https://github.com/{REPO}/releases/download/"
 ASSET = re.compile(r"^Owlingstone-(\d+(?:\.\d+){1,3})-windows\.zip$")
+ASSET_EXE = "Owlingstone.exe"       # l'exe en un seul fichier ; sa version = le tag de la Release
+TAG = re.compile(r"^v(\d+(?:\.\d+){1,3})$")
+AFTER_UPDATE = "OWLINGSTONE_AFTER_UPDATE"   # dit au nouvel exe d'attendre que l'ancien soit fermé
 CHECK_EVERY = 6 * 3600              # secondes entre deux questions à GitHub
 MAX_ZIP = 400 * 1024 * 1024         # refuse un téléchargement plus gros (anormal)
 
@@ -114,14 +154,19 @@ def _get(url, limit, timeout=20):
     return data
 
 
-def pick_release(release):
+def pick_release(release, onefile=False):
     """Réponse de l'API "latest release" -> {version, url, sha256} ou None si rien d'utilisable.
-    L'empreinte vient du champ "digest" de GitHub, sinon du fichier <zip>.sha256 publié avec."""
+    onefile : l'exe seul (Owlingstone.exe), sinon le zip. L'empreinte vient du champ "digest" de
+    GitHub, sinon du fichier <nom>.sha256 publié avec."""
     if not isinstance(release, dict) or release.get("draft") or release.get("prerelease"):
         return None
+    tag = TAG.match(str(release.get("tag_name") or ""))
     assets = {a.get("name"): a for a in release.get("assets") or [] if isinstance(a, dict)}
     for name, asset in assets.items():
-        m = ASSET.match(name or "")
+        if onefile:
+            m = tag if name == ASSET_EXE else None
+        else:
+            m = ASSET.match(name or "")
         url = asset.get("browser_download_url") or ""
         if not m or not url.startswith(DOWNLOAD_PREFIX):
             continue
@@ -160,7 +205,6 @@ def swap_script(pid, install_dir, new_dir, old_dir, exe_name="Owlingstone.exe"):
     return "\r\n".join([
         "@echo off",
         "chcp 65001 >nul",
-        "title Owlingstone update",
         ":wait",
         f'tasklist /fi "PID eq {int(pid)}" | find "{int(pid)}" >nul && (ping -n 2 127.0.0.1 >nul & goto wait)',
         f'if exist "{old_dir}" rmdir /s /q "{old_dir}"',
@@ -179,13 +223,23 @@ class ReleaseUpdater:
     """Cherche, télécharge et vérifie la dernière version GitHub dans un fil à part (jamais l'interface).
     `ready` = la version prête à installer (dict) une fois le zip vérifié et décompressé, sinon None."""
 
-    def __init__(self, current=__version__, install_dir=None, state_path=None):
+    def __init__(self, current=__version__, install_dir=None, state_path=None, exe_path=None, onefile=None):
         self.current = current
-        self.install_dir = Path(install_dir or Path(sys.executable).resolve().parent)
+        self.exe_path = Path(exe_path or Path(sys.executable).resolve())
+        self.install_dir = Path(install_dir or self.exe_path.parent)
+        self.onefile = is_onefile() if onefile is None else onefile
         self.state_path = Path(state_path or USER_DIR / "update_check.json")
         self.ready = None
         self.error = None
         self._thread = None
+
+    @property
+    def new_exe(self):
+        return self.exe_path.with_name(self.exe_path.name + ".new")
+
+    @property
+    def old_exe(self):
+        return self.exe_path.with_name(self.exe_path.name + ".old")
 
     @property
     def new_dir(self):
@@ -216,7 +270,7 @@ class ReleaseUpdater:
             return self.ready
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         self.state_path.write_text(json.dumps({"checked": now}), encoding="utf-8")
-        info = pick_release(json.loads(get(API_LATEST, 1_000_000)))
+        info = pick_release(json.loads(get(API_LATEST, 1_000_000)), self.onefile)
         if not info or parse(info["version"]) <= parse(self.current):
             return None
         if info["size"] > MAX_ZIP:
@@ -230,6 +284,10 @@ class ReleaseUpdater:
                 f.write(get(info["url"], MAX_ZIP, timeout=300))
             if sha256_of(tmp) != expected.lower():
                 raise ValueError("checksum mismatch: download refused")
+            if self.onefile:
+                shutil.move(tmp, self.new_exe)       # vérifié : posé à côté de l'exe en cours
+                self.ready = info
+                return info
             stage = self.install_dir.with_name(self.install_dir.name + ".unpack")
             if stage.exists():
                 shutil.rmtree(stage)
@@ -250,15 +308,54 @@ class ReleaseUpdater:
         return info
 
     def install(self):
-        """Écrit et lance le script d'échange, puis l'appli doit se fermer. False si rien n'est prêt."""
+        """Écrit et lance (sans fenêtre) le script d'échange, puis l'appli doit se fermer.
+        Renvoie le processus, ou None si rien n'est prêt."""
+        if self.onefile:
+            return self._install_onefile()
         if not self.ready or not self.new_dir.exists():
-            return False
+            return None
         old = self.install_dir.with_name(self.install_dir.name + ".old")
         script = self.state_path.parent / "swap_update.bat"
         script.write_text(swap_script(os.getpid(), self.install_dir, self.new_dir, old), encoding="utf-8")
-        subprocess.Popen(["cmd", "/c", str(script)],  # nosec B603 B607 : notre propre script, chemins locaux
-                         creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0))
-        return True
+        return run_hidden(["cmd", "/c", str(script)])  # notre propre script, chemins locaux
+
+
+    def _install_onefile(self):
+        """Un exe en cours peut être renommé sous Windows : on le met de côté, le nouveau prend sa place."""
+        if not self.ready or not self.new_exe.exists():
+            return None
+        try:
+            if self.old_exe.exists():
+                self.old_exe.unlink()
+            self.exe_path.rename(self.old_exe)
+        except OSError:
+            return None
+        try:
+            self.new_exe.rename(self.exe_path)
+        except OSError:
+            self.old_exe.rename(self.exe_path)       # retour en arrière : rien n'a changé
+            return None
+        env = dict(os.environ, **{AFTER_UPDATE: "1"})
+        flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+        return subprocess.Popen([str(self.exe_path)], env=env, close_fds=True,  # nosec B603 : notre exe vérifié
+                                creationflags=flags)
+
+
+def is_onefile():
+    """Exe en un seul fichier : PyInstaller le décompresse dans un dossier temporaire (pas _internal\\)."""
+    if not getattr(sys, "frozen", False):
+        return False
+    exe_dir = Path(sys.executable).resolve().parent
+    return not Path(getattr(sys, "_MEIPASS", exe_dir)).resolve().is_relative_to(exe_dir)
+
+
+def remove_old_exe(exe_path=None):
+    """Après une mise à jour de l'exe seul : supprime l'ancien (Owlingstone.exe.old) s'il traîne."""
+    exe_path = Path(exe_path or Path(sys.executable).resolve())
+    try:
+        exe_path.with_name(exe_path.name + ".old").unlink()
+    except OSError:
+        pass
 
 
 RELEASES = ReleaseUpdater()

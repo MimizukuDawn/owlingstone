@@ -1,9 +1,12 @@
 @echo off
 rem Met a jour Owlingstone : teste le code du projet, reconstruit Owlingstone.exe, puis le relance.
-rem Double-clic, ou bouton "Update" de l'appli. Mes donnees (%APPDATA%\Owlingstone, ex-BGTracker) ne sont jamais touchees.
+rem Double-clic (fenetre), ou bouton "Update" de l'appli (argument quiet : sans fenetre, sortie dans %APPDATA%\Owlingstone\update.log, pas de pause). Mes donnees (%APPDATA%\Owlingstone, ex-BGTracker) ne sont jamais touchees.
 rem Si un test ou la construction echoue, l'ancienne version reste en place et continue de marcher.
 cd /d "%~dp0"
-title Owlingstone update
+set QUIET=
+set KILLED=
+if /i "%~1"=="quiet" set QUIET=1
+if not defined QUIET title Owlingstone update
 echo === Owlingstone update ===
 if not exist .venv\Scripts\python.exe py -3.12 -m venv .venv
 .venv\Scripts\python -m pip install --quiet --disable-pip-version-check -r requirements.txt || goto failed
@@ -20,6 +23,7 @@ if exist build\new rmdir /s /q build\new
     Owlingstone.pyw || goto failed
 echo Replacing the old version...
 taskkill /im Owlingstone.exe /f >nul 2>&1
+set KILLED=1
 rem Ancien nom de l'appli (BG Tracker) : on ferme et on range l'ancienne version.
 taskkill /im BGTracker.exe /f >nul 2>&1
 ping -n 3 127.0.0.1 >nul
@@ -40,11 +44,17 @@ exit /b 0
 :locked
 echo.
 echo dist\Owlingstone is in use (is Owlingstone still open?). Close it and run update.bat again.
-pause
+rem Sans fenetre : on relance l'appli si elle a ete fermee, et elle dira que la mise a jour a echoue.
+if defined QUIET if defined KILLED echo failed> "%APPDATA%\Owlingstone\update_failed.txt"
+if defined QUIET if defined KILLED if exist "%~dp0dist\Owlingstone\Owlingstone.exe" start "" "%~dp0dist\Owlingstone\Owlingstone.exe"
+if not defined QUIET pause
 exit /b 1
 
 :failed
 echo.
 echo UPDATE FAILED - nothing was changed, the old version still works. See the messages above.
-pause
+rem Sans fenetre : on relance l'appli si elle a ete fermee, et elle dira que la mise a jour a echoue.
+if defined QUIET if defined KILLED echo failed> "%APPDATA%\Owlingstone\update_failed.txt"
+if defined QUIET if defined KILLED if exist "%~dp0dist\Owlingstone\Owlingstone.exe" start "" "%~dp0dist\Owlingstone\Owlingstone.exe"
+if not defined QUIET pause
 exit /b 1

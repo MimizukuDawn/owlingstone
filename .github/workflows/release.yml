@@ -77,18 +77,31 @@ jobs:
           --add-data "${{ github.workspace }}\data\*.yaml;data"
           --add-data "${{ github.workspace }}\CHANGELOG.md;."
           Owlingstone.pyw
-      - name: Zip and checksum
+      - name: Build the single-file exe (what players download)
+        run: >
+          pyinstaller --noconfirm --clean --windowed --onefile --log-level WARN --name Owlingstone
+          --distpath onefile --workpath build1 --specpath build1
+          --icon "${{ github.workspace }}\bgtracker\icon.ico"
+          --add-data "${{ github.workspace }}\bgtracker\icon.ico;bgtracker"
+          --add-data "${{ github.workspace }}\data\*.yaml;data"
+          --add-data "${{ github.workspace }}\CHANGELOG.md;."
+          Owlingstone.pyw
+      - name: Zip and checksums
         shell: bash
         run: |
           cp LICENSE.md README.md dist/Owlingstone/
+          cp onefile/Owlingstone.exe dist/Owlingstone.exe
           cd dist
           7z a -tzip "Owlingstone-$VERSION-windows.zip" Owlingstone >/dev/null
           sha256sum "Owlingstone-$VERSION-windows.zip" > "Owlingstone-$VERSION-windows.zip.sha256"
-          cat "Owlingstone-$VERSION-windows.zip.sha256"
+          sha256sum Owlingstone.exe > Owlingstone.exe.sha256
+          cat *.sha256
       - name: Attest build provenance
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: dist/Owlingstone-*-windows.zip
+          subject-path: |
+            dist/Owlingstone.exe
+            dist/Owlingstone-*-windows.zip
       - name: Release notes from CHANGELOG.md
         shell: bash
         run: |
@@ -100,7 +113,9 @@ jobs:
                   inside = line[3:].split()[0] == v
               elif inside:
                   out.append(line.rstrip())
-          print("\n".join(out).strip() or "See CHANGELOG.md")
+          notes = "\n".join(out).strip() or "See CHANGELOG.md"
+          print("**Download `Owlingstone.exe` below and run it.** That's all: it updates itself.\n\n" + notes +
+                "\n\n<sub>The zip holds the same app as a folder (starts a bit faster). Checksums: the .sha256 files.</sub>")
           PY
       - name: Publish the Release
         shell: bash
@@ -108,7 +123,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          files="dist/Owlingstone-$VERSION-windows.zip dist/Owlingstone-$VERSION-windows.zip.sha256"
+          files="dist/Owlingstone.exe dist/Owlingstone.exe.sha256 dist/Owlingstone-$VERSION-windows.zip dist/Owlingstone-$VERSION-windows.zip.sha256"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "Owlingstone $VERSION" --notes-file notes.md
             gh release upload "$TAG" $files --clobber

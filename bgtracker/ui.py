@@ -41,7 +41,8 @@ from .pool import (RACE_LABEL, available_keywords, learn_subsets, load_subsets, 
                    tier7_reachable, tier_list)
 from .powerlog import PowerLogParser
 from .rules import RULES_PATH, load_rules
-from .update import newer_version, start_update, update_script, whats_new
+from .update import (AFTER_UPDATE, log_tail, newer_version, remove_old_exe, start_update, take_failed_mark,
+                     update_script, whats_new)
 from .tiles import CARD_URLS, CARDS_DIR, TileCache
 from .watcher import DEFAULT_LOGS_DIR, LogWatcher
 from .widgets import card_tile, install_preview
@@ -435,6 +436,9 @@ class MainWindow(QWidget):
         self.update_timer.timeout.connect(self.check_update)
         self.update_timer.start(60_000)
         QTimer.singleShot(2000, self.check_update)
+        if take_failed_mark():
+            QTimer.singleShot(1500, lambda: self._update_failed(
+                "The last update failed; this version keeps working.\n\n" + log_tail()))
         self.render()
 
     # -------------------------------------------------------------- données et mises à jour
@@ -471,7 +475,8 @@ class MainWindow(QWidget):
         if found and found != self.update_ready:
             self.update_ready = found
             self.update_button.setText(f"Update to v{found}")
-            self.update_button.setToolTip("Closes Owlingstone, installs the new version and restarts it. "
+            self.update_button.setToolTip("Installs the new version in the background (no window), then "
+                                          "restarts Owlingstone. "
                                           "Your history and settings are kept.")
             self.update_button.show()
             if self.tray:
@@ -480,11 +485,44 @@ class MainWindow(QWidget):
                                       "in the window or the tray menu.", QSystemTrayIcon.Information, 8000)
 
     def run_update(self):
-        if start_update():
-            QApplication.quit()               # update.bat ferme aussi l'exe s'il tourne encore
-        elif self.tray:
-            self.tray.showMessage("Owlingstone", "The update could not start. Try again later.",
-                                  QSystemTrayIcon.Warning, 6000)
+        """Sans fenêtre cmd. Version GitHub : l'échange attend que l'appli se ferme. Version projet :
+        update.bat teste et reconstruit pendant que l'appli reste ouverte, puis la ferme et la relance."""
+        if getattr(self, "update_proc", None) and self.update_proc.poll() is None:
+            return                            # déjà en cours
+        proc = start_update()
+        if not proc:
+            self._update_failed("The update could not start. Try again later.")
+            return
+        if update_script() is None:           # version GitHub : on se ferme, le script prend le relais
+            QApplication.quit()
+            return
+        self.update_proc = proc
+        self.update_button.setText("Updating…")
+        self.update_button.setEnabled(False)
+        if self.tray:
+            self.tray.update_action.setEnabled(False)
+            self.tray.showMessage("Owlingstone", "Updating in the background. Owlingstone will restart by "
+                                  "itself in a minute or two.", QSystemTrayIcon.Information, 6000)
+        self.update_watch = QTimer(self)
+        self.update_watch.timeout.connect(self._watch_update)
+        self.update_watch.start(2000)
+
+    def _watch_update(self):
+        """update.bat s'est arrêté sans nous fermer : c'est un échec (l'ancienne version reste)."""
+        code = self.update_proc.poll()
+        if code is None:
+            return
+        self.update_watch.stop()
+        if code != 0:
+            self._update_failed("The update failed; this version keeps working.\n\n" + log_tail())
+
+    def _update_failed(self, text):
+        self.update_button.setEnabled(True)
+        if self.update_ready:
+            self.update_button.setText(f"Update to v{self.update_ready}")
+        if self.tray:
+            self.tray.update_action.setEnabled(update_script() is not None or bool(self.update_ready))
+        QMessageBox.warning(self, "Owlingstone update", text)
 
     # -------------------------------------------------------------- événements
     def on_snapshot(self, snap):
@@ -1003,9 +1041,12 @@ def run(replay_path=None, stop_turn=None, screenshot=None):
     lock = None
     if not replay_path:
         # Une seule fenêtre à la fois, même si on relance l'exe.
+        # Juste après une mise à jour de l'exe seul, l'ancien se ferme encore : on l'attend un peu.
+        after_update = os.environ.pop(AFTER_UPDATE, None) == "1"
         lock = QLockFile(QDir.tempPath() + "/owlingstone.lock")
-        if not lock.tryLock(100):
+        if not lock.tryLock(20_000 if after_update else 100):
             return 0
+        remove_old_exe()
     win = MainWindow(replay_mode=bool(replay_path))
     tray = tray_icon(app, win) if not replay_path and QSystemTrayIcon.isSystemTrayAvailable() else None
     win.tray = tray

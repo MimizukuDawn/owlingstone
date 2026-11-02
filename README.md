@@ -14,22 +14,25 @@ Hearthstone writes on your PC, like other community trackers.
 
 ## Install
 
-1. Download `Owlingstone-<version>-windows.zip` from the [latest release](https://github.com/MimizukuDawn/owlingstone/releases/latest).
-2. Unzip it anywhere you can write to (for example your Documents folder) and run `Owlingstone\Owlingstone.exe`.
+1. Download **`Owlingstone.exe`** from the [latest release](https://github.com/MimizukuDawn/owlingstone/releases/latest).
+2. Put it anywhere you can write to (for example your Documents folder or Desktop) and run it. That's all.
 3. Windows may say "Windows protected your PC" because the app is not signed with a paid certificate:
    click **More info**, then **Run anyway**.
 
 Updates: when a new version is published, the app downloads it in the background, checks its SHA-256
-checksum and shows **Update to vX**. Your history and settings (in `%APPDATA%\Owlingstone`) are kept.
+checksum and shows **Update to vX**: one click replaces the exe and restarts it, with no window to deal
+with. Your history and settings (in `%APPDATA%\Owlingstone`) are kept.
+
+The release also has `Owlingstone-<version>-windows.zip`: the same app as a folder, which starts a little faster.
 
 ### Check your download (optional)
 
-Each release has a `.sha256` file and a GitHub build attestation proving the zip was built by GitHub
+Each release has `.sha256` files and a GitHub build attestation proving the files were built by GitHub
 Actions from this repository's code:
 
 ```powershell
-Get-FileHash .\Owlingstone-1.7.0-windows.zip -Algorithm SHA256   # compare with the .sha256 file
-gh attestation verify .\Owlingstone-1.7.0-windows.zip --repo MimizukuDawn/owlingstone
+Get-FileHash .\Owlingstone.exe -Algorithm SHA256   # compare with Owlingstone.exe.sha256
+gh attestation verify .\Owlingstone.exe --repo MimizukuDawn/owlingstone
 ```
 
 ### Hearthstone logs

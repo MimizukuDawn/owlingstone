@@ -100,3 +100,66 @@ def test_old_bgtracker_data_is_copied_once(tmp_path):
     new = tmp_path / "Owlingstone"
     assert adopt_old_user_dir(new) and (new / "history.jsonl").exists() and old.exists()
     assert not adopt_old_user_dir(new)
+
+
+def test_source_update_runs_without_a_window(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(update.subprocess, "Popen", lambda args, **kw: calls.append((args, kw)) or "proc")
+    (tmp_path / "update.bat").write_text("@echo off", encoding="utf-8")
+    monkeypatch.setattr(update, "UPDATE_LOG", tmp_path / "update.log")
+    monkeypatch.setattr(update.sys, "frozen", False, raising=False)
+    assert update.start_update(tmp_path) == "proc"
+    args, kw = calls[0]
+    assert args[-1] == "quiet" and kw["stdin"] == update.subprocess.DEVNULL
+    assert kw["creationflags"] & getattr(update.subprocess, "CREATE_NO_WINDOW", 0) == \
+        getattr(update.subprocess, "CREATE_NO_WINDOW", 0)
+    assert update.start_update(tmp_path / "missing") is None
+
+
+def test_failed_mark_and_log_tail(tmp_path):
+    mark, log = tmp_path / "update_failed.txt", tmp_path / "update.log"
+    assert not update.take_failed_mark(mark)
+    mark.write_text("failed", encoding="utf-8")
+    assert update.take_failed_mark(mark) and not mark.exists()
+    log.write_text("a\n\nb\nUPDATE FAILED\n", encoding="utf-8")
+    assert update.log_tail(2, log) == "b\nUPDATE FAILED"
+    assert update.log_tail(log=tmp_path / "none.log") == ""
+
+
+EXE_URL = update.DOWNLOAD_PREFIX + "v9.9.9/Owlingstone.exe"
+
+
+def exe_release(data):
+    r = release(make_zip(["Owlingstone/Owlingstone.exe"]))
+    r["assets"].append({"name": "Owlingstone.exe", "browser_download_url": EXE_URL, "size": len(data),
+                        "digest": "sha256:" + hashlib.sha256(data).hexdigest()})
+    return r
+
+
+def test_single_exe_download_and_swap(tmp_path, monkeypatch):
+    exe = tmp_path / "Downloads" / "Owlingstone.exe"
+    exe.parent.mkdir()
+    exe.write_bytes(b"old exe")
+    new = b"new exe"
+    files = {update.API_LATEST: json.dumps(exe_release(new)).encode(), EXE_URL: new}
+    up = ReleaseUpdater(current="1.0.0", exe_path=exe, state_path=tmp_path / "user" / "check.json", onefile=True)
+    assert pick_release(exe_release(new), onefile=True)["url"] == EXE_URL
+    assert up.check_once(get=lambda url, limit, timeout=20: files[url], now=10**9)["version"] == "9.9.9"
+    assert up.new_exe.read_bytes() == new and exe.read_bytes() == b"old exe"
+    started = []
+    monkeypatch.setattr(update.subprocess, "Popen", lambda args, **kw: started.append((args, kw)) or "proc")
+    assert up.install() == "proc"
+    assert exe.read_bytes() == new and up.old_exe.read_bytes() == b"old exe" and not up.new_exe.exists()
+    assert started[0][0] == [str(exe)] and started[0][1]["env"][update.AFTER_UPDATE] == "1"
+    update.remove_old_exe(exe)
+    assert not up.old_exe.exists()
+
+
+def test_single_exe_refuses_tampered_download(tmp_path):
+    exe = tmp_path / "Owlingstone.exe"
+    exe.write_bytes(b"old")
+    files = {update.API_LATEST: json.dumps(exe_release(b"new")).encode(), EXE_URL: b"evil"}
+    up = ReleaseUpdater(current="1.0.0", exe_path=exe, state_path=tmp_path / "user" / "c.json", onefile=True)
+    with pytest.raises(ValueError):
+        up.check_once(get=lambda url, limit, timeout=20: files[url], now=10**9)
+    assert not up.new_exe.exists() and up.install() is None and exe.read_bytes() == b"old"
