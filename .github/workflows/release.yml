@@ -1,16 +1,51 @@
-# Publish a release (or push a tag) like v1.7.1: tests, Windows build, zip + SHA-256, provenance
+# Builds and publishes a Release like v1.8.2: tests, Windows build, zip + SHA-256, provenance
 # attestation, files attached to the GitHub Release.
+# Runs by itself when a push to main raises __version__ (no Release with that tag yet), or when a
+# Release / tag vX.Y.Z is published by hand.
 name: Release
 on:
+  push:
+    branches: [main]
+    paths: ["bgtracker/__init__.py", ".github/workflows/release.yml"]
+    tags: ["v*"]
   release:
     types: [published]
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency: release
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.v.outputs.go }}
+      tag: ${{ steps.v.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: v
+        name: Version to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          v=$(python3 -c "import re;print(re.search(r'__version__\s*=\s*\"([^\"]+)\"',open('bgtracker/__init__.py').read()).group(1))")
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = tag ] || [ "$GITHUB_EVENT_NAME" = release ]; then
+            test "v$v" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME but __version__ $v"; exit 1; }
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          elif gh release view "v$v" --json assets --jq '.assets[].name' 2>/dev/null | grep -q windows.zip; then
+            echo "v$v is already released"; echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
   build:
+    needs: check
+    if: needs.check.outputs.go == 'true'
     runs-on: windows-latest
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
     permissions:
       contents: write        # create the Release
       id-token: write        # sign the build attestation
@@ -22,12 +57,9 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
-      - name: Check the tag matches __version__
+      - name: Version
         shell: bash
-        run: |
-          v=$(python -c "import re;print(re.search(r'__version__\s*=\s*\"([^\"]+)\"',open('bgtracker/__init__.py').read()).group(1))")
-          test "v$v" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME but __version__ $v"; exit 1; }
-          echo "VERSION=$v" >> "$GITHUB_ENV"
+        run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
       - name: Privacy scan
         run: python tools/privacy_scan.py .
       - name: Install
@@ -77,9 +109,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           files="dist/Owlingstone-$VERSION-windows.zip dist/Owlingstone-$VERSION-windows.zip.sha256"
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release edit "$GITHUB_REF_NAME" --title "Owlingstone $VERSION" --notes-file notes.md
-            gh release upload "$GITHUB_REF_NAME" $files --clobber
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "Owlingstone $VERSION" --notes-file notes.md
+            gh release upload "$TAG" $files --clobber
           else
-            gh release create "$GITHUB_REF_NAME" --title "Owlingstone $VERSION" --notes-file notes.md $files
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "Owlingstone $VERSION" --notes-file notes.md $files
           fi
