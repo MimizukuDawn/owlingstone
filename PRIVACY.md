@@ -10,6 +10,9 @@ It contacts only:
 - **HearthstoneJSON** (`api.hearthstonejson.com`, `art.hearthstonejson.com`) for card data and art;
 - **the Owlingstone server** (a Cloudflare Worker) only if you turn on **Share my games** or send feedback.
 
+To read your games, Owlingstone turns on Hearthstone's own Power log once (it adds a `[Power]` section to
+`%LOCALAPPDATA%\Blizzard\Hearthstone\log.config`, as other trackers do) if it is not on yet.
+
 ## Share my games (optional, off unless you say yes)
 
 The app asks once. If you say yes, at the end of each finished game it sends one summary:
@@ -41,4 +44,5 @@ turn, with at least 30 games each) are published, in the `stats` release of this
 
 Right-click the tray icon > **Send feedback…** sends your text (1000 characters at most) with the same
 random install id. Feedback is never published; only the maintainer reads it, to plan updates. Please don't
-write personal information in it. **Delete my shared games** deletes it too.
+write personal information in it. **Delete my shared games** deletes it too. Feedback the maintainer has
+handled is deleted from the server after 180 days.

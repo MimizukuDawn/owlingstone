@@ -18,3 +18,8 @@ NOTES.md
 .env
 private_terms.txt
 feedback/
+
+# Signing key and other private local folders (never published)
+_signing/
+_private_history/
+*.key

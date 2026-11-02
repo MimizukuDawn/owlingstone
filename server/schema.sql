@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS games (
   quality  TEXT NOT NULL,          -- ok | afk | early_concede (see gameQuality in src/validate.js)
   summary  TEXT NOT NULL           -- validated JSON (see src/validate.js)
 );
-CREATE INDEX IF NOT EXISTS games_install_day ON games (install, day);
+-- No index on install: only "Delete my shared games" looks games up by install (rare), and each index
+-- would cost one more written row per game on the Free plan.
+DROP INDEX IF EXISTS games_install_day;
 CREATE INDEX IF NOT EXISTS games_day ON games (day);
 -- Small counters so limits cost 2 row reads per request instead of counting today's games.
 CREATE TABLE IF NOT EXISTS day_count (day TEXT PRIMARY KEY, n INTEGER NOT NULL);
@@ -28,3 +30,5 @@ CREATE TABLE IF NOT EXISTS feedback (
   done    INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS feedback_done ON feedback (done, id);
+-- The per-install feedback limit counts today's rows for one install: indexed, so it reads a few rows.
+CREATE INDEX IF NOT EXISTS feedback_install_day ON feedback (install, day);

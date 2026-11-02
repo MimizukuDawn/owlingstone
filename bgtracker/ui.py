@@ -585,6 +585,10 @@ class MainWindow(QWidget):
         self.snap = snap
         self.render()
         self.hud.on_snapshot(snap)
+        if snap.get("over") and not self.replay_mode and not share.asked() and not getattr(self, "_asked", False):
+            self._asked = True               # première partie finie : le bon moment pour demander le partage
+            QTimer.singleShot(1500, lambda: (ask_sharing(), self.tray and self.tray.sharing_action.setChecked(
+                share.enabled())))
         self._has_odds = bool(snap.get("in_game")) and self.top_odds.show_combat(snap.get("combat"))
 
     def on_tier_clicked(self, tier):
@@ -1117,7 +1121,8 @@ def run(replay_path=None, stop_turn=None, screenshot=None):
         QTimer.singleShot(4000, app.quit)
     if not replay_path and not smoke:
         announce_version(win, tray)
-        ask_sharing()
+        if load_history():                     # déjà des parties : on peut demander ; sinon après la 1re
+            ask_sharing()
         if tray:
             tray.sharing_action.setChecked(share.enabled())
         if ensure_log_config() == "written" and tray:   # Power.log était coupé : on l'active

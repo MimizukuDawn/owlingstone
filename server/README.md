@@ -5,7 +5,7 @@ A Cloudflare Worker (`src/worker.js`) with a D1 database (`schema.sql`), built f
 | Free-plan limit | How it stays under it |
 | --- | --- |
 | 100,000 requests a day | one request carries up to 20 games and 5 feedback messages; stats are served by GitHub, not the Worker |
-| 100,000 rows written a day | one row per game; above 80,000 writes a day the API answers 503 and apps keep their queue |
+| 100,000 rows written a day | about 5 rows per game (row, index, counters); above 12,000 games and feedback a day the API answers 503 and apps keep their queue |
 | 5 million rows read a day | limits use small counter tables (2 row reads per request); the daily stats job aggregates in SQL |
 | 5 GB storage | games older than 60 days are deleted by the daily stats job |
 

@@ -11,3 +11,10 @@ enabled = false
 binding = "DB"
 database_name = "owlingstone"
 database_id = "LOCAL_ONLY"
+
+# Per-address request limit (Workers rate-limit binding, Free plan). Counters live in Cloudflare's memory
+# for the period only; addresses are never written anywhere.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }

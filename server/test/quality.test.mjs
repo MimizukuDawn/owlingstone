@@ -33,3 +33,50 @@ test("validator needs one action count per turn", () => {
   assert.equal(validateGame({ ...g, actions: [1, 2] }), null);
   assert.equal(validateGame({ ...g, conceded: "no" }), null);
 });
+
+import { knownApp } from "../src/worker.js";
+test("only apps that can share are accepted", () => {
+  assert.equal(knownApp("1.8.0"), true);
+  assert.equal(knownApp("1.9.0"), true);
+  assert.equal(knownApp("2.0.0"), true);
+  assert.equal(knownApp("1.7.9"), false);
+  assert.equal(knownApp("0.9.0"), false);
+});
+
+import worker from "../src/worker.js";
+
+function fakeDb() {
+  const writes = [];
+  const stmt = (sql) => ({ sql, bind: (...args) => ({ sql, args }) });
+  return {
+    writes,
+    prepare: stmt,
+    async batch(list) {
+      if (list[0].sql.startsWith("SELECT")) return list.map(() => ({ results: [] }));
+      writes.push(...list);
+      return list.map(() => ({ meta: { changes: 1 } }));
+    },
+  };
+}
+
+const goodGame = { v: 1, app: "1.9.0", mode: "solo", hero: "Rafaam", races: [], place: 3, board: [], fights: [],
+  turns: 2, actions: [1, 2], end_hp: 0, conceded: false };
+const post = (body) => new Request("https://x/v1/games", {
+  method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+const install = "0b7c2b8e-6c1f-4c5e-9a3d-1f2e3d4c5b6a";
+
+test("one invalid game does not sink the batch", async () => {
+  const env = { DB: fakeDb() };
+  const r = await worker.fetch(post({ install, games: [goodGame, { ...goodGame, place: 99 }, goodGame] }), env);
+  assert.equal(r.status, 200);
+  const body = await r.json();
+  assert.equal(body.stored, 2);
+  assert.deepEqual(body.rejected.games, [1]);
+  assert.equal(env.DB.writes.filter((w) => w.sql.includes("INSERT INTO games")).length, 2);
+});
+
+test("all invalid is 422, and the address limit answers 429", async () => {
+  assert.equal((await worker.fetch(post({ install, games: [{ ...goodGame, app: "1.7.1" }] }), { DB: fakeDb() })).status, 422);
+  const env = { DB: fakeDb(), LIMITER: { limit: async () => ({ success: false }) } };
+  assert.equal((await worker.fetch(post({ install, games: [goodGame] }), env)).status, 429);
+});

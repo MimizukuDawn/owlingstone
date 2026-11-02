@@ -40,7 +40,7 @@ class LogWatcher:
         self._clock = clock
         self._last_scan = None
         self.on_new_game = on_new_game
-        self.parser = PowerLogParser(on_new_game=on_new_game)
+        self.parser = PowerLogParser(on_new_game=on_new_game, keep_games=False)
         self.path = None        # fichier suivi
         self._pos = 0           # position (en octets) déjà lue dans le fichier
         self._partial = b""     # fin de ligne pas encore terminée par le jeu (ou coupée entre deux blocs)
@@ -69,7 +69,7 @@ class LogWatcher:
             if path != self.path or os.path.getsize(path) < self._pos:
                 # Nouveau fichier (jeu relancé) ou fichier recréé plus petit : on relit depuis le début.
                 self.path, self._pos, self._partial = path, 0, b""
-                self.parser = PowerLogParser(on_new_game=self.on_new_game)
+                self.parser = PowerLogParser(on_new_game=self.on_new_game, keep_games=False)
             with open(path, "rb") as f:         # binaire : la position en octets reste exacte
                 f.seek(self._pos)
                 data = f.read(CHUNK)

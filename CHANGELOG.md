@@ -2,6 +2,16 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 1.9.0
+- Works wherever Hearthstone is installed: the app finds the Logs folder from the running game or Battle.net's install record, and you can pick it yourself (tray menu > Choose Hearthstone folder…). If Hearthstone's logging is off, the app turns it on. Instead of "Waiting for a Battlegrounds game" forever, it says what is missing.
+- Starts without internet: card data is now built into the app, and it refreshes in the background every week and as soon as a game shows a card it doesn't know (new patch), so new heroes and minions appear without waiting.
+- Signed updates: every new version must carry the maintainer's signature, made with a key that never touches GitHub. Updates without it are refused, even if the GitHub account were stolen.
+- The overlay no longer freezes after an unexpected log line or error: the error goes to error.log (in your data folder) and reading carries on.
+- Feedback typed while games are being sent is never lost, and one bad game no longer makes the server refuse the others.
+- The sharing question now comes after your first finished game, not before you've seen the app.
+- Lighter on your PC: the log folder is checked every 5 seconds instead of 4 times a second, the log is read in small pieces, and only the current game stays in memory.
+- The project moved to github.com/owlingstone/owlingstone.
+
 ## 1.8.4
 - Releases now hold just **Owlingstone.exe**: no zip, no checksum files to puzzle over. The app still checks every update's SHA-256 (GitHub records it for each file), and the release notes show it for anyone who wants to check by hand.
 - About half the size: the parts of Qt the app never uses (QML, PDF, software OpenGL, virtual keyboard, translations...) are left out, so updates download faster and the exe opens faster. Every build is started once on GitHub before release to prove it still opens.

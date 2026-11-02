@@ -13,6 +13,7 @@ Qui fait quoi :
 - download_stats() récupère une fois par jour stats.json (statistiques de tous les joueurs) depuis GitHub.
 """
 import json
+import threading
 import time
 import uuid
 from urllib.error import HTTPError
@@ -33,6 +34,8 @@ STATS_PATH = USER_DIR / "stats.json"
 MAX_AGE = 30 * 86400
 MAX_GAMES, MAX_FEEDBACK = 20, 5
 FEEDBACK_KINDS = ("idea", "bug", "other")
+# Un seul fil à la fois lit-modifie-écrit la file : un avis tapé pendant un envoi n'est jamais effacé.
+_queue_lock = threading.RLock()
 
 
 # ------------------------------------------------------------------ choix du joueur
@@ -138,10 +141,17 @@ def _write_queue(items):
     QUEUE_PATH.write_text("".join(json.dumps(i) + "\n" for i in items), encoding="utf-8")
 
 
+def _key(item):
+    """Identité d'un élément de la file (qid depuis 1.9 ; avant, le contenu lui-même)."""
+    return item.get("qid") or json.dumps(item, sort_keys=True)
+
+
 def enqueue(kind, data, now=None):
-    items = _read_queue(now)
-    items.append({"kind": kind, "data": data, "queued": time.time() if now is None else now})
-    _write_queue(items[-200:])
+    with _queue_lock:
+        items = _read_queue(now)
+        items.append({"kind": kind, "data": data, "queued": time.time() if now is None else now,
+                      "qid": uuid.uuid4().hex})
+        _write_queue(items[-200:])
     if kind == "game":
         LAST_PATH.write_text(json.dumps(data, indent=1), encoding="utf-8")
 
@@ -184,7 +194,8 @@ def flush(send=_request):
     """Envoie la file en une requête. Renvoie le nombre d'éléments envoyés (0 si rien ou impossible)."""
     if not API_URL:
         return 0
-    items = _read_queue()
+    with _queue_lock:
+        items = _read_queue()
     games = [i for i in items if i["kind"] == "game"][:MAX_GAMES] if enabled() else []
     notes = [i for i in items if i["kind"] == "feedback"][:MAX_FEEDBACK]
     if not games and not notes:
@@ -194,12 +205,13 @@ def flush(send=_request):
         status = send("POST", API_URL + "/v1/games", body)
     except OSError:
         return 0                                  # hors ligne : on réessaiera
-    if status == 422:                             # refusé (version trop vieille ?) : on ne le renvoie pas
+    if status == 422:                             # tout refusé (version trop vieille ?) : on ne le renvoie pas
         status = 200
-    if status != 200:
+    if status != 200:                             # 200 : rangé, ou refusé un par un par le serveur (invalide)
         return 0
-    sent = {id(i) for i in games + notes}
-    _write_queue([i for i in items if id(i) not in sent])
+    sent = {_key(i) for i in games + notes}
+    with _queue_lock:                             # relu : ce qui a été ajouté pendant l'envoi reste
+        _write_queue([i for i in _read_queue() if _key(i) not in sent])
     return len(sent)
 
 
@@ -212,7 +224,8 @@ def delete_remote(send=_request):
     s.pop("install", None)
     s["enabled"] = False
     _save(s)
-    _write_queue([i for i in _read_queue() if i["kind"] != "game"])
+    with _queue_lock:
+        _write_queue([i for i in _read_queue() if i["kind"] != "game"])
     for p in (LAST_PATH,):
         try:
             p.unlink()
