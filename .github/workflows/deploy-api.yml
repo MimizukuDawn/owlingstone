@@ -27,18 +27,17 @@ jobs:
           persist-credentials: false
       - name: Database (created once, id never printed)
         run: |
-          id=$($WRANGLER d1 list --json 2>/dev/null | python3 -c "import json,sys;print(next((d['uuid'] for d in json.load(sys.stdin) if d['name']=='owlingstone'),''))")
-          if [ -z "$id" ]; then
-            $WRANGLER d1 create owlingstone >/dev/null 2>&1
-            id=$($WRANGLER d1 list --json 2>/dev/null | python3 -c "import json,sys;print(next(d['uuid'] for d in json.load(sys.stdin) if d['name']=='owlingstone'))")
-          fi
+          id=$(python3 d1_id.py --create)
           echo "::add-mask::$id"
           sed -i "s/LOCAL_ONLY/$id/" wrangler.toml
-          $WRANGLER d1 execute owlingstone --remote --file schema.sql >/dev/null 2>&1 && echo "schema ok"
+          $WRANGLER d1 execute owlingstone --remote --file schema.sql > out.txt 2>&1 \
+            && echo "schema ok" || { sed -E 's/[0-9a-f]{16,}/<hidden>/g' out.txt | tail -20; exit 1; }
+      - name: Deploy
+        run: |
+          $WRANGLER deploy > out.txt 2>&1 && echo "deployed" \
+            || { sed -E 's/[0-9a-f]{16,}/<hidden>/g; s#https://[^ ]*workers.dev#<url>#g' out.txt | tail -20; exit 1; }
       - name: Admin key (Worker secret)
         env:
           ADMIN_KEY: ${{ secrets.OWLINGSTONE_ADMIN_KEY }}
         run: |
-          if [ -n "$ADMIN_KEY" ]; then printf '%s' "$ADMIN_KEY" | $WRANGLER secret put ADMIN_KEY >/dev/null 2>&1 && echo "admin key set"; fi
-      - name: Deploy
-        run: $WRANGLER deploy >/dev/null 2>&1 && echo "deployed"
+          if [ -n "$ADMIN_KEY" ]; then printf '%s' "$ADMIN_KEY" | $WRANGLER secret put ADMIN_KEY >/dev/null 2>&1 && echo "admin key set" || { echo "admin key not set"; exit 1; }; fi

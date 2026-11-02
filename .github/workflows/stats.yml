@@ -24,7 +24,7 @@ jobs:
       - name: Point wrangler at the database
         working-directory: server
         run: |
-          id=$(npx --yes wrangler@4.156.2 d1 list --json 2>/dev/null | python3 -c "import json,sys;print(next((d['uuid'] for d in json.load(sys.stdin) if d['name']=='owlingstone'),''))")
+          id=$(python3 d1_id.py)
           [ -n "$id" ] || { echo "API not deployed yet"; exit 0; }
           echo "::add-mask::$id"
           sed -i "s/LOCAL_ONLY/$id/" wrangler.toml
