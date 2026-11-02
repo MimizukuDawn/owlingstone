@@ -1,6 +1,9 @@
-# Push a tag like v1.7.0: tests, Windows build, zip + SHA-256, provenance attestation, GitHub Release.
+# Publish a release (or push a tag) like v1.7.1: tests, Windows build, zip + SHA-256, provenance
+# attestation, files attached to the GitHub Release.
 name: Release
 on:
+  release:
+    types: [published]
   push:
     tags: ["v*"]
 permissions:
@@ -71,6 +74,12 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >
-          gh release create "$GITHUB_REF_NAME" --title "Owlingstone $VERSION" --notes-file notes.md
-          dist/Owlingstone-$VERSION-windows.zip dist/Owlingstone-$VERSION-windows.zip.sha256
+          GH_REPO: ${{ github.repository }}
+        run: |
+          files="dist/Owlingstone-$VERSION-windows.zip dist/Owlingstone-$VERSION-windows.zip.sha256"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "Owlingstone $VERSION" --notes-file notes.md
+            gh release upload "$GITHUB_REF_NAME" $files --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" --title "Owlingstone $VERSION" --notes-file notes.md $files
+          fi
