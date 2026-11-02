@@ -2,6 +2,9 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 1.7.1
+- Card data download fixed for new installs: HearthstoneJSON refused the app's download (403), so a fresh install had no cards. The app now names itself when downloading and only replaces cards.json once the download is complete.
+
 ## 1.7.0
 - New name: **Owlingstone** (Owlingstone.exe, desktop shortcut "Owlingstone"). Your history and settings are copied from %APPDATA%\BGTracker to %APPDATA%\Owlingstone on first start; the old folder is left as it was. The old BG Tracker build and shortcut are removed by the update.
 - Owlingstone is ready to be shared on GitHub (github.com/MimizukuDawn/owlingstone): README, full PolyForm Noncommercial license (free, never sold), privacy and security pages.

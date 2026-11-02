@@ -40,8 +40,15 @@ class Card:
 
 def download(path=CARDS_PATH):
     """Télécharge (ou remplace) cards.json. À relancer après un patch du jeu."""
+    from . import __version__
     path.parent.mkdir(parents=True, exist_ok=True)
-    urllib.request.urlretrieve(CARDS_URL, path)
+    # HearthstoneJSON refuse (403) le User-Agent par défaut de Python : on se présente.
+    req = urllib.request.Request(CARDS_URL, headers={
+        "User-Agent": f"Owlingstone/{__version__} (+https://github.com/MimizukuDawn/owlingstone)"})
+    tmp = path.with_suffix(".part")
+    with urllib.request.urlopen(req, timeout=60) as resp, open(tmp, "wb") as f:  # nosec B310 : URL fixe https
+        f.write(resp.read())
+    tmp.replace(path)            # remplace seulement si le téléchargement est complet
 
 
 class CardDb:

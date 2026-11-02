@@ -1,6 +1,6 @@
 [project]
 name = "bgtracker"
-version = "1.7.0"
+version = "1.7.1"
 description = "Standalone Hearthstone Battlegrounds helper that reads Power.log"
 requires-python = ">=3.12"
 
