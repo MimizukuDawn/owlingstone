@@ -11,12 +11,9 @@ Qui fait quoi :
 - whats_new() : les lignes de CHANGELOG.md pour une version, montrées après la mise à jour.
 
 Version téléchargée depuis GitHub (pas de projet à côté de l'exe) : voir RELEASES plus bas. Un fil en
-arrière-plan regarde la dernière version publiée (au plus toutes les 6 h), la télécharge et vérifie son
-empreinte SHA-256. Le bouton n'apparaît qu'une fois tout vérifié. Deux formes :
-- Owlingstone.exe seul (un seul fichier, la forme normale) : le nouvel exe est posé à côté
-  (Owlingstone.exe.new) ; start_update() renomme l'exe en cours en .old (Windows le permet), met le
-  nouveau à sa place et le lance ; le .old est supprimé au démarrage suivant.
-- dossier Owlingstone\\ (le zip) : le dossier est remplacé par un petit script sans fenêtre.
+arrière-plan regarde la dernière version publiée (au plus toutes les 6 h), la télécharge, vérifie son
+empreinte SHA-256 et la pose à côté (Owlingstone.exe.new). Le bouton n'apparaît qu'une fois tout vérifié ;
+start_update() échange alors les deux exe et lance le nouveau, sans fenêtre ni script.
 """
 import hashlib
 import json
@@ -28,7 +25,6 @@ import sys
 import tempfile
 import threading
 import time
-import zipfile
 from pathlib import Path
 from urllib.request import Request, urlopen
 
@@ -134,12 +130,11 @@ def whats_new(version=__version__, changelog=None):
 REPO = "MimizukuDawn/owlingstone"
 API_LATEST = f"https://api.github.com/repos/{REPO}/releases/latest"
 DOWNLOAD_PREFIX = f"https://github.com/{REPO}/releases/download/"
-ASSET = re.compile(r"^Owlingstone-(\d+(?:\.\d+){1,3})-windows\.zip$")
-ASSET_EXE = "Owlingstone.exe"       # l'exe en un seul fichier ; sa version = le tag de la Release
+ASSET_EXE = "Owlingstone.exe"       # le seul fichier d'une Release ; sa version = le tag (v1.2.3)
 TAG = re.compile(r"^v(\d+(?:\.\d+){1,3})$")
 AFTER_UPDATE = "OWLINGSTONE_AFTER_UPDATE"   # dit au nouvel exe d'attendre que l'ancien soit fermé
 CHECK_EVERY = 6 * 3600              # secondes entre deux questions à GitHub
-MAX_ZIP = 400 * 1024 * 1024         # refuse un téléchargement plus gros (anormal)
+MAX_DOWNLOAD = 300 * 1024 * 1024    # refuse un téléchargement plus gros (anormal)
 
 
 def _get(url, limit, timeout=20):
@@ -154,30 +149,22 @@ def _get(url, limit, timeout=20):
     return data
 
 
-def pick_release(release, onefile=False):
-    """Réponse de l'API "latest release" -> {version, url, sha256} ou None si rien d'utilisable.
-    onefile : l'exe seul (Owlingstone.exe), sinon le zip. L'empreinte vient du champ "digest" de
-    GitHub, sinon du fichier <nom>.sha256 publié avec."""
+def pick_release(release):
+    """Réponse de l'API "latest release" -> {version, url, sha256, size} ou None si rien d'utilisable.
+    L'empreinte SHA-256 est le champ "digest" que GitHub calcule lui-même pour chaque fichier publié :
+    sans elle, pas de mise à jour."""
     if not isinstance(release, dict) or release.get("draft") or release.get("prerelease"):
         return None
     tag = TAG.match(str(release.get("tag_name") or ""))
-    assets = {a.get("name"): a for a in release.get("assets") or [] if isinstance(a, dict)}
-    for name, asset in assets.items():
-        if onefile:
-            m = tag if name == ASSET_EXE else None
-        else:
-            m = ASSET.match(name or "")
-        url = asset.get("browser_download_url") or ""
-        if not m or not url.startswith(DOWNLOAD_PREFIX):
+    for asset in release.get("assets") or []:
+        if not tag or not isinstance(asset, dict) or asset.get("name") != ASSET_EXE:
             continue
-        digest = asset.get("digest") or ""
-        sha = digest[7:] if digest.startswith("sha256:") else None
-        side = assets.get(name + ".sha256")
-        side_url = (side or {}).get("browser_download_url") or ""
-        if sha is None and not side_url.startswith(DOWNLOAD_PREFIX):
+        url = asset.get("browser_download_url") or ""
+        digest = str(asset.get("digest") or "")
+        sha = digest[7:].lower() if digest.startswith("sha256:") else ""
+        if not url.startswith(DOWNLOAD_PREFIX) or not re.fullmatch(r"[0-9a-f]{64}", sha):
             return None
-        return {"version": m.group(1), "url": url, "sha256": sha, "sha_url": side_url or None,
-                "size": asset.get("size") or 0}
+        return {"version": tag.group(1), "url": url, "sha256": sha, "size": asset.get("size") or 0}
     return None
 
 
@@ -189,45 +176,17 @@ def sha256_of(path):
     return h.hexdigest()
 
 
-def safe_extract(zip_path, dest):
-    """Décompresse sans laisser un fichier sortir de `dest` (noms en ../ ou absolus refusés)."""
-    dest = Path(dest).resolve()
-    with zipfile.ZipFile(zip_path) as z:
-        for member in z.infolist():
-            target = (dest / member.filename).resolve()
-            if target != dest and dest not in target.parents:
-                raise ValueError(f"unsafe path in zip: {member.filename}")
-        z.extractall(dest)
-
-
-def swap_script(pid, install_dir, new_dir, old_dir, exe_name="Owlingstone.exe"):
-    """Petit .bat : attend la fin de l'appli, échange les dossiers, relance (revient en arrière si raté)."""
-    return "\r\n".join([
-        "@echo off",
-        "chcp 65001 >nul",
-        ":wait",
-        f'tasklist /fi "PID eq {int(pid)}" | find "{int(pid)}" >nul && (ping -n 2 127.0.0.1 >nul & goto wait)',
-        f'if exist "{old_dir}" rmdir /s /q "{old_dir}"',
-        f'move "{install_dir}" "{old_dir}" >nul || goto failed',
-        f'move "{new_dir}" "{install_dir}" >nul || (move "{old_dir}" "{install_dir}" >nul & goto failed)',
-        f'start "" "{install_dir}\\{exe_name}"',
-        f'rmdir /s /q "{old_dir}"',
-        "exit /b 0",
-        ":failed",
-        f'start "" "{install_dir}\\{exe_name}"',
-        "exit /b 1",
-        ""])
-
-
 class ReleaseUpdater:
     """Cherche, télécharge et vérifie la dernière version GitHub dans un fil à part (jamais l'interface).
-    `ready` = la version prête à installer (dict) une fois le zip vérifié et décompressé, sinon None."""
+    `ready` = la version prête à installer (dict) une fois l'exe vérifié et posé à côté, sinon None.
 
-    def __init__(self, current=__version__, install_dir=None, state_path=None, exe_path=None, onefile=None):
+    Un exe en cours peut être renommé sous Windows : install() met Owlingstone.exe de côté
+    (Owlingstone.exe.old), met le nouveau à sa place et le lance ; le .old est supprimé au démarrage suivant.
+    Un ancien dossier Owlingstone\\ (version zip) se met à jour de la même façon : seul l'exe change."""
+
+    def __init__(self, current=__version__, exe_path=None, state_path=None):
         self.current = current
         self.exe_path = Path(exe_path or Path(sys.executable).resolve())
-        self.install_dir = Path(install_dir or self.exe_path.parent)
-        self.onefile = is_onefile() if onefile is None else onefile
         self.state_path = Path(state_path or USER_DIR / "update_check.json")
         self.ready = None
         self.error = None
@@ -240,10 +199,6 @@ class ReleaseUpdater:
     @property
     def old_exe(self):
         return self.exe_path.with_name(self.exe_path.name + ".old")
-
-    @property
-    def new_dir(self):
-        return self.install_dir.with_name(self.install_dir.name + ".new")
 
     def start(self):
         if self._thread is None:
@@ -270,35 +225,18 @@ class ReleaseUpdater:
             return self.ready
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         self.state_path.write_text(json.dumps({"checked": now}), encoding="utf-8")
-        info = pick_release(json.loads(get(API_LATEST, 1_000_000)), self.onefile)
+        info = pick_release(json.loads(get(API_LATEST, 1_000_000)))
         if not info or parse(info["version"]) <= parse(self.current):
             return None
-        if info["size"] > MAX_ZIP:
+        if info["size"] > MAX_DOWNLOAD:
             raise ValueError("release too large")
-        expected = info["sha256"] or get(info["sha_url"], 1000).decode("ascii", "replace").split()[0]
-        if not re.fullmatch(r"[0-9a-f]{64}", expected.lower()):
-            raise ValueError("bad checksum format")
-        fd, tmp = tempfile.mkstemp(suffix=".zip", dir=self.state_path.parent)
+        fd, tmp = tempfile.mkstemp(suffix=".exe", dir=self.state_path.parent)
         try:
             with os.fdopen(fd, "wb") as f:
-                f.write(get(info["url"], MAX_ZIP, timeout=300))
-            if sha256_of(tmp) != expected.lower():
+                f.write(get(info["url"], MAX_DOWNLOAD, timeout=300))
+            if sha256_of(tmp) != info["sha256"]:
                 raise ValueError("checksum mismatch: download refused")
-            if self.onefile:
-                shutil.move(tmp, self.new_exe)       # vérifié : posé à côté de l'exe en cours
-                self.ready = info
-                return info
-            stage = self.install_dir.with_name(self.install_dir.name + ".unpack")
-            if stage.exists():
-                shutil.rmtree(stage)
-            safe_extract(tmp, stage)
-            inner = stage / "Owlingstone"
-            if not (inner / "Owlingstone.exe").exists():
-                raise ValueError("Owlingstone.exe missing from the release")
-            if self.new_dir.exists():
-                shutil.rmtree(self.new_dir)
-            inner.rename(self.new_dir)
-            stage.rmdir()
+            shutil.move(tmp, self.new_exe)           # vérifié : posé à côté de l'exe en cours
         finally:
             try:
                 os.remove(tmp)
@@ -308,20 +246,7 @@ class ReleaseUpdater:
         return info
 
     def install(self):
-        """Écrit et lance (sans fenêtre) le script d'échange, puis l'appli doit se fermer.
-        Renvoie le processus, ou None si rien n'est prêt."""
-        if self.onefile:
-            return self._install_onefile()
-        if not self.ready or not self.new_dir.exists():
-            return None
-        old = self.install_dir.with_name(self.install_dir.name + ".old")
-        script = self.state_path.parent / "swap_update.bat"
-        script.write_text(swap_script(os.getpid(), self.install_dir, self.new_dir, old), encoding="utf-8")
-        return run_hidden(["cmd", "/c", str(script)])  # notre propre script, chemins locaux
-
-
-    def _install_onefile(self):
-        """Un exe en cours peut être renommé sous Windows : on le met de côté, le nouveau prend sa place."""
+        """Échange les exe et lance le nouveau (l'appli doit ensuite se fermer). None si impossible."""
         if not self.ready or not self.new_exe.exists():
             return None
         try:
@@ -341,16 +266,8 @@ class ReleaseUpdater:
                                 creationflags=flags)
 
 
-def is_onefile():
-    """Exe en un seul fichier : PyInstaller le décompresse dans un dossier temporaire (pas _internal\\)."""
-    if not getattr(sys, "frozen", False):
-        return False
-    exe_dir = Path(sys.executable).resolve().parent
-    return not Path(getattr(sys, "_MEIPASS", exe_dir)).resolve().is_relative_to(exe_dir)
-
-
 def remove_old_exe(exe_path=None):
-    """Après une mise à jour de l'exe seul : supprime l'ancien (Owlingstone.exe.old) s'il traîne."""
+    """Après une mise à jour : supprime l'ancien exe (Owlingstone.exe.old) s'il traîne."""
     exe_path = Path(exe_path or Path(sys.executable).resolve())
     try:
         exe_path.with_name(exe_path.name + ".old").unlink()

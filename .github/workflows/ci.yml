@@ -1,4 +1,5 @@
-# Every push and pull request: tests, privacy scan, Python security checks.
+# Every push and pull request: tests, privacy scan, Python security checks, and a build of the exe
+# that is started once to prove it opens.
 name: CI
 on:
   push:
@@ -26,6 +27,20 @@ jobs:
           QT_QPA_PLATFORM: offscreen
       - name: Security checks (bandit)
         run: python -m bandit -q -r bgtracker -ll
+      - name: Build the single-file exe
+        env:
+          OWLINGSTONE_ONEFILE: "1"
+        run: pyinstaller --noconfirm --log-level WARN --distpath dist --workpath build Owlingstone.spec
+      - name: Start the built exe once
+        shell: pwsh
+        env:
+          OWLINGSTONE_SMOKE: "1"
+          BGTRACKER_HOME: ${{ runner.temp }}\smoke
+        run: |
+          $p = Start-Process dist\Owlingstone.exe -PassThru
+          if (-not $p.WaitForExit(120000)) { $p.Kill(); throw "Owlingstone.exe did not close by itself" }
+          if ($p.ExitCode -ne 0) { throw "Owlingstone.exe exited with code $($p.ExitCode)" }
+          "started and closed fine; size: {0:N1} MB" -f ((Get-Item dist\Owlingstone.exe).Length / 1MB)
 
   server:
     runs-on: ubuntu-latest

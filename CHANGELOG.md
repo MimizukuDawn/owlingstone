@@ -2,6 +2,11 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 1.8.4
+- Releases now hold just **Owlingstone.exe**: no zip, no checksum files to puzzle over. The app still checks every update's SHA-256 (GitHub records it for each file), and the release notes show it for anyone who wants to check by hand.
+- About half the size: the parts of Qt the app never uses (QML, PDF, software OpenGL, virtual keyboard, translations...) are left out, so updates download faster and the exe opens faster. Every build is started once on GitHub before release to prove it still opens.
+- Faster rebuilds from the project: packages are reinstalled only when requirements.txt changes, and PyInstaller reuses what didn't change.
+
 ## 1.8.3
 - One file to download: each release now has **Owlingstone.exe**, the whole app in a single exe. Put it anywhere and run it. It updates itself in place (the new exe is checked with its SHA-256 before it replaces the old one). The zip is still there for those who prefer the folder version.
 - Updates run without a cmd window: click "Update to vX" and Owlingstone restarts by itself on the new version (when built from the project, it keeps working while the new version is tested and built in the background). If something goes wrong, a message says why and the current version keeps working (details in %APPDATA%\Owlingstone\update.log).

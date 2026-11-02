@@ -1,30 +1,27 @@
-"""Mises à jour depuis GitHub Releases : choix du fichier, empreinte, décompression sûre."""
+"""Mises à jour : depuis GitHub Releases (exe seul, empreinte SHA-256) et depuis le projet (update.bat)."""
 import hashlib
-import io
 import json
-import zipfile
 
 import pytest
 
 from bgtracker import update
-from bgtracker.update import ReleaseUpdater, pick_release, safe_extract, swap_script
+from bgtracker.update import ReleaseUpdater, pick_release
 
-URL = update.DOWNLOAD_PREFIX + "v9.9.9/Owlingstone-9.9.9-windows.zip"
-
-
-def make_zip(names):
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w") as z:
-        for n in names:
-            z.writestr(n, "x")
-    return buf.getvalue()
+EXE_URL = update.DOWNLOAD_PREFIX + "v9.9.9/Owlingstone.exe"
 
 
 def release(data, digest=True, **extra):
-    asset = {"name": "Owlingstone-9.9.9-windows.zip", "browser_download_url": URL, "size": len(data)}
+    asset = {"name": "Owlingstone.exe", "browser_download_url": EXE_URL, "size": len(data)}
     if digest:
         asset["digest"] = "sha256:" + hashlib.sha256(data).hexdigest()
     return {"tag_name": "v9.9.9", "assets": [asset], **extra}
+
+
+def updater(tmp_path, old=b"old exe"):
+    exe = tmp_path / "Downloads" / "Owlingstone.exe"
+    exe.parent.mkdir()
+    exe.write_bytes(old)
+    return ReleaseUpdater(current="1.0.0", exe_path=exe, state_path=tmp_path / "user" / "check.json")
 
 
 def test_pick_release_reads_version_and_digest():
@@ -32,12 +29,14 @@ def test_pick_release_reads_version_and_digest():
     assert info["version"] == "9.9.9" and info["sha256"] == hashlib.sha256(b"abc").hexdigest()
 
 
-def test_pick_release_refuses_other_hosts_drafts_and_missing_checksum():
+def test_pick_release_refuses_other_hosts_drafts_bad_tags_and_missing_checksum():
     r = release(b"abc")
-    r["assets"][0]["browser_download_url"] = "https://evil.example/Owlingstone-9.9.9-windows.zip"
+    r["assets"][0]["browser_download_url"] = "https://evil.example/Owlingstone.exe"
     assert pick_release(r) is None
     assert pick_release(release(b"abc", draft=True)) is None
+    assert pick_release(release(b"abc", prerelease=True)) is None
     assert pick_release(release(b"abc", digest=False)) is None
+    assert pick_release(release(b"abc", tag_name="stats")) is None
 
 
 def test_get_refuses_foreign_urls():
@@ -45,36 +44,37 @@ def test_get_refuses_foreign_urls():
         update._get("https://evil.example/x", 10)
 
 
-def test_safe_extract_blocks_zip_slip(tmp_path):
-    bad = tmp_path / "bad.zip"
-    bad.write_bytes(make_zip(["../evil.txt"]))
-    with pytest.raises(ValueError):
-        safe_extract(bad, tmp_path / "out")
-    assert not (tmp_path / "evil.txt").exists()
-
-
-def updater(tmp_path):
-    install = tmp_path / "Owlingstone"
-    install.mkdir()
-    return ReleaseUpdater(current="1.0.0", install_dir=install, state_path=tmp_path / "user" / "check.json")
-
-
-def test_check_once_downloads_verifies_and_unpacks(tmp_path):
-    data = make_zip(["Owlingstone/Owlingstone.exe", "Owlingstone/_internal/x.dll"])
-    files = {update.API_LATEST: json.dumps(release(data)).encode(), URL: data}
+def test_download_verify_and_swap(tmp_path, monkeypatch):
     up = updater(tmp_path)
-    info = up.check_once(get=lambda url, limit, timeout=20: files[url], now=10**9)
-    assert info["version"] == "9.9.9" and up.ready
-    assert (tmp_path / "Owlingstone.new" / "Owlingstone.exe").exists()
+    new = b"new exe"
+    files = {update.API_LATEST: json.dumps(release(new)).encode(), EXE_URL: new}
+    assert up.check_once(get=lambda url, limit, timeout=20: files[url], now=10**9)["version"] == "9.9.9"
+    assert up.new_exe.read_bytes() == new and up.exe_path.read_bytes() == b"old exe"
+    started = []
+    monkeypatch.setattr(update.subprocess, "Popen", lambda args, **kw: started.append((args, kw)) or "proc")
+    assert up.install() == "proc"
+    assert up.exe_path.read_bytes() == new and up.old_exe.read_bytes() == b"old exe" and not up.new_exe.exists()
+    assert started[0][0] == [str(up.exe_path)] and started[0][1]["env"][update.AFTER_UPDATE] == "1"
+    update.remove_old_exe(up.exe_path)
+    assert not up.old_exe.exists()
 
 
-def test_check_once_refuses_tampered_download(tmp_path):
-    data = make_zip(["Owlingstone/Owlingstone.exe"])
-    files = {update.API_LATEST: json.dumps(release(data)).encode(), URL: data + b"tampered"}
+def test_tampered_download_is_refused(tmp_path):
     up = updater(tmp_path)
+    files = {update.API_LATEST: json.dumps(release(b"new")).encode(), EXE_URL: b"evil"}
     with pytest.raises(ValueError):
         up.check_once(get=lambda url, limit, timeout=20: files[url], now=10**9)
-    assert up.ready is None and not (tmp_path / "Owlingstone.new").exists()
+    assert up.ready is None and not up.new_exe.exists()
+    assert up.install() is None and up.exe_path.read_bytes() == b"old exe"
+
+
+def test_same_version_is_not_downloaded(tmp_path):
+    up = updater(tmp_path)
+    up.current = "9.9.9"
+    calls = []
+    files = {update.API_LATEST: json.dumps(release(b"x")).encode()}
+    assert up.check_once(get=lambda url, limit, timeout=20: calls.append(url) or files[url], now=10**9) is None
+    assert calls == [update.API_LATEST]
 
 
 def test_check_once_waits_between_checks(tmp_path):
@@ -84,12 +84,6 @@ def test_check_once_waits_between_checks(tmp_path):
     up.check_once(get=get, now=10**9)
     up.check_once(get=get, now=10**9 + 60)
     assert len(calls) == 1
-
-
-def test_swap_script_quotes_paths_and_rolls_back():
-    text = swap_script(42, r"C:\Games\Owlingstone", r"C:\Games\Owlingstone.new", r"C:\Games\Owlingstone.old")
-    assert 'move "C:\\Games\\Owlingstone" "C:\\Games\\Owlingstone.old"' in text
-    assert ":failed" in text and "PID eq 42" in text
 
 
 def test_old_bgtracker_data_is_copied_once(tmp_path):
@@ -124,42 +118,3 @@ def test_failed_mark_and_log_tail(tmp_path):
     log.write_text("a\n\nb\nUPDATE FAILED\n", encoding="utf-8")
     assert update.log_tail(2, log) == "b\nUPDATE FAILED"
     assert update.log_tail(log=tmp_path / "none.log") == ""
-
-
-EXE_URL = update.DOWNLOAD_PREFIX + "v9.9.9/Owlingstone.exe"
-
-
-def exe_release(data):
-    r = release(make_zip(["Owlingstone/Owlingstone.exe"]))
-    r["assets"].append({"name": "Owlingstone.exe", "browser_download_url": EXE_URL, "size": len(data),
-                        "digest": "sha256:" + hashlib.sha256(data).hexdigest()})
-    return r
-
-
-def test_single_exe_download_and_swap(tmp_path, monkeypatch):
-    exe = tmp_path / "Downloads" / "Owlingstone.exe"
-    exe.parent.mkdir()
-    exe.write_bytes(b"old exe")
-    new = b"new exe"
-    files = {update.API_LATEST: json.dumps(exe_release(new)).encode(), EXE_URL: new}
-    up = ReleaseUpdater(current="1.0.0", exe_path=exe, state_path=tmp_path / "user" / "check.json", onefile=True)
-    assert pick_release(exe_release(new), onefile=True)["url"] == EXE_URL
-    assert up.check_once(get=lambda url, limit, timeout=20: files[url], now=10**9)["version"] == "9.9.9"
-    assert up.new_exe.read_bytes() == new and exe.read_bytes() == b"old exe"
-    started = []
-    monkeypatch.setattr(update.subprocess, "Popen", lambda args, **kw: started.append((args, kw)) or "proc")
-    assert up.install() == "proc"
-    assert exe.read_bytes() == new and up.old_exe.read_bytes() == b"old exe" and not up.new_exe.exists()
-    assert started[0][0] == [str(exe)] and started[0][1]["env"][update.AFTER_UPDATE] == "1"
-    update.remove_old_exe(exe)
-    assert not up.old_exe.exists()
-
-
-def test_single_exe_refuses_tampered_download(tmp_path):
-    exe = tmp_path / "Owlingstone.exe"
-    exe.write_bytes(b"old")
-    files = {update.API_LATEST: json.dumps(exe_release(b"new")).encode(), EXE_URL: b"evil"}
-    up = ReleaseUpdater(current="1.0.0", exe_path=exe, state_path=tmp_path / "user" / "c.json", onefile=True)
-    with pytest.raises(ValueError):
-        up.check_once(get=lambda url, limit, timeout=20: files[url], now=10**9)
-    assert not up.new_exe.exists() and up.install() is None and exe.read_bytes() == b"old"

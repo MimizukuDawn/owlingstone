@@ -9,18 +9,15 @@ if /i "%~1"=="quiet" set QUIET=1
 if not defined QUIET title Owlingstone update
 echo === Owlingstone update ===
 if not exist .venv\Scripts\python.exe py -3.12 -m venv .venv
-.venv\Scripts\python -m pip install --quiet --disable-pip-version-check -r requirements.txt || goto failed
+rem Paquets : seulement quand requirements.txt a change (gagne du temps a chaque mise a jour).
+fc /b requirements.txt .venv\requirements.done >nul 2>&1 || (.venv\Scripts\python -m pip install --quiet --disable-pip-version-check -r requirements.txt && copy /y requirements.txt .venv\requirements.done >nul) || goto failed
 echo Running tests...
 .venv\Scripts\python -m pytest -q -m "not slow" || goto failed
 echo Building the new version...
 if exist build\new rmdir /s /q build\new
-.venv\Scripts\pyinstaller --noconfirm --clean --windowed --log-level WARN --name Owlingstone ^
-    --distpath build\new --workpath build\work --specpath build ^
-    --icon "%~dp0bgtracker\icon.ico" ^
-    --add-data "%~dp0bgtracker\icon.ico;bgtracker" ^
-    --add-data "%~dp0data\*.yaml;data" ^
-    --add-data "%~dp0CHANGELOG.md;." ^
-    Owlingstone.pyw || goto failed
+rem Owlingstone.spec : la meme recette que les Releases, sans les parties de Qt inutiles.
+rem Pas de --clean : PyInstaller reutilise ce qui n'a pas change (build\work), bien plus rapide.
+.venv\Scripts\pyinstaller --noconfirm --log-level WARN --distpath build\new --workpath build\work Owlingstone.spec || goto failed
 echo Replacing the old version...
 taskkill /im Owlingstone.exe /f >nul 2>&1
 set KILLED=1

@@ -1050,7 +1050,10 @@ def run(replay_path=None, stop_turn=None, screenshot=None):
     win = MainWindow(replay_mode=bool(replay_path))
     tray = tray_icon(app, win) if not replay_path and QSystemTrayIcon.isSystemTrayAvailable() else None
     win.tray = tray
-    if not replay_path:
+    smoke = os.environ.get("OWLINGSTONE_SMOKE") == "1"   # test de l'exe construit : s'ouvre puis se ferme
+    if smoke:
+        QTimer.singleShot(4000, app.quit)
+    if not replay_path and not smoke:
         announce_version(win, tray)
         ask_sharing()
         if tray:

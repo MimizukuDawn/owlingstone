@@ -23,15 +23,13 @@ Updates: when a new version is published, the app downloads it in the background
 checksum and shows **Update to vX**: one click replaces the exe and restarts it, with no window to deal
 with. Your history and settings (in `%APPDATA%\Owlingstone`) are kept.
 
-The release also has `Owlingstone-<version>-windows.zip`: the same app as a folder, which starts a little faster.
-
 ### Check your download (optional)
 
-Each release has `.sha256` files and a GitHub build attestation proving the files were built by GitHub
-Actions from this repository's code:
+The release notes give the exe's SHA-256 (under "Check the download"), and each release has a GitHub
+build attestation proving the exe was built by GitHub Actions from this repository's code:
 
 ```powershell
-Get-FileHash .\Owlingstone.exe -Algorithm SHA256   # compare with Owlingstone.exe.sha256
+Get-FileHash .\Owlingstone.exe -Algorithm SHA256   # compare with the SHA-256 in the release notes
 gh attestation verify .\Owlingstone.exe --repo MimizukuDawn/owlingstone
 ```
 
