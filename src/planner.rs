@@ -436,6 +436,7 @@ pub struct Caches {
     preview: Option<(String, Odds)>,
 }
 
+#[allow(clippy::too_many_arguments)]
 fn sim_input(game: &Game, mine: Vec<MinionSnap>, theirs: Vec<MinionSnap>, my_tier: i64, opp_tier: i64, opp: i64, cap: Option<i64>, counters: [Counters; 2]) -> SimInput {
     let bonuses = game.my_bonuses();
     let deity = |pid: Option<i64>| pid.and_then(|p| game.deity_seen.get(&p).copied()).unwrap_or((1, 1));

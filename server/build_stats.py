@@ -3,7 +3,8 @@
     python server/build_stats.py --remote out/stats.json      (or --local for `wrangler dev` tests)
 
 Each query aggregates in the database, so the job reads each game once per query and downloads only
-a few hundred numbers. Only groups with at least MIN_GAMES games are published.
+a few hundred numbers. Each install weighs PER_INSTALL games at most in a group, and only groups with
+at least MIN_GAMES (weighted) games are published.
 It also deletes games older than KEEP_DAYS days so the database stays far below the 5 GB free limit.
 """
 import json
@@ -16,28 +17,45 @@ KEEP_DAYS = 60
 FEEDBACK_DAYS = 180     # feedback the maintainer has handled is deleted after this many days
 MIN_GAMES = int(__import__("os").environ.get("MIN_GAMES", 30))
 
+# One player who plays a lot must not make the stats alone: in each group (a comp, a hero...), each
+# install counts for PER_INSTALL games at most. Its games are weighted down to that (weight w), "games" is
+# the weighted count (used for MIN_GAMES), "raw_games" the real one, "installs" how many players.
+PER_INSTALL = int(__import__("os").environ.get("PER_INSTALL", 10))
+SOLO_OK = "mode = 'solo' AND quality = 'ok' AND day >= date('now', '-{w} day')"
+
+
+def grouped(key, group, where=SOLO_OK):
+    """Average place per group, each install's weight capped at PER_INSTALL games in the group."""
+    return f"""SELECT {key} AS key, SUM(w) AS games, COUNT(*) AS raw_games, COUNT(DISTINCT install) AS installs,
+                      SUM(place * w) / SUM(w) AS avg_place
+               FROM (SELECT *, MIN(1.0, {PER_INSTALL}.0 / COUNT(*) OVER (PARTITION BY {group}, install)) AS w
+                     FROM games WHERE {where})
+               GROUP BY {group}"""
+
+
+def by_turn(columns, where):
+    """Per-turn averages over the fights; each install's weight capped at PER_INSTALL games per turn."""
+    return f"""SELECT t AS key, SUM(w) AS games, COUNT(*) AS raw_games, COUNT(DISTINCT install) AS installs, {columns}
+               FROM (SELECT *, MIN(1.0, {PER_INSTALL}.0 / COUNT(*) OVER (PARTITION BY t, install)) AS w
+                     FROM (SELECT g.install, CAST(json_extract(f.value, '$.t') AS INTEGER) AS t, f.value AS fight
+                           FROM games g, json_each(g.summary, '$.fights') f WHERE {where}))
+               GROUP BY t"""
+
+
 QUERIES = {
-    "comps": """SELECT comp AS key, COUNT(*) AS games, AVG(place) AS avg_place FROM games
-                WHERE mode = 'solo' AND quality = 'ok' AND comp IS NOT NULL AND day >= date('now', '-{w} day') GROUP BY comp""",
-    "heroes": """SELECT hero AS key, COUNT(*) AS games, AVG(place) AS avg_place FROM games
-                 WHERE mode = 'solo' AND quality = 'ok' AND day >= date('now', '-{w} day') GROUP BY hero""",
-    "hero_comps": """SELECT hero || ' / ' || comp AS key, COUNT(*) AS games, AVG(place) AS avg_place FROM games
-                     WHERE mode = 'solo' AND quality = 'ok' AND comp IS NOT NULL AND day >= date('now', '-{w} day')
-                     GROUP BY hero, comp""",
-    "board_by_turn": """SELECT CAST(json_extract(f.value, '$.t') AS INTEGER) AS key, COUNT(*) AS games,
-                          AVG((SELECT TOTAL(json_extract(m.value, '$.a') + json_extract(m.value, '$.h'))
-                               FROM json_each(f.value, '$.opp') m)) AS avg_stats,
-                          AVG(json_extract(f.value, '$.otier')) AS avg_tier,
-                          AVG(json_array_length(f.value, '$.opp')) AS avg_minions
-                        FROM games g, json_each(g.summary, '$.fights') f
-                        WHERE g.mode = 'solo' AND g.quality = 'ok' AND g.day >= date('now', '-{w} day')
-                          AND (json_extract(f.value, '$.t') <= 3 OR json_array_length(f.value, '$.opp') > 0)
-                        GROUP BY key""",
-    "tier_by_turn_top4": """SELECT CAST(json_extract(f.value, '$.t') AS INTEGER) AS key, COUNT(*) AS games,
-                              AVG(json_extract(f.value, '$.tier')) AS avg_tier
-                            FROM games g, json_each(g.summary, '$.fights') f
-                            WHERE g.mode = 'solo' AND g.quality = 'ok' AND g.place <= 4 AND g.day >= date('now', '-{w} day')
-                            GROUP BY key""",
+    "comps": grouped("comp", "comp", SOLO_OK + " AND comp IS NOT NULL"),
+    "heroes": grouped("hero", "hero"),
+    "hero_comps": grouped("hero || ' / ' || comp", "hero, comp", SOLO_OK + " AND comp IS NOT NULL"),
+    "board_by_turn": by_turn(
+        """SUM(w * (SELECT TOTAL(json_extract(m.value, '$.a') + json_extract(m.value, '$.h'))
+                    FROM json_each(fight, '$.opp') m)) / SUM(w) AS avg_stats,
+           SUM(w * json_extract(fight, '$.otier')) / SUM(w) AS avg_tier,
+           SUM(w * json_array_length(fight, '$.opp')) / SUM(w) AS avg_minions""",
+        "g.mode = 'solo' AND g.quality = 'ok' AND g.day >= date('now', '-{w} day') "
+        "AND (json_extract(f.value, '$.t') <= 3 OR json_array_length(f.value, '$.opp') > 0)"),
+    "tier_by_turn_top4": by_turn(
+        "SUM(w * json_extract(fight, '$.tier')) / SUM(w) AS avg_tier",
+        "g.mode = 'solo' AND g.quality = 'ok' AND g.place <= 4 AND g.day >= date('now', '-{w} day')"),
 }
 
 
@@ -97,7 +115,7 @@ def d1(sql, where):
 
 def build(where):
     stats = {"generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), "window_days": WINDOW_DAYS,
-             "min_games": MIN_GAMES}
+             "min_games": MIN_GAMES, "per_install": PER_INSTALL}
     for name, sql in QUERIES.items():
         rows = d1(sql.format(w=WINDOW_DAYS), where)
         stats[name] = {str(r.pop("key")): {k: round(v, 3) if isinstance(v, float) else v for k, v in r.items()}

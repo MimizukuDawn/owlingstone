@@ -161,7 +161,7 @@ fn turn_plan_buys_rolls_and_sells() {
     let out = turn_plan(&k, &p, &picks, &[], &[], &protect);
     assert_eq!(out.buy[0].card.id, core.id);
     assert!(out.buy[0].reasons.contains(&"core Mech APM".to_string()));
-    assert_eq!(out.plan_buys.iter().map(|c| c.id.clone()).collect::<Vec<_>>(), [core.id.clone()]);
+    assert_eq!(out.plan_buys.iter().map(|c| c.id.clone()).collect::<Vec<_>>(), [core.id.as_str()]);
     assert_eq!(out.sell.as_deref(), Some("Wrath Weaver (weakest)"));
     assert!(out.roll.unwrap().starts_with("Then roll 2×"));
 }

@@ -44,6 +44,35 @@ jobs:
           if ($p.ExitCode -ne 0) { throw "Owlingstone.exe exited with code $($p.ExitCode)" }
           "started and closed fine; size: {0:N1} MB" -f ((Get-Item dist\Owlingstone.exe).Length / 1MB)
 
+  rust:
+    # The Rust version of the app: tests, lints, a release build started once.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          rustup component add clippy
+      - name: Tests
+        env:
+          OWLINGSTONE_NO_CARD_DOWNLOAD: "1"
+        run: cargo test --locked
+      - name: Lints
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Release build
+        run: cargo build --locked --release
+      - name: Start the built exe once
+        shell: pwsh
+        env:
+          OWLINGSTONE_HOME: ${{ runner.temp }}\rust-smoke
+        run: |
+          $v = & target\release\Owlingstone.exe --version
+          if ($LASTEXITCODE -ne 0) { throw "Owlingstone.exe --version failed" }
+          "$v; size: {0:N1} MB" -f ((Get-Item target\release\Owlingstone.exe).Length / 1MB)
+
   server:
     runs-on: ubuntu-latest
     steps:
@@ -52,3 +81,5 @@ jobs:
           persist-credentials: false
       - name: Server rules (validation, AFK and concede detection)
         run: node --test server/test/quality.test.mjs
+      - name: Daily stats queries (each install's weight capped)
+        run: python3 -m unittest discover -s server/test

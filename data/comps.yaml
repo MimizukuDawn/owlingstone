@@ -1,23 +1,23 @@
-# Base de compositions (comps) Battlegrounds — modifiable à la main.
+# Battlegrounds comps: edit by hand.
 #
-# Même structure que les guides de comps de HDT (core cards / addon cards / when to commit / how to play).
-# Champs :
-#   id           identifiant court, unique (sert aux règles de préférence de data/rules.yaml)
-#   name         nom affiché
-#   races        races nécessaires : la comp n'est proposée que si TOUTES sont dans la partie
-#                ([] = jouable dans tous les lobbies)
-#   core         cartes clés (noms anglais exacts) : elles définissent la comp (3 points chacune)
-#   addons       cartes qui la renforcent (1 point chacune)
+# Same structure as HDT's comp guides (core cards / addon cards / when to commit / how to play).
+# Fields:
+#   id           short unique id (used by the preference rules of data/rules.yaml)
+#   name         shown name
+#   races        tribes needed: the comp is offered only if ALL are in the game
+#                ([] = playable in every lobby)
+#   core         key cards (exact English names): they define the comp (3 points each)
+#   addons       cards that make it stronger (1 point each)
 #   difficulty   easy / medium / hard
-#   when_to_commit  quand s'engager dans cette comp
-#   how_to_play  conseil de jeu en une ou deux phrases
-#   stats        placement moyen (avg, plus bas = mieux) et nombre de parties (games)
+#   when_to_commit  when to go for this comp
+#   how_to_play  play advice in one or two sentences
+#   stats        average place (avg, lower = better) and number of games (games)
 #
-# Source (27/10/2026, patch 36.6.3, saison 14) : guides et stats de https://bgbuddy.gg/comps
-# (données communautaires Firestone, Solo, tous MMR). Une comp n'est comptée qu'une fois construite,
-# donc toutes ont une moyenne meilleure que 4,5 : comparer les comps entre elles, pas à 4,5.
-# Sans "stats" = comp sans chiffres publics (avis seulement).
-# Un test vérifie que chaque nom de carte existe dans le pool Solo actuel (ni Duos, ni Naga).
+# Source (2026-10-27, patch 36.6.3, season 14): guides and stats from https://bgbuddy.gg/comps
+# (Firestone community data, Solo, all MMR). A comp is counted only once built, so all have an
+# average better than 4.5: compare comps with each other, not with 4.5.
+# No "stats" = a comp without public numbers (opinion only).
+# A test checks that each card name exists in the current Solo pool (no Duos, no rotated-out tribe).
 
 # ---------------------------------------------------------------- Aberrations
 - id: aberration-discard
@@ -48,9 +48,9 @@
   difficulty: hard
   when_to_commit: Rogers + Privateer with a Faceless Converter.
   how_to_play: Spend all your gold for Bounties (cast twice with Privateer); every spell grows Converter and Mindslasher.
-  # Pas de stats séparées : bgbuddy la range dans Aberration Deathrattle (Rogers/Privateer = add-ons).
+  # No separate stats: bgbuddy files it under Aberration Deathrattle (Rogers/Privateer = add-ons).
 
-# ---------------------------------------------------------------- Bêtes
+# ---------------------------------------------------------------- Beasts
 - id: beast-lobster
   name: Beast Lobster
   races: [BEAST]
@@ -81,7 +81,7 @@
   how_to_play: Cycle Beasts (Shark, Lionfish) to grow Leviathan; protect it with Taunts, losing it usually loses the fight.
   stats: {avg: 3.93, games: 7830}
 
-# ---------------------------------------------------------------- Démons
+# ---------------------------------------------------------------- Demons
 - id: demon-boost-shop
   name: Demon Boost Shop
   races: [DEMON]
@@ -133,7 +133,7 @@
   how_to_play: Cycle strong Battlecries; keep Kelp Keeper to retrigger Draconic Warden.
   stats: {avg: 3.96, games: 17000}
 
-# ---------------------------------------------------------------- Élémentaires
+# ---------------------------------------------------------------- Elementals
 - id: elemental-cycle
   name: Elemental Cycle
   races: [ELEMENTAL]
@@ -278,7 +278,7 @@
   how_to_play: Generate Blood Gems (Tunneler, Mangled Bandit) and play them on Roogug with Surveyor and Balinda.
   stats: {avg: 3.86, games: 31700}
 
-# ---------------------------------------------------------------- Morts-vivants
+# ---------------------------------------------------------------- Undead
 - id: undead-apm
   name: Undead APM
   races: [UNDEAD, PIRATE]
@@ -309,7 +309,7 @@
   how_to_play: Butcher makes Butchering spells, Geist and Titus boost them; pair with Bellringer and Mummifier for Reborn loops into Snazzy Phantom.
   stats: {avg: 3.65, games: 39300}
 
-# ---------------------------------------------------------------- Sans race
+# ---------------------------------------------------------------- No tribe
 - id: neutral-tea-set
   name: Neutral Tea Set
   races: []

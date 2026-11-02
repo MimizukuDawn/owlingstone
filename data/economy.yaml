@@ -1,16 +1,16 @@
-# Cartes d'économie (or, relances gratuites, Fodder) et d'avantage de cartes (cartes en plus, Discover,
-# sorts de taverne, Blood Gems...). Lu par planner.py pour les conseils Buy / Sell / Level.
+# Economy cards (gold, free rerolls, Fodder) and card advantage (extra cards, Discover, Tavern spells,
+# Blood Gems...). Read by the planner for the Buy / Sell / Level advice.
 #
-#   value : points, comme une carte "core" de comp = 3. Comptés plus tôt dans la partie (plus de tours
-#           pour en profiter) : ×1,2 au tour 2-4, ×1 vers le tour 6, ×0,3 en fin de partie.
-#   kind  : gold (or / relances / Fodder) ou cards (cartes en plus)
-#   when  : board = rapporte tant qu'elle est sur mon plateau (ne pas la vendre),
-#           play  = rapporte une fois en la jouant (après : bonne à vendre),
-#           sell  = rapporte en la vendant (à vendre quand on veut la récompense)
-#   note  : ce que la carte rapporte (affiché dans la raison)
-# Noms exacts de HearthstoneJSON. À compléter / corriger librement : rechargé à chaque démarrage.
+#   value : points, like a comp "core" card = 3. Worth more early in the game (more turns to use it):
+#           x1.2 on turns 2-4, x1 around turn 6, x0.3 late in the game.
+#   kind  : gold (gold / rerolls / Fodder) or cards (extra cards)
+#   when  : board = pays while on my board (don't sell it),
+#           play  = pays once when played (then fine to sell),
+#           sell  = pays when sold (sell it when you want the reward)
+#   note  : what the card gives (shown in the reason)
+# Exact HearthstoneJSON names. Complete / fix freely: reloaded when it changes.
 
-# --- or et relances, réguliers
+# --- gold and rerolls, every turn
 Accord-o-Tron: {value: 3, kind: gold, when: board, note: "+1 gold each turn"}
 Malchezaar, Prince of Dance: {value: 3, kind: gold, when: board, note: "2 free rolls each turn"}
 Snare Trapper: {value: 3, kind: gold, when: play, note: "+1 max gold for the game"}
@@ -27,7 +27,7 @@ Treasure Parrot: {value: 1.5, kind: gold, when: board, note: "Golden Touch after
 Ominous Seer: {value: 0.5, kind: gold, when: play, note: "next Tavern spell 1 cheaper"}
 Silent Deliverer: {value: 2, kind: cards, when: play, note: "a Golden Tier 4 minion"}
 
-# --- cartes en plus à chaque tour (les meilleures)
+# --- extra cards every turn (the best ones)
 Gearfin: {value: 3, kind: cards, when: board, note: "two 1-cost spells each turn"}
 Highkeeper Ra: {value: 3, kind: cards, when: board, note: "Tier 6 minions"}
 Cataclysmic Harbinger: {value: 2.5, kind: cards, when: board, note: "copy of your last spell each turn"}
@@ -39,7 +39,7 @@ Hired Mount: {value: 1.5, kind: cards, when: board, note: "a Chromadrake for 2 g
 Abyssal Envoy: {value: 1, kind: cards, when: board, note: "discard → Tavern spell"}
 Mangled Bandit: {value: 1, kind: cards, when: board, note: "discard → 3 Blood Gems"}
 
-# --- cartes gagnées en combat (Rally, Avenge, Deathrattle) : à chaque combat
+# --- cards won in combat (Rally, Avenge, Deathrattle): every fight
 Bigwig Bandit: {value: 2, kind: cards, when: board, note: "a Bounty each fight"}
 Bronze Timewalker: {value: 2, kind: cards, when: board, note: "a Chromadrake each fight"}
 Headhunter Gryphon: {value: 1.5, kind: cards, when: board, note: "a Beast each fight"}
@@ -54,7 +54,7 @@ Rescue Bot: {value: 1, kind: cards, when: board, note: "a Repair Job when it die
 Conveyor Construct: {value: 1, kind: cards, when: board, note: "a Volumizer when it dies"}
 Imp-lusionist: {value: 1, kind: cards, when: board, note: "a spell when it dies"}
 
-# --- une carte en la jouant, une autre quand elle meurt
+# --- a card when played, another when it dies
 Gormling Gourmet: {value: 1.5, kind: cards, when: board, note: "Seafood Stew now and on death"}
 Leyline Surfacer: {value: 1.5, kind: cards, when: board, note: "a spell now and on death"}
 Razorfen Flapper: {value: 1.5, kind: cards, when: board, note: "a spell now and on death"}
@@ -64,7 +64,7 @@ Nightmare Par-tea Guest: {value: 1.5, kind: cards, when: board, note: "Tea Set n
 Draconic Warden: {value: 1.5, kind: cards, when: board, note: "Chromadrake now and on death"}
 Shipwrecked Rascal: {value: 1.5, kind: cards, when: board, note: "Bounty now and on death"}
 
-# --- une carte en la jouant
+# --- a card when played
 Bilgewater Breakout: {value: 1, kind: cards, when: play, note: "a Lockbox"}
 Fearless Foodie: {value: 1, kind: cards, when: play, note: "4 Blood Gems"}
 Tavern Tempest: {value: 1, kind: cards, when: play, note: "an Elemental"}
@@ -79,6 +79,6 @@ Iron Groundskeeper: {value: 0.5, kind: cards, when: play, note: "2 Fortify"}
 Auto Accelerator: {value: 0.5, kind: cards, when: play, note: "a Volumizer"}
 Maw Caster: {value: 0.5, kind: cards, when: play, note: "Discover an Undead"}
 
-# --- une récompense en la vendant
+# --- a reward when sold
 Patient Scout: {value: 1.5, kind: cards, when: sell, note: "Discover a minion when sold (grows each turn)"}
 Wandering Willbreaker: {value: 1, kind: cards, when: sell, note: "2 spells when sold"}

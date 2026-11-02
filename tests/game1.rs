@@ -146,3 +146,25 @@ fn game1_record() {
     assert_eq!(r.comp.as_deref(), Some("mech-apm"));
     assert_eq!(r.races, ["ABERRATION", "BEAST", "DRAGON", "MECHANICAL", "MURLOC"]);
 }
+
+#[test]
+fn game1_snapshot_has_the_advice() {
+    if game1().is_none() {
+        return;
+    }
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("testdata/bg_game1.log");
+    let heroes = owlingstone::snapshot::replay_snapshot(&path, Some(0)).unwrap();
+    assert!(heroes.in_game);
+    assert_eq!(heroes.advice.heroes.len(), heroes.hero_options.len());
+    assert!(heroes.advice.heroes.len() >= 2);
+
+    let s = owlingstone::snapshot::replay_snapshot(&path, Some(5)).unwrap();
+    assert!(s.in_game && s.turn >= 5);
+    let plan = s.advice.plan.as_ref().expect("turn plan in the recruit phase");
+    assert!(!plan.advice.level_why.is_empty());
+    assert!(!s.advice.buy.is_empty() && s.advice.buy.len() <= 3);
+    assert!(!s.advice.ranked.is_empty());
+    assert!(s.combat.is_some());
+    assert_eq!(s.players.len(), 8);
+    assert_eq!(s.players.iter().filter(|p| p.me).count(), 1);
+}

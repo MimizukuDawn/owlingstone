@@ -126,7 +126,7 @@ pub fn learn_subsets(game: &Game, db: &CardDb, subsets: &mut Subsets) {
             continue;
         }
         let known = subsets.entry(card.id.clone()).or_default();
-        races.extend(known.drain(..));
+        races.append(known);
         races.sort();
         races.dedup();
         *known = races;

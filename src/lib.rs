@@ -10,6 +10,7 @@ pub mod data;
 pub mod errlog;
 pub mod game;
 pub mod history;
+pub mod hslogs;
 pub mod net;
 pub mod paths;
 pub mod pool;
@@ -19,8 +20,10 @@ pub mod rng;
 pub mod season;
 pub mod settings;
 pub mod share;
+pub mod snapshot;
 pub mod trinkets;
 pub mod update;
+pub mod watcher;
 
 /// The app's version (from Cargo.toml).
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

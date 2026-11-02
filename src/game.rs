@@ -144,6 +144,9 @@ pub struct Counters {
     pub undead: i64,
 }
 
+/// (attack, health).
+pub type Stats = (i64, i64);
+
 /// What was frozen at the first attack of a fight (both boards, tiers, bonuses).
 #[derive(Debug, Clone)]
 pub struct Frozen {
@@ -153,7 +156,7 @@ pub struct Frozen {
     /// Who attacked first: 0 = me, 1 = them, None = unknown.
     pub first: Option<u8>,
     pub counters: (Counters, Counters),
-    pub deity_stats: (Option<(i64, i64)>, Option<(i64, i64)>),
+    pub deity_stats: (Option<Stats>, Option<Stats>),
     pub gem: (i64, i64),
     pub spell: (i64, i64),
     pub cap: Option<i64>,
@@ -667,7 +670,7 @@ impl Game {
     /// Sure tribes of the lobby: seen on a single-tribe minion in Bob's shop (most seen first).
     pub fn available_races(&self) -> Vec<String> {
         let mut counts = self.shop_race_counts.clone();
-        counts.sort_by(|a, b| b.1.cmp(&a.1)); // stable: ties keep the order first seen
+        counts.sort_by_key(|c| std::cmp::Reverse(c.1)); // stable: ties keep the order first seen
         counts.into_iter().take(crate::season::get().lobby_tribes).map(|(r, _)| r).collect()
     }
 

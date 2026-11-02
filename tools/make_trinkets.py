@@ -18,16 +18,16 @@ CARDS = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "data" / "cards.json"
 OUT = ROOT / "data" / "trinkets.yaml"
 
 HEADER = """\
-# Trinkets du pool actuel : stats + infos des cartes. Fichier refait par tools/make_trinkets.py (ne pas modifier
-# à la main : modifier tools/bgbuddy_trinkets.txt puis relancer l'outil).
+# Trinkets of the current pool: stats + card info. File made by tools/make_trinkets.py (don't edit by
+# hand: edit tools/bgbuddy_trinkets.txt then run the tool again).
 #
-# Source des stats : https://bgbuddy.gg/trinkets (données communautaires Firestone, Solo, tous rangs, patch actuel,
-# relevé le 02/11/2026, saison 14, patch 36.6.x).
-#   avg   = placement moyen des joueurs qui l'ont pris (plus bas = mieux)
-#   pick  = % de fois où il est choisi quand il est proposé
-#   games = nombre de parties (moins de 500 = chiffre peu fiable)
-# Champs des cartes : kind (lesser / greater), cost (prix de base en or ; -2 si c'est un Trinket "pivot"),
-# races (race liée : proposé surtout si on en a sur le plateau), gives (serviteur donné par un Portrait / Sticker).
+# Stats source: https://bgbuddy.gg/trinkets (Firestone community data, Solo, all ranks, current patch,
+# read on 2026-11-02, season 14, patch 36.6.x).
+#   avg   = average place of the players who took it (lower = better)
+#   pick  = % of times it is picked when offered
+#   games = number of games (under 500 = not very reliable)
+# Card fields: kind (lesser / greater), cost (base price in gold; -2 for a "pivot" Trinket),
+# races (linked tribe: offered mostly if you have some on board), gives (minion given by a Portrait / Sticker).
 """
 
 

@@ -1,8 +1,8 @@
-# Placement moyen de chaque héros (plus bas = mieux) — modifiable à la main.
+# Average place of each hero (lower = better): edit by hand.
 #
-# Source (27/10/2026, patch 36.6.3) : https://bgbuddy.gg/heroes (données communautaires Firestone,
-# Solo, tous MMR, patch en cours). Les noms sont ceux de cards.json (un test le vérifie).
-# À rafraîchir après chaque gros patch ; un héros absent d'ici est affiché sans chiffre.
+# Source (2026-10-27, patch 36.6.3): https://bgbuddy.gg/heroes (Firestone community data,
+# Solo, all MMR, current patch). Names are those of cards.json (a test checks it).
+# Refresh after each big patch; a hero missing here is shown without a number.
 
 Lord Jaraxxus: {avg: 3.55, games: 18500}
 Death Speaker Blackthorn: {avg: 3.64, games: 12500}

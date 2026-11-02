@@ -1,8 +1,8 @@
-# Meilleurs héros de chaque comp (placement moyen du héros quand il joue cette comp, nb de parties).
-# Source : bgbuddy.gg/comps/<comp>?time_period=last-patch ("Best heroes for this comp", Firestone, Solo, tous
-# MMR, patch actuel), relevé le 2026-11-02. 8 héros max par comp (moins quand bgbuddy en montre moins).
-# Sert à : préférer les comps où mon héros réussit le mieux (planner / advice), et à montrer au choix du
-# héros les comps où chaque héros proposé est le meilleur. À relever de nouveau à chaque patch.
+# Best heroes of each comp (the hero's average place when it plays this comp, number of games).
+# Source: bgbuddy.gg/comps/<comp>?time_period=last-patch ("Best heroes for this comp", Firestone, Solo, all
+# MMR, current patch), read on 2026-11-02. 8 heroes at most per comp (fewer when bgbuddy shows fewer).
+# Used to prefer the comps where my hero does best (planner / advice), and to show, when picking a
+# hero, the comps where each offered hero is the best. Read again at each patch.
 aberration-discard:
   Rakanishu: [2.76, 237]
   Vol'jin: [2.83, 143]

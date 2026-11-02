@@ -1,21 +1,21 @@
-# Courbes et habitudes propres à certains héros, pour le plan du tour (planner.py).
-# Clé = nom exact du héros (ou du pouvoir héroïque, pour les héros qui en changent : Sir Finley, Nguyen, Genn).
+# Curves and habits of some heroes, for the turn plan (planner).
+# Key = exact hero name (or hero power name, for heroes that change it: Sir Finley, Nguyen, Genn).
 #
-#   curve       : tier à atteindre à la FIN de ces tours (les autres tours suivent le tour d'avant).
-#                 Absent = courbe standard (T2 tour 2, T3 tour 5, T4 tour 7, T5 tour 9, T6 tour 12).
-#   power       : every_turn = garder l'or du pouvoir chaque tour (prix lu dans le jeu) ;
-#                 from_turn: N = à partir du tour N ; until_turn: N = jusqu'au tour N ; never = ne rien garder.
-#                 Absent : un pouvoir à 1 ou 2 d'or est gardé à partir du tour 3 (règle automatique).
-#   level_bias  : + = monter plus volontiers (or en plus, vie en plus...), - = acheter plus.
-#   minion_cost : prix d'un serviteur s'il n'est pas de 3.
-#   buy_bonus   : points en plus pour acheter un serviteur de cette race (ex. PIRATE: 1.5).
-#   pair_bonus  : points en plus pour un 2e exemplaire (Mister Clocksworth : 2 exemplaires = doré).
-#   note        : conseil affiché dans le plan du tour.
-# Sources : textes des pouvoirs du patch actuel (HearthstoneJSON) et courbes connues des guides
-# (Rafaam : T2 au tour 4 puis montées enchaînées, hearthstonetopdecks "Battlegrounds Curves Explained").
-# À corriger librement : relu quand il change.
+#   curve       : tier to reach at the END of these turns (other turns follow the turn before).
+#                 Missing = standard curve (T2 turn 2, T3 turn 5, T4 turn 7, T5 turn 9, T6 turn 12).
+#   power       : every_turn = keep the power's gold every turn (price read from the game);
+#                 from_turn: N = from turn N; until_turn: N = until turn N; never = keep nothing.
+#                 Missing: a 1 or 2 gold power is kept from turn 3 (automatic rule).
+#   level_bias  : + = level more readily (extra gold, extra health...), - = buy more.
+#   minion_cost : price of a minion if not 3.
+#   buy_bonus   : extra points to buy a minion of this tribe (e.g. PIRATE: 1.5).
+#   pair_bonus  : extra points for a 2nd copy (Mister Clocksworth: 2 copies = golden).
+#   note        : advice shown in the turn plan.
+# Sources: hero power texts of the current patch (HearthstoneJSON) and known curves from guides
+# (Rafaam: T2 on turn 4 then level after level, hearthstonetopdecks "Battlegrounds Curves Explained").
+# Fix freely: reloaded when it changes.
 
-# --- courbes à part
+# --- own curves
 Arch-Villain Rafaam:
   curve: {3: 1, 4: 2, 5: 3, 6: 4, 8: 5, 11: 6}
   power: {every_turn: true, from_turn: 2}
@@ -46,7 +46,7 @@ Skycap'n Kragg:
   level_bias: 0.5
   note: "once per game gold (2 + 1 per turn): use it around turn 6-8 to level twice"
 
-# --- départ avec un serviteur ou beaucoup de vie : on peut être plus gourmand
+# --- start with a minion or a lot of health: can be greedier
 Sneed:
   curve: {2: 2, 4: 3, 6: 4, 8: 5, 11: 6}
   level_bias: 0.5
@@ -67,7 +67,7 @@ Patchwerk:
   level_bias: 1
   note: "30 extra health: you can afford greedy levels"
 
-# --- économie qui pousse à acheter / vendre
+# --- economy that pushes to buy / sell
 Cap'n Hoggarr:
   buy_bonus: {PIRATE: 1.5}
   note: "+1 gold for each Pirate you buy"
@@ -102,7 +102,7 @@ Snake Eyes:
   level_bias: 0.5
   note: "roll the die whenever it is ready: the gold helps you level"
 
-# --- pouvoirs payants à utiliser chaque tour
+# --- paid powers to use every turn
 Infinite Toki:
   power: {every_turn: true, from_turn: 2}
   note: "use Temporal Tavern as your roll: it shows 2 higher-Tier minions"

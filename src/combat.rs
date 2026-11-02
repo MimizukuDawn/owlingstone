@@ -772,7 +772,7 @@ impl<'a, 'r> Fight<'a, 'r> {
                         }
                         "BG36_515" => {
                             // Snazzy Phantom
-                            let undead = self.alive(side).into_iter().filter(|&u| self.ms[u].has_race("UNDEAD")).last();
+                            let undead = self.alive(side).into_iter().rfind(|&u| self.ms[u].has_race("UNDEAD"));
                             if let Some(u) = undead {
                                 let a = self.ms[r].atk * g;
                                 self.buff(u, a, a);
