@@ -136,3 +136,12 @@ def test_comp_tier_letters():
     assert comp_tier(c, table={})[0] == "A"
     assert comp_tier(c, bonus=3, table={})[0] == "S"          # règle prefer_if de 3 points
     assert comp_tier(Comp("y", "Y", [], [], []), table={})[0] == "?"
+
+
+def test_finished_game_shows_the_waiting_view(game1):  # noqa: F811
+    """Partie finie = on est dans les menus : plus de tour, de chances ni de plan, juste le résultat."""
+    from bgtracker.ui import make_snapshot, waiting_text
+    snap = make_snapshot(game1)
+    assert snap["in_game"] is False and snap["over"] and snap["placement"] == 6
+    assert "combat" not in snap and "plan" not in snap
+    assert "finished <b>#6</b>" in waiting_text(snap)

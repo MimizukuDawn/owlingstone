@@ -104,6 +104,12 @@ def make_snapshot(game):
     """Copie simple (dict) de ce que la fenêtre affiche : pas d'objet partagé entre les 2 fils."""
     if game is None or not game.is_battlegrounds:
         return {"in_game": False}
+    if game.is_over:
+        # Partie finie : on est dans les menus. Plus de tour, de chances de combat ni de plan :
+        # la fenêtre et le HUD reviennent à l'attente, avec le résultat de la partie en en-tête.
+        hero = game.my_hero
+        return {"in_game": False, "over": True, "placement": game.my_placement,
+                "last_hero": hero.name if hero else None}
     hero = game.my_hero
 
     def ids(entities):
@@ -176,6 +182,9 @@ def waiting_text(snap):
     if status == "no_log":
         return (f"No Power.log yet in {html.escape(snap.get('logs_dir') or 'the Logs folder')}. "
                 "If the game is open, restart it once (logging is turned on at its start).")
+    if snap.get("over") and snap.get("placement"):
+        hero = html.escape(snap.get("last_hero") or "Last game")
+        return f"{hero}: finished <b>#{snap['placement']}</b> · Waiting for the next game…"
     return "Waiting for a Battlegrounds game…"
 
 
@@ -214,7 +223,10 @@ class LogWorker(QThread):
         last, learned_for, errors, status = None, None, 0, None
         while not self.isInterruptionRequested():
             try:
-                if watcher.poll():
+                read = watcher.poll()
+                if read and watcher.behind:
+                    continue            # rattrapage d'un gros log : rien à l'écran avant d'être à jour
+                if read:
                     g = watcher.game
                     snap = make_snapshot(g)
                     snap["log_status"] = watcher.status
@@ -244,8 +256,9 @@ class LogWorker(QThread):
         save_subsets(learn_subsets([g], load_subsets()))
         try:
             record = game_record(g, load_comps(), log_date(watcher.path))
-            add_records([record])
-            if share.add_game(g, record):     # seulement si le joueur a dit oui
+            # Seulement une partie pas encore notée (un redémarrage de l'appli ne la renvoie pas),
+            # et seulement si le joueur a dit oui au partage.
+            if add_records([record]) and share.add_game(g, record):
                 send_in_background()
         except (OSError, ValueError):
             pass                    # comps.yaml cassé : la fenêtre l'affiche déjà
