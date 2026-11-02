@@ -172,6 +172,20 @@ def comp_avg(comp, hero=None, table=None):
     return found[0] if found else comp.stats.get("avg", 9)
 
 
+# Tier list : placement moyen ajusté (mon héros, mes règles) -> lettre. Une règle "prefer_if" de 3 points
+# (= une carte core) gagne 0,15 place ; "avoid_if" en perd autant.
+TIERS = [("S", 3.30), ("A", 3.50), ("B", 3.70), ("C", 3.90), ("D", 99)]
+RULE_PLACE = 0.05
+
+
+def comp_tier(comp, hero=None, bonus=0, table=None):
+    """(lettre, placement ajusté) de la comp dans ce lobby ; ("?", 9) sans stats."""
+    avg = round(comp_avg(comp, hero, table) - RULE_PLACE * bonus, 6)   # 3.45 - 0.15 = 3.3000000000000003
+    if avg >= 9:
+        return "?", avg
+    return next(letter for letter, top in TIERS if avg <= top), avg
+
+
 def hero_best_comps(hero, comps, races=None, top=3, table=None):
     """[(Comp, placement moyen du héros avec elle, parties)] : les comps où ce héros est parmi les
     meilleurs, jouables dans ce lobby (toutes si les races ne sont pas connues), meilleures d'abord."""

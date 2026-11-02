@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QPushButton, QScroll
 
 from .advice import PLAYING_MIN_CONFIDENCE
 from .cards import get_db
-from .comps import available_comps, cards_from_ids, lobby_comps, match_comps
+from .comps import available_comps, cards_from_ids, comp_tier, load_hero_comps, lobby_comps, match_comps
 from .history import HISTORY_PATH, load_history
 from .rules import judge
 from .widgets import (HEALTH, Thumbs, Tile, card_tile, pill_html, place_color, plain_text,
@@ -240,6 +240,10 @@ class CompCard(QFrame):
         self.clicked.emit(self.comp_id)
 
 
+TIER_ORDER = ["S", "A", "B", "C", "D", "?"]
+TIER_LIST_COLORS = {"S": "#ff7f7f", "A": "#ffbf7f", "B": "#ffdf7f", "C": "#bfff7f", "D": "#7fbfff", "?": "#9aa0ad"}
+
+
 def page_scroll(page):
     """Un onglet entier dans une zone qui défile verticalement : quand le plan du tour, les achats et
     les comps ne tiennent pas, l'onglet défile au lieu d'agrandir la fenêtre (qui débordait alors de
@@ -422,6 +426,9 @@ class LobbyWindow(QWidget):
     def apply_folds(self):
         for layout in self.page_layouts:
             apply_folds(layout)
+        inner = self.comps_scroll.widget()
+        if inner is not None and inner.layout() is not None:
+            apply_folds(inner.layout())          # tiers de la liste des comps
 
     # -------------------------------------------------------------- affichage
     def render(self, force=False):
@@ -488,8 +495,25 @@ class LobbyWindow(QWidget):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(4)
         open_id = self.shown_comp()
+        # Tier list (S à D) : placement moyen de la comp, celui de mon héros s'il en est un des meilleurs,
+        # ajusté par mes règles ; celle que je joue en tête de son tier. Chaque tier se replie.
+        table = load_hero_comps()
+        ranked = []
         for comp in shown:
-            row = CompCard(comp, judge(comp.id, main.rules, ctx), owned, shop, comp.id == main.playing_comp,
+            verdict = judge(comp.id, main.rules, ctx)
+            letter, avg = comp_tier(comp, ctx["hero"], verdict.bonus, table)
+            ranked.append((TIER_ORDER.index(letter), comp.id != main.playing_comp, avg, comp, verdict))
+        ranked.sort(key=lambda r: r[:3])
+        current = None
+        for rank, _, avg, comp, verdict in ranked:
+            letter = TIER_ORDER[rank]
+            if letter != current:
+                current = letter
+                count = sum(1 for r in ranked if r[0] == rank)
+                head = section(f"{letter} tier · {count} comp{'s' if count > 1 else ''}", key=f"tier {letter.lower()}")
+                head.setStyleSheet(f"color: {TIER_LIST_COLORS[letter]};")
+                lay.addWidget(head)
+            row = CompCard(comp, verdict, owned, shop, comp.id == main.playing_comp,
                            comp.id == open_id, main.tiles, main.art_box.isChecked())
             row.clicked.connect(self.on_comp_clicked)
             lay.addWidget(row)
@@ -499,6 +523,7 @@ class LobbyWindow(QWidget):
             note.setWordWrap(True)
             lay.addWidget(note)
         lay.addStretch(1)
+        apply_folds(lay)
         self.comps_scroll.setWidget(w)
 
     def render_counters(self):

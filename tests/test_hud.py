@@ -128,3 +128,11 @@ def test_folded_section_hides_until_next_header():
     hud.FOLDED.clear()
     hud.apply_folds(lay)
     assert not x.isHidden()
+
+
+def test_comp_tier_letters():
+    from bgtracker.comps import Comp, comp_tier
+    c = Comp("x", "X", [], [], [], stats={"avg": 3.45})
+    assert comp_tier(c, table={})[0] == "A"
+    assert comp_tier(c, bonus=3, table={})[0] == "S"          # règle prefer_if de 3 points
+    assert comp_tier(Comp("y", "Y", [], [], []), table={})[0] == "?"

@@ -2,6 +2,12 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 1.8.2
+- The Owlingstone server address is set: "Share my games" and "Send feedback" now work. If the server is offline, your games and feedback wait on your PC and leave with a later send.
+
+## 1.8.1
+- Right panel: the comps are now a tier list (S, A, B, C, D). The tier comes from the comp's average placement, using your hero's own result with it when your hero is one of its best, plus your rules (prefer / avoid). The comp you play is first in its tier. Click a tier title to fold it.
+
 ## 1.8.0
 - Share my games (optional, asked once, "No" by default): at the end of a game, an anonymous summary (hero, placement, comp, lobby tribes, final board and each fight's boards: cards and stats only) is sent to the Owlingstone server. Never your BattleTag, other players' names, your logs or files. Games are sent together in one small request, at the end of a game or when the app starts; offline, they wait (30 days at most).
 - Send feedback: right-click the tray icon > "Send feedback…" to send an idea, a bug or anything else (1000 characters). It leaves with the next send, even if you don't share your games.

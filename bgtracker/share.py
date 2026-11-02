@@ -23,7 +23,7 @@ from .paths import USER_DIR
 from .update import REPO
 
 # Adresse de l'API (Cloudflare Workers). Vide = partage indisponible dans cette version.
-API_URL = ""
+API_URL = "https://owlingstone-api.mimizuku-dawn.workers.dev"
 STATS_URL = f"https://github.com/{REPO}/releases/download/stats/stats.json"
 
 STATE_PATH = USER_DIR / "sharing.json"

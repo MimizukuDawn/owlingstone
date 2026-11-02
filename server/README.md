@@ -12,6 +12,8 @@ A Cloudflare Worker (`src/worker.js`) with a D1 database (`schema.sql`), built f
 With no payment method on the account, Cloudflare can never bill: past a limit, requests fail until the
 next day (00:00 UTC).
 
+Public address: `https://owlingstone-api.mimizuku-dawn.workers.dev` (set as `API_URL` in `bgtracker/share.py`).
+
 ## Routes
 
 - `POST /v1/games` `{"install", "games": [...], "feedback": [...]}`: every field is checked by
