@@ -17,12 +17,13 @@ import json
 import os
 import sys
 import threading
+import traceback
 import time
 from pathlib import Path
 
 from PySide6.QtCore import QDir, QLockFile, QThread, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QIcon, QPainter, QPixmap
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog, QHBoxLayout, QLabel,
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel,
                                QMenu, QMessageBox, QPlainTextEdit, QPushButton, QScrollArea, QSystemTrayIcon, QVBoxLayout,
                                QWidget)
 
@@ -44,6 +45,7 @@ from .rules import RULES_PATH, load_rules
 from .update import (AFTER_UPDATE, log_tail, newer_version, remove_old_exe, start_update, take_failed_mark,
                      update_script, whats_new)
 from .tiles import CARD_URLS, CARDS_DIR, TileCache
+from .hslogs import ensure_log_config, find_logs_dir
 from .watcher import DEFAULT_LOGS_DIR, LogWatcher
 from .widgets import card_tile, install_preview
 
@@ -165,6 +167,18 @@ def _base_id(card_id):
     return c.id if c else card_id
 
 
+def waiting_text(snap):
+    """Ce que dit l'en-tête hors partie : attendre, ou ce qui manque pour lire le jeu."""
+    status = snap.get("log_status")
+    if status == "no_folder":
+        return ("Hearthstone not found. Start the game, or right-click the tray icon > "
+                "<b>Choose Hearthstone folder…</b>")
+    if status == "no_log":
+        return (f"No Power.log yet in {html.escape(snap.get('logs_dir') or 'the Logs folder')}. "
+                "If the game is open, restart it once (logging is turned on at its start).")
+    return "Waiting for a Battlegrounds game…"
+
+
 class LogWorker(QThread):
     snapshot = Signal(dict)   # signal Qt : transporte l'instantané vers la fenêtre
 
@@ -193,28 +207,64 @@ class LogWorker(QThread):
         self.snapshot.emit(make_snapshot(parser.game))
 
     def _run_live(self):
+        """Boucle de lecture. Une erreur (ligne inattendue, bug du simulateur...) ne l'arrête jamais :
+        elle est notée dans error.log et la lecture continue ; après plusieurs erreurs de suite, on
+        repart d'un lecteur neuf (le jeu en cours est relu depuis le début du fichier)."""
         watcher = LogWatcher()
-        last, learned_for = None, None
+        last, learned_for, errors, status = None, None, 0, None
         while not self.isInterruptionRequested():
-            if watcher.poll():
-                g = watcher.game
-                snap = make_snapshot(g)
-                if snap != last:
-                    last = snap
-                    self.snapshot.emit(snap)
-                # Fin de partie : on retient les neutres liés à une race (tags BACON_SUBSET_*)
-                # et on note la partie dans l'historique (history.jsonl).
-                if g is not None and g.is_over and learned_for is not g:
-                    learned_for = g
-                    save_subsets(learn_subsets([g], load_subsets()))
-                    try:
-                        record = game_record(g, load_comps(), log_date(watcher.path))
-                        add_records([record])
-                        if share.add_game(g, record):     # seulement si le joueur a dit oui
-                            send_in_background()
-                    except (OSError, ValueError):
-                        pass                    # comps.yaml cassé : la fenêtre l'affiche déjà
+            try:
+                if watcher.poll():
+                    g = watcher.game
+                    snap = make_snapshot(g)
+                    snap["log_status"] = watcher.status
+                    if snap != last:
+                        last = snap
+                        self.snapshot.emit(snap)
+                    if g is not None and g.is_over and learned_for is not g:
+                        learned_for = g
+                        self._game_over(g, watcher)
+                elif watcher.status != status and (last is None or not last.get("in_game")):
+                    # Rien à lire : on dit pourquoi (dossier introuvable, pas encore de Power.log...).
+                    last = {"in_game": False, "log_status": watcher.status, "logs_dir": str(watcher.logs_dir or "")}
+                    self.snapshot.emit(last)
+                status = watcher.status
+                errors = 0
+            except Exception:           # noqa: BLE001 : le fil de lecture ne doit jamais mourir
+                errors += 1
+                log_error("log reader")
+                if errors >= 5:
+                    watcher, last, errors = LogWatcher(), None, 0
+                    time.sleep(2)
             time.sleep(0.25)            # 4 lectures par seconde : un changement (pouvoir, boutique) se voit vite
+
+    def _game_over(self, g, watcher):
+        """Fin de partie : on retient les neutres liés à une race (tags BACON_SUBSET_*) et on note la
+        partie dans l'historique (history.jsonl), puis on l'envoie si le joueur partage."""
+        save_subsets(learn_subsets([g], load_subsets()))
+        try:
+            record = game_record(g, load_comps(), log_date(watcher.path))
+            add_records([record])
+            if share.add_game(g, record):     # seulement si le joueur a dit oui
+                send_in_background()
+        except (OSError, ValueError):
+            pass                    # comps.yaml cassé : la fenêtre l'affiche déjà
+
+
+ERROR_LOG = USER_DIR / "error.log"
+
+
+def log_error(where, path=ERROR_LOG, limit=200_000):
+    """Ajoute l'erreur en cours (avec sa pile d'appels) à error.log ; l'ancien fichier devient
+    error.log.1 au-delà de `limit` octets. À joindre à un rapport de bug (tray > Open my data folder)."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists() and path.stat().st_size > limit:
+            path.replace(path.with_name(path.name + ".1"))
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"--- {time.strftime('%Y-%m-%d %H:%M:%S')} v{__version__} {where}\n{traceback.format_exc()}\n")
+    except OSError:
+        pass
 
 
 # ------------------------------------------------------------------ détection du premier plan
@@ -286,7 +336,7 @@ class StatsDialog(QDialog):
         self.text.setPlainText(prefix + format_report(load_history(), self.rules))
 
     def import_logs(self):
-        paths = sorted(DEFAULT_LOGS_DIR.glob("Hearthstone_*/Power*.log"))
+        paths = sorted((find_logs_dir() or DEFAULT_LOGS_DIR).glob("Hearthstone_*/Power*.log"))
         QApplication.setOverrideCursor(Qt.WaitCursor)     # peut prendre quelques secondes
         try:
             added = add_records(import_logs(paths, self.comps))
@@ -636,7 +686,7 @@ class MainWindow(QWidget):
         tier = self.shown_tier()
         # En-tête
         if not s.get("in_game"):
-            self.header.setText("<span style='color:#9aa0ad'>Waiting for a Battlegrounds game…</span>")
+            self.header.setText("<span style='color:#9aa0ad'>" + waiting_text(s) + "</span>")
         else:
             parts = [f"<b>{html.escape(s['hero'] or 'Choosing hero…')}</b>",
                      f"Tier {s['tier'] or '?'}", f"Turn {s['turn']}"]
@@ -962,6 +1012,8 @@ def tray_icon(app, win):
     stats.triggered.connect(win.show_stats)
     news = QAction("What's new", menu)
     news.triggered.connect(lambda: show_whats_new(tray))
+    hs_dir = QAction("Choose Hearthstone folder…", menu)
+    hs_dir.triggered.connect(lambda: choose_hearthstone_dir(win))
     folder = QAction("Open my data folder", menu)
     folder.triggered.connect(lambda: os.startfile(USER_DIR) if hasattr(os, "startfile") else None)
     # Toujours présent : reconstruit l'exe depuis le projet (le texte change quand une version est prête).
@@ -989,7 +1041,7 @@ def tray_icon(app, win):
     tray.sharing_action = sharing
     quit_ = QAction("Quit Owlingstone", menu)
     quit_.triggered.connect(app.quit)
-    for action in (show, stats, odds, narrower, wider, news, folder, tray.update_action):
+    for action in (show, stats, odds, narrower, wider, news, hs_dir, folder, tray.update_action):
         menu.addAction(action)
     menu.addSeparator()
     for action in (feedback, sharing, shown, erase):
@@ -1000,6 +1052,16 @@ def tray_icon(app, win):
     tray.menu = menu                       # garde le menu en vie (sinon Python le libère)
     tray.show()
     return tray
+
+
+def choose_hearthstone_dir(win):
+    """Hearthstone installé ailleurs et pas trouvé tout seul : le joueur montre le dossier (celui du jeu
+    ou son dossier Logs). Lu par hslogs à la recherche suivante (quelques secondes)."""
+    start = win.settings.get("hearthstone_dir") or str(find_logs_dir() or "C:\\")
+    folder = QFileDialog.getExistingDirectory(None, "Hearthstone folder (the one with Hearthstone.exe)", start)
+    if folder:
+        win.settings["hearthstone_dir"] = folder
+        save_settings(win.settings)
 
 
 def show_whats_new(tray, version=__version__):
@@ -1058,6 +1120,9 @@ def run(replay_path=None, stop_turn=None, screenshot=None):
         ask_sharing()
         if tray:
             tray.sharing_action.setChecked(share.enabled())
+        if ensure_log_config() == "written" and tray:   # Power.log était coupé : on l'active
+            tray.showMessage("Owlingstone", "Hearthstone logging is now on. If the game is open, restart it "
+                             "once so Owlingstone can read it.", QSystemTrayIcon.Information, 15000)
         send_in_background()                   # avis ou parties restés en file
         threading.Thread(target=share.download_stats, name="stats", daemon=True).start()
     worker = LogWorker(replay_path, stop_turn)
