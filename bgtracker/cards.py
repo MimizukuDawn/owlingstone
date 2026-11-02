@@ -3,17 +3,31 @@
 Qui fait quoi :
 - HearthstoneJSON publie toutes les cartes du jeu dans un fichier JSON gratuit.
 - download() le récupère dans cards.json (dossier de mes données, USER_DIR) ; get_db() le charge une seule fois en mémoire.
+- data/cards-fallback.json.gz : une copie réduite incluse dans l'appli. Premier lancement sans internet (ou
+  HearthstoneJSON en panne) : l'appli démarre avec elle au lieu de planter.
+- Mise à jour en arrière-plan (jamais dans le fil de l'interface) : au démarrage si cards.json manque ou a
+  plus de 7 jours, et quand le jeu montre une carte inconnue (nouveau patch). La base neuve remplace
+  l'ancienne d'un coup, une fois chargée.
 - Card : petit objet lisible (card.name, card.tier, card.races) au lieu d'un dict brut.
 """
+import gzip
 import json                    # lire le fichier cards.json
+import os
+import re
+import threading
+import time
 import urllib.request          # télécharger sans dépendance externe
 from dataclasses import dataclass
-from functools import lru_cache  # mémorise le résultat : on ne charge le fichier qu'une fois
 
-from .paths import USER_DIR
+from .paths import DATA_DIR, USER_DIR
 
 CARDS_URL = "https://api.hearthstonejson.com/v1/latest/enUS/cards.json"
 CARDS_PATH = USER_DIR / "cards.json"
+FALLBACK_PATH = DATA_DIR / "cards-fallback.json.gz"
+MAX_AGE = 7 * 86400            # cards.json plus vieux : on le retélécharge (patchs fréquents)
+UNKNOWN_RETRY = 6 * 3600       # carte inconnue : au plus un téléchargement toutes les 6 h
+NO_DOWNLOAD = "OWLINGSTONE_NO_CARD_DOWNLOAD"   # tests : jamais de réseau
+CARD_ID = re.compile(r"^[A-Za-z0-9]+_[A-Za-z0-9_]+$")
 
 # Races sorties du pool alors que HearthstoneJSON les marque encore "pool" (à mettre à jour à
 # chaque saison). Naga : retirés au patch 36.6.1 (22/09/2026) ; les doubles races Naga restent.
@@ -44,10 +58,14 @@ def download(path=CARDS_PATH):
     path.parent.mkdir(parents=True, exist_ok=True)
     # HearthstoneJSON refuse (403) le User-Agent par défaut de Python : on se présente.
     req = urllib.request.Request(CARDS_URL, headers={
-        "User-Agent": f"Owlingstone/{__version__} (+https://github.com/MimizukuDawn/owlingstone)"})
+        "User-Agent": f"Owlingstone/{__version__} (+https://github.com/owlingstone/owlingstone)"})
     tmp = path.with_suffix(".part")
-    with urllib.request.urlopen(req, timeout=60) as resp, open(tmp, "wb") as f:  # nosec B310 : URL fixe https
-        f.write(resp.read())
+    with urllib.request.urlopen(req, timeout=60) as resp:  # nosec B310 : URL fixe https
+        data = resp.read(100_000_001)
+    cards = json.loads(data)     # refuse un fichier coupé ou une page d'erreur
+    if not isinstance(cards, list) or len(cards) < 1000 or len(data) > 100_000_000:
+        raise ValueError("HearthstoneJSON sent something that is not the card list")
+    tmp.write_bytes(data)
     tmp.replace(path)            # remplace seulement si le téléchargement est complet
 
 
@@ -82,11 +100,17 @@ class CardDb:
         }
 
     def get(self, card_id):
-        return self.by_id.get(card_id)
+        card = self.by_id.get(card_id)
+        if card is None and card_id:
+            _unknown(card_id)
+        return card
 
     def base(self, card_id):
         """Carte normale (non dorée) correspondant à card_id."""
-        return self.by_id.get(self.normal_of.get(card_id, card_id))
+        card = self.by_id.get(self.normal_of.get(card_id, card_id))
+        if card is None and card_id:
+            _unknown(card_id)
+        return card
 
     def pool_minions(self, duos=False):
         """Serviteurs que Bob peut proposer : sans les cartes Duos (en Solo) ni les races sorties."""
@@ -102,10 +126,87 @@ def _in_mode(card, duos):
     return duos or not card.is_duos_only
 
 
-@lru_cache(maxsize=1)
-def get_db():
-    """Charge la base une fois ; la télécharge si le fichier n'existe pas encore."""
-    if not CARDS_PATH.exists():
-        download()
-    with open(CARDS_PATH, encoding="utf-8") as f:
+# ------------------------------------------------------------------ chargement et mise à jour
+_lock = threading.Lock()
+_db = None
+_state = {"thread": None, "last_try": 0.0, "source": None}
+
+
+def _read(path):
+    opener = gzip.open if path.suffix == ".gz" else open
+    with opener(path, "rt", encoding="utf-8") as f:
         return CardDb(json.load(f))
+
+
+def get_db():
+    """La base de cartes, chargée une fois : cards.json de l'utilisateur, sinon la copie incluse.
+    Ne télécharge jamais dans le fil appelant (l'interface ne gèle pas, et hors ligne rien ne plante)."""
+    global _db
+    db = _db
+    if db is not None:
+        return db
+    with _lock:
+        if _db is None:
+            try:
+                _db, _state["source"] = _read(CARDS_PATH), CARDS_PATH
+            except (OSError, ValueError, KeyError, TypeError):
+                _db, _state["source"] = _read(FALLBACK_PATH), FALLBACK_PATH
+            if _stale():
+                refresh_in_background()
+        return _db
+
+
+def reset():
+    """Oublie la base en mémoire : le prochain get_db() relit le fichier (après un téléchargement)."""
+    global _db
+    with _lock:
+        _db = None
+
+
+def _stale(now=None):
+    now = time.time() if now is None else now
+    try:
+        return now - CARDS_PATH.stat().st_mtime > MAX_AGE
+    except OSError:
+        return True
+
+
+def refresh_in_background(force=False, now=None):
+    """Télécharge cards.json dans un fil à part, au plus une fois toutes les UNKNOWN_RETRY secondes.
+    Renvoie le fil lancé, ou None si rien à faire."""
+    now = time.time() if now is None else now
+    if os.environ.get(NO_DOWNLOAD):
+        return None
+    t = _state["thread"]
+    if t is not None and t.is_alive():
+        return None
+    if not force and now - _state["last_try"] < UNKNOWN_RETRY:
+        return None
+    _state["last_try"] = now
+
+    def work():
+        global _db
+        try:
+            download()
+            fresh = _read(CARDS_PATH)       # chargée ici, pas dans le fil de l'interface
+            with _lock:
+                _db, _state["source"] = fresh, CARDS_PATH
+        except (OSError, ValueError, KeyError, TypeError):
+            pass                  # hors ligne ou site en panne : on garde la base actuelle
+    t = threading.Thread(target=work, name="cards-refresh", daemon=True)
+    _state["thread"] = t
+    t.start()
+    return t
+
+
+def _unknown(card_id):
+    """Le jeu montre une carte absente de la base : sûrement un nouveau patch. On retélécharge, sauf si
+    cards.json vient d'être téléchargé (certains ids du log n'existent nulle part)."""
+    if not CARD_ID.match(str(card_id)):
+        return
+    try:
+        fresh = time.time() - CARDS_PATH.stat().st_mtime < UNKNOWN_RETRY
+    except OSError:
+        fresh = False
+    if not fresh:
+        refresh_in_background()

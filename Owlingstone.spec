@@ -28,6 +28,7 @@ a = Analysis(
     pathex=[str(ROOT)],
     datas=[(str(ROOT / "bgtracker" / "icon.ico"), "bgtracker"),
            (str(ROOT / "data" / "*.yaml"), "data"),
+           (str(ROOT / "data" / "cards-fallback.json.gz"), "data"),
            (str(ROOT / "CHANGELOG.md"), ".")],
     excludes=["tkinter", "PySide6.QtQml", "PySide6.QtQuick", "PySide6.QtOpenGL"],
 )

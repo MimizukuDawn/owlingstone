@@ -14,7 +14,7 @@ Hearthstone writes on your PC, like other community trackers.
 
 ## Install
 
-1. Download **`Owlingstone.exe`** from the [latest release](https://github.com/MimizukuDawn/owlingstone/releases/latest).
+1. Download **`Owlingstone.exe`** from the [latest release](https://github.com/owlingstone/owlingstone/releases/latest).
 2. Put it anywhere you can write to (for example your Documents folder or Desktop) and run it. That's all.
 3. Windows may say "Windows protected your PC" because the app is not signed with a paid certificate:
    click **More info**, then **Run anyway**.
@@ -30,7 +30,7 @@ build attestation proving the exe was built by GitHub Actions from this reposito
 
 ```powershell
 Get-FileHash .\Owlingstone.exe -Algorithm SHA256   # compare with the SHA-256 in the release notes
-gh attestation verify .\Owlingstone.exe --repo MimizukuDawn/owlingstone
+gh attestation verify .\Owlingstone.exe --repo owlingstone/owlingstone
 ```
 
 ### Hearthstone logs
