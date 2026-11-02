@@ -1,5 +1,5 @@
 # Top-level packages, exact versions. requirements.txt is made from this file with every hash (see its header).
 PySide6==6.12.0
 PyYAML==6.0.3
-pytest==9.1.1
+pytest==9.2.0
 pyinstaller==6.22.3
