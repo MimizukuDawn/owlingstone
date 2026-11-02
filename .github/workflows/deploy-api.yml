@@ -31,11 +31,11 @@ jobs:
           echo "::add-mask::$id"
           sed -i "s/LOCAL_ONLY/$id/" wrangler.toml
           $WRANGLER d1 execute owlingstone --remote --file schema.sql > out.txt 2>&1 \
-            && echo "schema ok" || { sed -E 's/[0-9a-f]{16,}/<hidden>/g' out.txt | tail -20; exit 1; }
+            && echo "schema ok" || python3 d1_id.py --filter < out.txt
       - name: Deploy
         run: |
           $WRANGLER deploy > out.txt 2>&1 && echo "deployed" \
-            || { sed -E 's/[0-9a-f]{16,}/<hidden>/g; s#https://[^ ]*workers.dev#<url>#g' out.txt | tail -20; exit 1; }
+            || python3 d1_id.py --filter < out.txt
       - name: Admin key (Worker secret)
         env:
           ADMIN_KEY: ${{ secrets.OWLINGSTONE_ADMIN_KEY }}

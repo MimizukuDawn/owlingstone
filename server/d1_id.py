@@ -1,6 +1,8 @@
 """Prints the id of the "owlingstone" D1 database (creates it if --create and missing).
-Used by the workflows. On failure it prints wrangler's error with every long hex id masked, because
-Actions logs are public."""
+Used by the workflows. Actions logs are public, so on failure it prints only wrangler's error lines,
+with ids, e-mail addresses and account names hidden (wrangler's own output names the account owner).
+
+    python3 d1_id.py --filter < out.txt     same safe filter for any wrangler output"""
 import json
 import re
 import subprocess  # nosec B404 : runs the wrangler CLI with fixed arguments
@@ -10,7 +12,16 @@ WRANGLER = ["npx", "--yes", "wrangler@4.156.2"]
 
 
 def masked(text):
-    return re.sub(r"[0-9a-f]{16,}|[0-9a-f-]{36}", "<hidden>", text)
+    """Keeps only error lines; hides ids, e-mails and anything naming the account."""
+    keep = []
+    for line in text.splitlines():
+        if not re.search(r"ERROR|\[code: \d+\]|error:", line, re.I) or re.search(r"account name|'s account", line, re.I):
+            continue
+        line = re.sub(r"[\w.+-]+@[\w-]+(\.[\w-]+)+", "<hidden>", line)
+        line = re.sub(r"[0-9a-fA-F-]{16,}", "<hidden>", line)
+        line = re.sub(r"https?://\S+", "<url>", line)
+        keep.append(line.strip()[:200])
+    return "\n".join(keep[-10:]) or "(no error line; full output hidden because logs are public)"
 
 
 def run(*args):
@@ -32,6 +43,9 @@ def find():
 
 
 def main(argv):
+    if "--filter" in argv:
+        sys.stderr.write(masked(sys.stdin.read()) + "\n")
+        sys.exit(1)
     db = find()
     if not db and "--create" in argv:
         code, out, err = run("d1", "create", "owlingstone")
