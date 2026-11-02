@@ -16,16 +16,17 @@ import html
 import json
 import os
 import sys
+import threading
 import time
 from pathlib import Path
 
 from PySide6.QtCore import QDir, QLockFile, QThread, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog, QHBoxLayout, QLabel,
-                               QMenu, QPlainTextEdit, QPushButton, QScrollArea, QSystemTrayIcon, QVBoxLayout,
+                               QMenu, QMessageBox, QPlainTextEdit, QPushButton, QScrollArea, QSystemTrayIcon, QVBoxLayout,
                                QWidget)
 
-from . import __version__
+from . import __version__, share
 from .advice import (HEROES_PATH, PLAYING_MIN_CONFIDENCE, ShopPick, load_heroes, non_golden, rank_heroes,
                      shop_advice, target_comps)
 from .cards import get_db
@@ -206,7 +207,10 @@ class LogWorker(QThread):
                     learned_for = g
                     save_subsets(learn_subsets([g], load_subsets()))
                     try:
-                        add_records([game_record(g, load_comps(), log_date(watcher.path))])
+                        record = game_record(g, load_comps(), log_date(watcher.path))
+                        add_records([record])
+                        if share.add_game(g, record):     # seulement si le joueur a dit oui
+                            send_in_background()
                     except (OSError, ValueError):
                         pass                    # comps.yaml cassé : la fenêtre l'affiche déjà
             time.sleep(0.25)            # 4 lectures par seconde : un changement (pouvoir, boutique) se voit vite
@@ -808,6 +812,106 @@ class MainWindow(QWidget):
         return w
 
 
+# ------------------------------------------------------------------ partage (opt-in) et avis
+def send_in_background():
+    """Envoie la file de partage sans bloquer la fenêtre (un seul envoi groupé)."""
+    def run():
+        try:
+            share.flush()
+        except Exception:             # réseau, serveur... la file attend le prochain envoi
+            pass
+    threading.Thread(target=run, name="share", daemon=True).start()
+
+
+SHARE_QUESTION = (
+    "Share anonymous game summaries to improve everyone's advice?\n\n"
+    "When a game ends, Owlingstone would send your hero, placement, comp, lobby tribes, final board and the "
+    "boards of each fight (cards and stats only). Never your BattleTag, other players' names, your logs or "
+    "files. You can turn it off or delete what you sent at any time from the tray menu.")
+
+
+def ask_sharing(parent=None):
+    """Demandé une seule fois. NON par défaut."""
+    if share.asked() or not share.API_URL:
+        return
+    box = QMessageBox(QMessageBox.Question, "Owlingstone", SHARE_QUESTION, QMessageBox.Yes | QMessageBox.No, parent)
+    box.setDefaultButton(QMessageBox.No)
+    share.set_enabled(box.exec() == QMessageBox.Yes)
+
+
+class FeedbackDialog(QDialog):
+    """Clic droit sur l'icône > Send feedback : une idée, un bug ou autre, envoyé avec le prochain envoi."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Owlingstone – send feedback")
+        lay = QVBoxLayout(self)
+        lay.addWidget(QLabel("Ideas, bugs, anything: it helps decide the next updates."))
+        self.kind = QComboBox()
+        self.kind.addItems(["Idea", "Bug", "Other"])
+        lay.addWidget(self.kind)
+        self.text = QPlainTextEdit()
+        self.text.setPlaceholderText("Write here (1000 characters max). Please don't include personal information.")
+        self.text.textChanged.connect(self._limit)
+        lay.addWidget(self.text)
+        self.info = QLabel("Sent anonymously with your next game, or when Owlingstone next starts.")
+        self.info.setWordWrap(True)
+        lay.addWidget(self.info)
+        row = QHBoxLayout()
+        cancel, send = QPushButton("Cancel"), QPushButton("Send")
+        cancel.clicked.connect(self.reject)
+        send.clicked.connect(self.send)
+        row.addStretch(1)
+        row.addWidget(cancel)
+        row.addWidget(send)
+        lay.addLayout(row)
+        self.resize(420, 300)
+
+    def _limit(self):
+        text = self.text.toPlainText()
+        if len(text) > 1000:
+            self.text.setPlainText(text[:1000])
+
+    def send(self):
+        try:
+            share.add_feedback(self.kind.currentText().lower(), self.text.toPlainText())
+        except ValueError:
+            self.info.setText("Please write at least a few words.")
+            return
+        self.accept()
+
+
+def show_shared(parent=None):
+    try:
+        text = share.LAST_PATH.read_text(encoding="utf-8")
+    except OSError:
+        text = "Nothing sent yet. After your next game, the exact summary sent appears here."
+    dlg = QDialog(parent)
+    dlg.setWindowTitle("Owlingstone – what is sent")
+    lay = QVBoxLayout(dlg)
+    view = QPlainTextEdit(text)
+    view.setReadOnly(True)
+    lay.addWidget(view)
+    dlg.resize(460, 520)
+    dlg.exec()
+
+
+def delete_shared(tray):
+    if QMessageBox.question(None, "Owlingstone", "Delete every game and feedback you shared from the server, "
+                            "and stop sharing?") != QMessageBox.Yes:
+        return False
+    def run():
+        try:
+            ok = share.delete_remote()
+        except OSError:
+            ok = False
+        if tray:
+            tray.showMessage("Owlingstone", "Your shared data was deleted." if ok else
+                             "Could not reach the server. Try again later.", QSystemTrayIcon.Information, 6000)
+    threading.Thread(target=run, name="share-delete", daemon=True).start()
+    return True
+
+
 def tray_icon(app, win):
     """Icône près de l'horloge (comme HDT) : la fenêtre n'a ni cadre ni bouton dans la barre des tâches,
     c'est donc d'ici qu'on la montre, ouvre ses stats, met à jour ou quitte l'application."""
@@ -833,10 +937,27 @@ def tray_icon(app, win):
     narrower.triggered.connect(lambda: win.resize_panels(-PANEL_STEP))
     wider = QAction("Side panels wider", menu)
     wider.triggered.connect(lambda: win.resize_panels(PANEL_STEP))
+    sharing = QAction("Share my games (anonymous)", menu, checkable=True)
+    sharing.setChecked(share.enabled())
+    sharing.setEnabled(bool(share.API_URL))
+    sharing.toggled.connect(share.set_enabled)
+    shown = QAction("Show what is sent", menu)
+    shown.triggered.connect(lambda: show_shared())
+    erase = QAction("Delete my shared games", menu)
+    erase.triggered.connect(lambda: delete_shared(tray) and sharing.setChecked(False))
+    feedback = QAction("Send feedback…", menu)
+    feedback.triggered.connect(lambda: FeedbackDialog().exec())
+    feedback.setEnabled(bool(share.API_URL))
+    tray.sharing_action = sharing
     quit_ = QAction("Quit Owlingstone", menu)
     quit_.triggered.connect(app.quit)
-    for action in (show, stats, odds, narrower, wider, news, folder, tray.update_action, quit_):
+    for action in (show, stats, odds, narrower, wider, news, folder, tray.update_action):
         menu.addAction(action)
+    menu.addSeparator()
+    for action in (feedback, sharing, shown, erase):
+        menu.addAction(action)
+    menu.addSeparator()
+    menu.addAction(quit_)
     tray.setContextMenu(menu)
     tray.menu = menu                       # garde le menu en vie (sinon Python le libère)
     tray.show()
@@ -890,6 +1011,11 @@ def run(replay_path=None, stop_turn=None, screenshot=None):
     win.tray = tray
     if not replay_path:
         announce_version(win, tray)
+        ask_sharing()
+        if tray:
+            tray.sharing_action.setChecked(share.enabled())
+        send_in_background()                   # avis ou parties restés en file
+        threading.Thread(target=share.download_stats, name="stats", daemon=True).start()
     worker = LogWorker(replay_path, stop_turn)
     worker.snapshot.connect(win.on_snapshot)   # le signal du fil de lecture met à jour la fenêtre
     if replay_path or not win.hide_box.isChecked():

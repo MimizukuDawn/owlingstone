@@ -40,9 +40,13 @@ tracker such as Hearthstone Deck Tracker or Firestone, which turns logging on.
 
 ## Privacy
 
-Nothing leaves your PC unless you turn on **Share my games** (off by default, asked once). Your history,
-settings and learned data stay in `%APPDATA%\Owlingstone`. See [PRIVACY.md](PRIVACY.md) for exactly what is
-shared when you opt in and how to delete it.
+Nothing about your games leaves your PC unless you turn on **Share my games** (off by default, asked
+once). Your history, settings and learned data stay in `%APPDATA%\Owlingstone`. See [PRIVACY.md](PRIVACY.md)
+for exactly what is shared when you opt in and how to delete it.
+
+## Feedback
+
+Right-click the Owlingstone icon near the clock > **Send feedback…** to send an idea or a bug report.
 
 ## Run from source
 

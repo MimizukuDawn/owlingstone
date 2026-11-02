@@ -76,6 +76,8 @@ class Game:
         self._fight = None                 # combat en cours d'enregistrement
         self.deity_seen = {}               # PLAYER_ID -> (attaque, vie) de sa Déité la dernière fois vue
         self.bonus_tags = {}               # derniers compteurs vus sur mes entités (voir my_bonuses)
+        self.actions_by_turn = {}          # tour -> nb d'actions faites (achat, vente, pose, relance, tier, pouvoir...)
+        self.conceded = False              # j'ai abandonné (PLAYSTATE = CONCEDED)
 
     # ------------------------------------------------------------- remplissage
     def create_entity(self, eid, card_id):
@@ -104,6 +106,15 @@ class Game:
             mine = ent.get("CONTROLLER") == me or (me in self.players and ent.id == self.players[me]["entity_id"])
             if mine and me is not None:
                 self.bonus_tags[tag] = ent.get(tag, 0)
+        if tag in ("NUM_OPTIONS_PLAYED_THIS_TURN", "PLAYSTATE"):
+            me = self.players.get(self.local_player_id)
+            if me and ent.id == me["entity_id"]:
+                if tag == "PLAYSTATE":
+                    self.conceded = self.conceded or ent.get(tag) == "CONCEDED"
+                elif not self.in_combat and self.turn:
+                    # Le jeu compte chaque choix du joueur pendant le tour (remis à 0 au tour suivant).
+                    t = self.turn
+                    self.actions_by_turn[t] = max(self.actions_by_turn.get(t, 0), ent.get(tag, 0) or 0)
         if ent.id == self.game_entity_id and tag in ("TURN", "STATE"):
             if tag == "TURN":
                 self._on_turn()

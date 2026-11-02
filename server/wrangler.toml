@@ -1,0 +1,13 @@
+# The deploy workflow fills database_id from the account (never stored here).
+name = "owlingstone-api"
+main = "src/worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[observability]
+enabled = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "owlingstone"
+database_id = "LOCAL_ONLY"

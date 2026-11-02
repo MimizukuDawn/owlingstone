@@ -26,3 +26,12 @@ jobs:
           QT_QPA_PLATFORM: offscreen
       - name: Security checks (bandit)
         run: python -m bandit -q -r bgtracker -ll
+
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Server rules (validation, AFK and concede detection)
+        run: node --test server/test/quality.test.mjs

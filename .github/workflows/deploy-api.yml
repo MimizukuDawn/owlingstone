@@ -1,0 +1,44 @@
+# Deploys the shared-data API (server/) to Cloudflare Workers + D1 on the Free plan.
+# Needs repository secrets CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and OWLINGSTONE_ADMIN_KEY.
+# Logs are public on a public repo: commands that would print account details run quietly.
+name: Deploy API
+on:
+  push:
+    branches: [main]
+    paths: ["server/**", ".github/workflows/deploy-api.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency: deploy-api
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_SEND_METRICS: "false"
+      WRANGLER: npx --yes wrangler@4.156.2
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Database (created once, id never printed)
+        run: |
+          id=$($WRANGLER d1 list --json 2>/dev/null | python3 -c "import json,sys;print(next((d['uuid'] for d in json.load(sys.stdin) if d['name']=='owlingstone'),''))")
+          if [ -z "$id" ]; then
+            $WRANGLER d1 create owlingstone >/dev/null 2>&1
+            id=$($WRANGLER d1 list --json 2>/dev/null | python3 -c "import json,sys;print(next(d['uuid'] for d in json.load(sys.stdin) if d['name']=='owlingstone'))")
+          fi
+          echo "::add-mask::$id"
+          sed -i "s/LOCAL_ONLY/$id/" wrangler.toml
+          $WRANGLER d1 execute owlingstone --remote --file schema.sql >/dev/null 2>&1 && echo "schema ok"
+      - name: Admin key (Worker secret)
+        env:
+          ADMIN_KEY: ${{ secrets.OWLINGSTONE_ADMIN_KEY }}
+        run: |
+          if [ -n "$ADMIN_KEY" ]; then printf '%s' "$ADMIN_KEY" | $WRANGLER secret put ADMIN_KEY >/dev/null 2>&1 && echo "admin key set"; fi
+      - name: Deploy
+        run: $WRANGLER deploy >/dev/null 2>&1 && echo "deployed"

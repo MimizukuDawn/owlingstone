@@ -1,0 +1,42 @@
+# Once a day: builds stats.json from the shared games and publishes it on the "stats" pre-release.
+# The app downloads it from GitHub, so reading stats costs no Cloudflare request.
+name: Daily stats
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write          # update the "stats" pre-release
+concurrency: stats
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_SEND_METRICS: "false"
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Point wrangler at the database
+        working-directory: server
+        run: |
+          id=$(npx --yes wrangler@4.156.2 d1 list --json 2>/dev/null | python3 -c "import json,sys;print(next((d['uuid'] for d in json.load(sys.stdin) if d['name']=='owlingstone'),''))")
+          [ -n "$id" ] || { echo "API not deployed yet"; exit 0; }
+          echo "::add-mask::$id"
+          sed -i "s/LOCAL_ONLY/$id/" wrangler.toml
+          echo "READY=1" >> "$GITHUB_ENV"
+      - name: Build stats.json
+        if: env.READY == '1'
+        working-directory: server
+        run: python3 build_stats.py --remote ../stats.json
+      - name: Publish
+        if: env.READY == '1'
+        run: |
+          [ -f stats.json ] || exit 0
+          gh release view stats >/dev/null 2>&1 || gh release create stats --prerelease --title "Shared stats" \
+            --notes "Daily stats from players who share their games (updated automatically, not an app version)."
+          gh release upload stats stats.json --clobber

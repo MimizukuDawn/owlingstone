@@ -2,6 +2,14 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 1.8.0
+- Share my games (optional, asked once, "No" by default): at the end of a game, an anonymous summary (hero, placement, comp, lobby tribes, final board and each fight's boards: cards and stats only) is sent to the Owlingstone server. Never your BattleTag, other players' names, your logs or files. Games are sent together in one small request, at the end of a game or when the app starts; offline, they wait (30 days at most).
+- Send feedback: right-click the tray icon > "Send feedback…" to send an idea, a bug or anything else (1000 characters). It leaves with the next send, even if you don't share your games.
+- Tray menu: "Share my games" on/off, "Show what is sent" (the exact last summary), "Delete my shared games" (erases everything you sent from the server).
+- Every day the app downloads the stats built from all shared games (from GitHub, not the server), ready for the advice to use once enough games are in.
+- Fair stats: AFK games (3 turns in a row with no action at all; one or two quiet turns, hero-power-only turns and heroes that wait on purpose are fine) and concedes while still healthy are left out of the shared stats. Early concedes are still analysed in totals (lost streak, big hit, behind on tier, weak board, slow leveling, passive start...) to find the misplays the advice should warn about.
+- The sharing switch and feedback stay greyed out until the server is online.
+
 ## 1.7.1
 - Card data download fixed for new installs: HearthstoneJSON refused the app's download (403), so a fresh install had no cards. The app now names itself when downloading and only replaces cards.json once the download is complete.
 
