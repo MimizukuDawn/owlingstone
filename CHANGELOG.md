@@ -2,6 +2,14 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.0.0
+- Rewritten from scratch in Rust: the download is less than half the size (about 12 MB instead of 27 MB), and the app opens faster and is lighter on your PC while you play.
+- Everything you had is still there: tier list, Comps and Lobby tabs, turn plan, win chance banner, card previews, hero and trinket advice, history and stats, sharing and feedback. Your settings, history and learned data carry over untouched.
+- The combat simulator is much faster, so the win chance is ready sooner after each fight starts.
+- Duos: the app now checks which player is you before showing anything, instead of guessing.
+- Shared stats: one very active player can no longer tilt the community numbers (each install counts for at most 10 games per comp or hero).
+- Commands for the curious: run `Owlingstone.exe history` in a console to see your stats there.
+
 ## 1.9.1
 - Fixed: after starting the app (or after an update), the overlay no longer replays the evening's old games one by one in the menu. It now jumps straight to the last game in Hearthstone's log and shows nothing until it has caught up.
 - Once a game is over you are back in the menus: the overlay drops the turn, the combat odds and the turn plan, and only says where you finished (with auto-hide on, it hides until the next game).

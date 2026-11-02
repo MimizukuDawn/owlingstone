@@ -37,7 +37,7 @@ jobs:
             want=$(sed -n 's/^sha256 //p' "$sig")
             have=$(gh release view "$tag" --json assets --jq '.assets[] | select(.name=="Owlingstone.exe") | .digest')
             if [ "sha256:$want" != "$have" ]; then echo "::error::$sig is for another exe ($have)"; exit 1; fi
-            python3 -c "import sys; sys.path.insert(0, '.'); from bgtracker.update import signed_sha256; signed_sha256(open('$sig').read(), '${tag#v}')"
+            python3 tools/release_key.py verify --sig "$sig" --version "${tag#v}"
             cp "$sig" Owlingstone.exe.sig
             gh release upload "$tag" Owlingstone.exe.sig
             echo "$tag: signature attached"

@@ -102,6 +102,22 @@ pub fn load_subsets() -> Subsets {
     Subsets::new()
 }
 
+/// `load_subsets()`, read again at most every 10 seconds (the window asks several times a second).
+pub fn load_subsets_cached() -> Arc<Subsets> {
+    use std::sync::Mutex;
+    use std::time::{Duration, Instant};
+    static CACHE: Mutex<Option<(Instant, Arc<Subsets>)>> = Mutex::new(None);
+    let mut cache = CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some((at, s)) = cache.as_ref() {
+        if at.elapsed() < Duration::from_secs(10) {
+            return s.clone();
+        }
+    }
+    let s = Arc::new(load_subsets());
+    *cache = Some((Instant::now(), s.clone()));
+    s
+}
+
 /// Saves in the user folder (never in the data folder).
 pub fn save_subsets(subsets: &Subsets) -> std::io::Result<()> {
     let path = subsets_path();

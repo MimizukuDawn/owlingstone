@@ -1,14 +1,14 @@
-# Builds and publishes a Release like v1.9.0: tests, single-file Windows exe, a start-up test of that exe,
+# Builds and publishes a Release like v2.0.0: tests, the Windows exe (Rust), a start-up test of that exe,
 # provenance attestation. Players' apps install it only once its signature (Owlingstone.exe.sig, made
 # with the maintainer's offline key by tools/release_key.py) is attached: see sign.yml.
 # The build job has read-only rights; only the small publish job can write to the repository.
-# Runs by itself when a push to main raises __version__ (no Release with that tag yet), or when a
+# Runs by itself when a push to main raises the version in Cargo.toml (no Release with that tag yet), or when a
 # Release / tag vX.Y.Z is published by hand.
 name: Release
 on:
   push:
     branches: [main]
-    paths: ["bgtracker/__init__.py", ".github/workflows/release.yml"]
+    paths: ["Cargo.toml", ".github/workflows/release.yml"]
     tags: ["v*"]
   release:
     types: [published]
@@ -32,10 +32,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          v=$(python3 -c "import re;print(re.search(r'__version__\s*=\s*\"([^\"]+)\"',open('bgtracker/__init__.py').read()).group(1))")
+          v=$(sed -n 's/^version = "\([^"]*\)"$/\1/p' Cargo.toml | head -n1)
+          test -n "$v" || { echo "no version in Cargo.toml"; exit 1; }
           echo "tag=v$v" >> "$GITHUB_OUTPUT"
           if [ "$GITHUB_REF_TYPE" = tag ] || [ "$GITHUB_EVENT_NAME" = release ]; then
-            test "v$v" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME but __version__ $v"; exit 1; }
+            test "v$v" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME but Cargo.toml says $v"; exit 1; }
             echo "go=true" >> "$GITHUB_OUTPUT"
           elif gh release view "v$v" --json assets --jq '.assets[].name' 2>/dev/null | grep -qx Owlingstone.exe; then
             echo "v$v is already released"; echo "go=false" >> "$GITHUB_OUTPUT"
@@ -54,34 +55,32 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.12"
       - name: Version
         shell: bash
         run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
       - name: Privacy scan
         run: python tools/privacy_scan.py .
-      - name: Install
-        run: python -m pip install --disable-pip-version-check --require-hashes -r requirements.txt
+      - name: Toolchain
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
       - name: Tests
-        run: python -m pytest -q -m "not slow"
         env:
-          QT_QPA_PLATFORM: offscreen
-      - name: Build the single-file exe (the only download)
-        env:
-          OWLINGSTONE_ONEFILE: "1"
-        run: pyinstaller --noconfirm --clean --log-level WARN --distpath dist --workpath build Owlingstone.spec
-      - name: Start the built exe once (proves no needed part of Qt was left out)
+          OWLINGSTONE_NO_CARD_DOWNLOAD: "1"
+        run: cargo test --locked --release
+      - name: Build the exe (the only download)
+        run: |
+          cargo build --locked --release
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item target\release\Owlingstone.exe dist\Owlingstone.exe
+      - name: Start the built exe once
         shell: pwsh
         env:
-          OWLINGSTONE_SMOKE: "1"
-          BGTRACKER_HOME: ${{ runner.temp }}\smoke
+          OWLINGSTONE_HOME: ${{ runner.temp }}\smoke
         run: |
-          $p = Start-Process dist\Owlingstone.exe -PassThru
-          if (-not $p.WaitForExit(120000)) { $p.Kill(); throw "Owlingstone.exe did not close by itself" }
-          if ($p.ExitCode -ne 0) { throw "Owlingstone.exe exited with code $($p.ExitCode)" }
-          "started and closed fine; size: {0:N1} MB" -f ((Get-Item dist\Owlingstone.exe).Length / 1MB)
+          ./tools/smoke.ps1 dist\Owlingstone.exe
+          $v = (Get-Content ([IO.Path]::GetTempPath() + "owlingstone-version.txt") -Raw).Trim()
+          if ($v -ne "Owlingstone $env:VERSION") { throw "the exe says '$v', the tag says $env:VERSION" }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: exe

@@ -14,9 +14,9 @@ import sys
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from bgtracker.paths import USER_DIR  # noqa: E402
-from bgtracker.share import API_URL  # noqa: E402
+# Same values as the app (src/paths.rs, src/share.rs).
+API_URL = "https://owlingstone-api.mimizuku-dawn.workers.dev"
+USER_DIR = Path(os.environ.get("OWLINGSTONE_HOME") or Path(os.environ.get("APPDATA") or Path.home()) / "Owlingstone")
 
 INBOX = Path(__file__).resolve().parent.parent / "feedback" / "inbox.jsonl"
 
@@ -33,7 +33,7 @@ def admin_key():
 
 def call(method, path, body=None):
     if not API_URL.startswith("https://"):
-        sys.exit("API_URL is not set in bgtracker/share.py")
+        sys.exit("API_URL is not set")
     req = Request(API_URL + path, method=method, data=None if body is None else json.dumps(body).encode(),
                   headers={"authorization": "Bearer " + admin_key(), "content-type": "application/json",
                            "User-Agent": "Owlingstone-maintainer"})
