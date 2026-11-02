@@ -235,6 +235,8 @@ pub struct Knowledge {
     pub economy: HashMap<String, Economy>,
     /// Card id -> trinket stats.
     pub trinkets: HashMap<String, TrinketStat>,
+    /// The same, in the file's order.
+    pub trinket_list: Vec<TrinketStat>,
     /// Pool minions (Solo and Duos) by name.
     pub minion_by_name: HashMap<String, Arc<Card>>,
     /// Problems found in the files (shown to the user, the rest still works).
@@ -410,6 +412,7 @@ impl Knowledge {
         for v in trinkets {
             match serde_yaml_ng::from_value::<TrinketStat>(v) {
                 Ok(t) => {
+                    k.trinket_list.push(t.clone());
                     k.trinkets.insert(t.id.clone(), t);
                 }
                 Err(e) => errors.push(format!("trinkets.yaml: {e}")),

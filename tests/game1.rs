@@ -130,3 +130,19 @@ fn game1_combat_info() {
     assert!((0.0..=100.0).contains(&w));
     assert!(info.now.as_ref().is_none_or(|n| !n.live));
 }
+
+#[test]
+fn game1_record() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("testdata/bg_game1.log");
+    if !path.exists() {
+        return;
+    }
+    unsafe { std::env::set_var("OWLINGSTONE_NO_CARD_DOWNLOAD", "1") };
+    let k = owlingstone::knowledge::get();
+    let records = owlingstone::history::import_logs(&[path], &k);
+    assert_eq!(records.len(), 1);
+    let r = &records[0];
+    assert_eq!((r.hero.as_str(), r.placement, r.deity.as_deref(), r.time.as_str()), ("Thorim, Stormlord", 6, Some("C'Thun"), "12:00:41"));
+    assert_eq!(r.comp.as_deref(), Some("mech-apm"));
+    assert_eq!(r.races, ["ABERRATION", "BEAST", "DRAGON", "MECHANICAL", "MURLOC"]);
+}
