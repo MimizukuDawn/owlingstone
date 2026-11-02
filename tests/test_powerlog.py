@@ -126,3 +126,46 @@ def test_log_config_gets_power_section_once(tmp_path):
     assert hslogs.ensure_log_config(other) == "written"
     text = other.read_text(encoding="utf-8")
     assert text.startswith("[Zone]") and text.count("[Power]") == 1
+
+
+def _game_lines(turn, filler=0):
+    pad = "".join("D 00:00:00.0 PowerTaskList.DebugPrintPower() -     filler line\n" for _ in range(filler))
+    return ("D 00:00:00.0 GameState.DebugPrintPowerList() - Count=1\n"
+            "D 00:00:00.0 GameState.DebugPrintPower() - CREATE_GAME\n"
+            "D 00:00:00.0 GameState.DebugPrintPower() -     GameEntity EntityID=1\n"
+            f"D 00:00:00.0 GameState.DebugPrintPower() - TAG_CHANGE Entity=1 tag=TURN value={turn}\n" + pad)
+
+
+@pytest.mark.parametrize("block", [7, 40, 64, 1 << 20])
+def test_last_game_offset_finds_the_last_create_game(tmp_path, block):
+    from bgtracker.watcher import last_game_offset
+    log = tmp_path / "Power.log"
+    text = _game_lines(1, 30) + _game_lines(2, 30) + _game_lines(3, 5)
+    log.write_bytes(text.encode())
+    start = last_game_offset(log, block=block)
+    assert text.encode()[start:].startswith(b"D 00:00:00.0 GameState.DebugPrintPower() - CREATE_GAME")
+    assert text.encode()[start:].count(b"CREATE_GAME") == 1
+    log.write_bytes(b"no game here\n" * 10)
+    assert last_game_offset(log, block=block) == 0
+
+
+def test_watcher_skips_old_games_of_a_big_log(tmp_path, monkeypatch):
+    """Bug 1.9.0 : au démarrage, un gros Power.log (toute la soirée) était relu depuis le début par blocs
+    et les vieilles parties défilaient à l'écran. On commence à la dernière partie ; behind dit si on
+    rattrape encore du retard."""
+    import bgtracker.watcher as watcher
+    folder = tmp_path / "Hearthstone_2026_01_01_00_00_00"
+    folder.mkdir()
+    log = folder / "Power.log"
+    log.write_text(_game_lines(12, 50) + _game_lines(8, 50) + _game_lines(3, 50), encoding="utf-8")
+    seen = []
+    w = LogWatcher(logs_dir=tmp_path, on_new_game=seen.append)
+    monkeypatch.setattr(watcher, "CHUNK", 300)
+    assert w.poll() and w.behind
+    while w.poll():
+        pass
+    assert not w.behind and len(seen) == 1 and w.game.game_entity.get("TURN") == 3
+    with open(log, "a", encoding="utf-8") as f:      # partie suivante écrite pendant que l'appli tourne
+        f.write(_game_lines(1))
+    w.poll()
+    assert len(seen) == 2 and w.game.game_entity.get("TURN") == 1

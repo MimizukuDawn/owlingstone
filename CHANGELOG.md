@@ -2,6 +2,11 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 1.9.1
+- Fixed: after starting the app (or after an update), the overlay no longer replays the evening's old games one by one in the menu. It now jumps straight to the last game in Hearthstone's log and shows nothing until it has caught up.
+- Once a game is over you are back in the menus: the overlay drops the turn, the combat odds and the turn plan, and only says where you finished (with auto-hide on, it hides until the next game).
+- A game already recorded is not sent again when the app restarts.
+
 ## 1.9.0
 - Works wherever Hearthstone is installed: the app finds the Logs folder from the running game or Battle.net's install record, and you can pick it yourself (tray menu > Choose Hearthstone folder…). If Hearthstone's logging is off, the app turns it on. Instead of "Waiting for a Battlegrounds game" forever, it says what is missing.
 - Starts without internet: card data is now built into the app, and it refreshes in the background every week and as soon as a game shows a card it doesn't know (new patch), so new heroes and minions appear without waiting.
