@@ -1,0 +1,10 @@
+# Facts about the current Battlegrounds season that change with patches. Edit after a patch; the app
+# reloads this file when it changes.
+#
+#   lobby_tribes  number of tribes in each lobby (5 in Season 14)
+#   rotated_out   tribes taken out of the pool while HearthstoneJSON still marks their minions as "pool"
+#                 (Naga left in patch 36.6.1 on 2026-09-22; dual-tribe minions with Naga stay)
+#   since         when these facts were last checked
+lobby_tribes: 5
+rotated_out: [NAGA]
+since: 2026-09-22

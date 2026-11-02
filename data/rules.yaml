@@ -1,47 +1,47 @@
-# Mes règles de préférence (phase 4) — modifiable à la main.
+# My preference rules: edit by hand.
 #
-# Une règle = une comp (id de comps.yaml, ou une liste d'ids) + UN effet avec sa condition :
-#   only_if:   {...}   la comp n'est proposée que si la condition est vraie
-#   never_if:  {...}   la comp est cachée si la condition est vraie
-#   prefer_if: {...}   +bonus points quand la condition est vraie ({} = toujours)
-#   avoid_if:  {...}   -bonus points quand la condition est vraie
-#   bonus: 3           (facultatif) points ajoutés/retirés ; 3 = une carte core
-#   note: "..."        (facultatif) texte affiché quand la règle s'applique
+# A rule = a comp (id from comps.yaml, or a list of ids) + ONE effect with its condition:
+#   only_if:   {...}   the comp is offered only when the condition is true
+#   never_if:  {...}   the comp is hidden when the condition is true
+#   prefer_if: {...}   +bonus points when the condition is true ({} = always)
+#   avoid_if:  {...}   -bonus points when the condition is true
+#   bonus: 3           (optional) points added / removed; 3 = one core card
+#   note: "..."        (optional) text shown when the rule applies
 #
-# Conditions (toutes doivent être vraies) :
-#   lobby_has: [PIRATE]            toutes ces races sont dans la partie
-#   lobby_has_any: [DEMON, DRAGON] au moins une de ces races
-#   lobby_lacks: [BEAST]           aucune de ces races
-#   deity: "C'Thun"                ou "Y'Shaarj"
-#   hero: "Sir Finley"             mon héros
-#   hero_power: "Choose Your Champion"   un de mes pouvoirs héroïques actuels (suit les changements
-#                                  en cours de partie ; liste possible : ["A", "B"])
-# Races : ABERRATION BEAST DEMON DRAGON ELEMENTAL MECHANICAL MURLOC PIRATE QUILBOAR UNDEAD.
-# Tant que les races ne sont pas sûres, une condition sur les races ne fait rien.
+# Conditions (all must be true):
+#   lobby_has: [PIRATE]            all these tribes are in the game
+#   lobby_has_any: [DEMON, DRAGON] at least one of these tribes
+#   lobby_lacks: [BEAST]           none of these tribes
+#   deity: "C'Thun"                or "Y'Shaarj"
+#   hero: "Sir Finley"             my hero
+#   hero_power: "Choose Your Champion"   one of my current hero powers (follows changes during the
+#                                  game; a list works too: ["A", "B"])
+# Tribes: ABERRATION BEAST DEMON DRAGON ELEMENTAL MECHANICAL MURLOC PIRATE QUILBOAR UNDEAD.
+# While the tribes are not sure yet, a condition on tribes does nothing.
 #
-# Déjà géré sans règle : les Naga (hors du pool) et les cartes Duos ne sont jamais proposés en Solo,
-# et une comp n'apparaît que si toutes ses "races" sont là (aberration-apm et undead-apm demandent PIRATE).
+# Already handled without a rule: tribes out of the pool (data/season.yaml) and Duos cards are never offered
+# in Solo, and a comp shows only if all its "races" are there (aberration-apm and undead-apm need PIRATE).
 
-# 1. Aberration APM seulement si les Pirates sont dans le lobby (déjà vrai via races, gardé comme exemple).
+# 1. Aberration APM only if Pirates are in the lobby (already true through races, kept as an example).
 - comp: aberration-apm
   only_if: {lobby_has: [PIRATE]}
 
-# 2. Aberration Deathrattle si la Déité est C'Thun, pas Y'Shaarj.
-#    ⚠️ Pas de stats par Déité trouvées (27/10/2026) : préférence personnelle, à vérifier.
+# 2. Aberration Deathrattle if the Deity is C'Thun, not Y'Shaarj.
+#    No stats by Deity found (2026-10-27): a personal preference, to check.
 - comp: aberration-deathrattle
   prefer_if: {deity: "C'Thun"}
 - comp: aberration-deathrattle
   avoid_if: {deity: "Y'Shaarj"}
 
 # ---------------------------------------------------------------------------------------------
-# Suggestions (voir le doc "Battlegrounds comps: rules and review"), à décommenter si d'accord :
+# Suggestions (see the review of comps and rules), uncomment if you agree:
 #
 # - comp: aberration-discard          # Discard 3.23 vs Deathrattle 3.56
 #   prefer_if: {}
 #   bonus: 2
 # - comp: [demon-self-damage, mech-glambot, pirate-bounty, dragon-kalecgos, beast-leviathan, elemental-tempest, quilboar-gems, murloc-scam]
-#   avoid_if: {}                      # la variante plus faible de chaque race
+#   avoid_if: {}                      # the weaker variant of each tribe
 #   bonus: 2
 # - comp: [dragon-shield, neutral-tea-set]
-#   prefer_if: {}                     # meilleures moyennes (3.16)
+#   prefer_if: {}                     # best averages (3.16)
 #   bonus: 2
