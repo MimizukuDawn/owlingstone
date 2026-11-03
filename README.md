@@ -6,7 +6,7 @@ A free, standalone helper for **Hearthstone Battlegrounds** on Windows. It reads
 - the minion tier list for the tribes in your lobby, with what is in your shop, board and hand;
 - hero pick advice and the comps that work in this lobby, with what to buy for them;
 - a turn plan: level up or not, what to buy, sell, roll or freeze, with the danger of the next fight;
-- your chance to win each fight (a combat simulator), and the lobby: every player's last board;
+- your chance to win each fight (a combat simulator), and the lobby: every player's last board, also shown with the card pictures when your mouse is over their portrait in the game;
 - your own game history and stats.
 
 It does not read the game's memory, inject anything or automate any action: it only reads the log file

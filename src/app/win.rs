@@ -21,7 +21,7 @@ mod imp {
     };
     use windows_sys::Win32::UI::Shell::ShellExecuteW;
     use windows_sys::Win32::UI::WindowsAndMessaging::{
-        EnumThreadWindows, FindWindowW, GetClientRect, GetForegroundWindow, GetWindowThreadProcessId, IsIconic, SW_SHOWNORMAL,
+        EnumThreadWindows, FindWindowW, GetClientRect, GetCursorPos, GetForegroundWindow, GetWindowThreadProcessId, IsIconic, SW_SHOWNORMAL,
     };
 
     fn wide(s: &str) -> Vec<u16> {
@@ -44,6 +44,13 @@ mod imp {
             }
             (rc.right > 0 && rc.bottom > 0).then_some((origin.x, origin.y, rc.right, rc.bottom))
         }
+    }
+
+    /// Where the mouse is on screen (physical pixels).
+    pub fn cursor_pos() -> Option<(i32, i32)> {
+        let mut p = POINT { x: 0, y: 0 };
+        // SAFETY: out-struct on the stack.
+        (unsafe { GetCursorPos(&mut p) } != 0).then_some((p.x, p.y))
     }
 
     /// File name of the program whose window is in front, in lower case (e.g. "hearthstone.exe").
@@ -171,6 +178,9 @@ mod imp {
     }
     pub fn foreground_exe() -> String {
         String::new()
+    }
+    pub fn cursor_pos() -> Option<(i32, i32)> {
+        None
     }
     pub fn running_exes() -> Vec<String> {
         Vec::new()
