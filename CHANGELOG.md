@@ -2,6 +2,10 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.1.1
+- The tray menu closes as soon as you click anywhere else (the game, the desktop, the taskbar), instead of staying open for several seconds.
+- New in the tray menu: **Check for updates now**. It asks GitHub right away instead of waiting for the check every 6 hours, and says if you already have the latest version.
+
 ## 2.1.0
 - Put your mouse on a hero portrait in the game's leaderboard (left of the board): Owlingstone shows that player's last board you fought, with the card pictures, their attack and health in that fight, golden minions, the turn and who won. Players you haven't fought yet say so.
 - Pictures are downloaded once and kept in your data folder, like the card previews. Turn it off in the tray menu ("Opponent board on portrait hover"). Not shown in Duos for now.

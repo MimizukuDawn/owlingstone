@@ -178,9 +178,17 @@ impl Updater {
             .unwrap_or(0.0)
     }
 
-    /// One check. Ok(Some) once a newer signed version is downloaded and checked.
+    /// One check, at most every CHECK_EVERY. Ok(Some) once a newer signed version is downloaded and checked.
     pub fn check_once(&mut self, get: Get, now: f64) -> Result<Option<ReleaseInfo>, String> {
         if self.ready.is_some() || now - self.last_check() < CHECK_EVERY {
+            return Ok(self.ready.clone());
+        }
+        self.check_now(get, now)
+    }
+
+    /// One check right away, whatever the time of the last one (tray menu "Check for updates now").
+    pub fn check_now(&mut self, get: Get, now: f64) -> Result<Option<ReleaseInfo>, String> {
+        if self.ready.is_some() {
             return Ok(self.ready.clone());
         }
         if let Some(dir) = self.state_path.parent() {
@@ -406,6 +414,9 @@ mod tests {
         };
         assert!(up.check_once(&get, 1e9).unwrap().is_none());
         assert!(up.check_once(&get, 1e9 + 60.0).unwrap().is_none()); // too soon: not asked
-        assert_eq!(calls.into_inner(), [API_LATEST]);
+        assert_eq!(calls.borrow().len(), 1);
+        // "Check for updates now" asks again at once.
+        assert!(up.check_now(&get, 1e9 + 61.0).unwrap().is_none());
+        assert_eq!(calls.into_inner(), [API_LATEST, API_LATEST]);
     }
 }

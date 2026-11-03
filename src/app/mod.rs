@@ -25,7 +25,7 @@ mod win;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver, channel};
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 
@@ -70,6 +70,10 @@ pub fn odds_geometry(rect: (f32, f32, f32, f32)) -> (f32, f32) {
 /// What the update checker says.
 enum UpdateMsg {
     Ready(String),
+    /// Answer to "Check for updates now" when nothing newer is published.
+    UpToDate,
+    /// Answer to "Check for updates now" when GitHub could not be reached or the release was refused.
+    Failed(String),
 }
 
 /// A short message near the bottom right of the screen (what Qt showed as a tray balloon).
@@ -122,12 +126,18 @@ pub struct App {
     // --- updates, dialogs, messages
     updater: Arc<Mutex<Updater>>,
     upd_rx: Receiver<UpdateMsg>,
+    upd_tx: Sender<UpdateMsg>,
+    repaint: Context,
+    /// A "Check for updates now" is running.
+    pub checking_update: bool,
     pub update_ready: Option<String>,
     pub dialogs: dialogs::Dialogs,
     pub toasts: Vec<Toast>,
     tray: Option<tray::Tray>,
     /// The tray menu, while it is open (tray.rs).
     pub tray_menu: Option<tray::OpenMenu>,
+    /// When an outside click last closed the tray menu (tray.rs: the same click must not reopen it).
+    pub tray_menu_closed: Option<Instant>,
     asked_sharing: bool,
     history_cache: (Option<SystemTime>, Arc<Vec<Record>>),
 }
@@ -354,11 +364,15 @@ impl App {
             smoke_until: opts.smoke.then(|| Instant::now() + Duration::from_secs(4)),
             updater: updater.clone(),
             upd_rx,
+            upd_tx: upd_tx.clone(),
+            repaint: ctx.clone(),
+            checking_update: false,
             update_ready: None,
             dialogs: dialogs::Dialogs::default(),
             toasts: Vec::new(),
             tray: None,
             tray_menu: None,
+            tray_menu_closed: None,
             asked_sharing: false,
             history_cache: (None, Arc::new(Vec::new())),
         };
@@ -481,6 +495,33 @@ impl App {
         match &self.open_comp {
             None => self.snap.advice.playing.as_ref().map(|p| p.comp_id.clone()),
             Some(c) => c.clone(),
+        }
+    }
+
+    /// Tray menu "Check for updates now": asks GitHub at once (not waiting for the 6-hour check) and
+    /// says the result in a notice. A newer signed version is downloaded and offered as usual.
+    pub fn check_updates_now(&mut self) {
+        if self.checking_update || self.update_ready.is_some() {
+            return;
+        }
+        self.checking_update = true;
+        let (updater, tx, ctx) = (self.updater.clone(), self.upd_tx.clone(), self.repaint.clone());
+        let spawned = std::thread::Builder::new().name("update-now".into()).spawn(move || {
+            let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map(|d| d.as_secs_f64()).unwrap_or(0.0);
+            let found = updater.lock().unwrap_or_else(|e| e.into_inner()).check_now(&update::github_get, now);
+            let msg = match found {
+                Ok(Some(info)) => UpdateMsg::Ready(info.version),
+                Ok(None) => UpdateMsg::UpToDate,
+                Err(e) => {
+                    owlingstone::errlog::note("update check", &e);
+                    UpdateMsg::Failed(e)
+                }
+            };
+            let _ = tx.send(msg);
+            ctx.request_repaint();
+        });
+        if spawned.is_err() {
+            self.checking_update = false;
         }
     }
 
@@ -746,7 +787,16 @@ impl eframe::App for App {
         }
         while let Ok(msg) = self.upd_rx.try_recv() {
             match msg {
+                UpdateMsg::UpToDate => {
+                    self.checking_update = false;
+                    self.toast("Owlingstone", &format!("You have the latest version (v{VERSION})."));
+                }
+                UpdateMsg::Failed(e) => {
+                    self.checking_update = false;
+                    self.toast("Owlingstone", &format!("Could not check for updates: {e}"));
+                }
                 UpdateMsg::Ready(v) => {
+                    self.checking_update = false;
                     if self.update_ready.as_deref() != Some(&v) {
                         self.toast("Owlingstone", &format!("Version {v} is ready. Click \"Update to v{v}\" in the window or the tray menu."));
                         self.update_ready = Some(v);
