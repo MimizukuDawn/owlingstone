@@ -4,6 +4,7 @@ The app shows the lines of its version after an update. Newest version first.
 
 ## 2.1.4
 - Less lag when you level up, sell or buy: the fight simulations behind the turn plan and the win chance now run on half of your CPU at most, and Owlingstone's background work always lets Hearthstone go first. The advice may show a split second later on small PCs; the game stays smooth.
+- Fixed the win chance banner at the top of the game sometimes showing as an empty box.
 
 ## 2.1.3
 - In Hearthstone's menus, a small gold badge ("Owlingstone · running, waiting for a game") now shows where the left panel goes, so you can see the app is on. After a game it shows where you finished. The panels themselves still appear only during a game (with auto-hide on).

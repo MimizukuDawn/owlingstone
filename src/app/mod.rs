@@ -696,6 +696,9 @@ impl App {
                 .with_always_on_top()
                 .with_taskbar(false)
                 .with_resizable(false)
+                // Like the card preview and board windows: a click-through window must also be transparent,
+                // else Windows can show it as an empty box (the app clears to transparent).
+                .with_transparent(true)
                 .with_mouse_passthrough(true)
                 .with_visible(odds_on)
                 .with_active(false),
