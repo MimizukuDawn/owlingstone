@@ -53,6 +53,8 @@ fn discover_prefers_the_core_card_of_my_comp() {
     let options = vec![card("Wrath Weaver"), card("Auto Reveille"), card("Glambot")];
     let c = for_discover(&k, Some("Triple Reward"), &options, &board, &[], &board, &targets, None, 6, 3).unwrap();
     assert_eq!(c.title, "Discover · Triple Reward");
+    let gift = for_discover(&k, Some("Battlegrounds Dark Gift [DNT]"), &options, &board, &[], &board, &targets, None, 6, 3).unwrap();
+    assert_eq!(gift.title, "Discover · Dark Gift");
     let best = c.options.iter().find(|o| o.best).unwrap();
     assert_eq!(best.name, "Auto Reveille", "{}", describe(&c));
     assert!(best.reasons.iter().any(|r| r.starts_with("core ")), "{:?}", best.reasons);

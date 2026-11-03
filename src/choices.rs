@@ -254,7 +254,12 @@ pub fn for_discover(
             best: false,
         })
         .collect();
-    let title = match source.filter(|s| !s.is_empty()) {
+    // "Battlegrounds Dark Gift [DNT]" -> "Dark Gift": no internal tags or mode prefix.
+    let source = source.map(|s| {
+        let s = s.split(" [").next().unwrap_or(s).trim();
+        s.strip_prefix("Battlegrounds ").unwrap_or(s).to_string()
+    });
+    let title = match source.as_deref().filter(|s| !s.is_empty()) {
         Some(s) => format!("Discover · {s}"),
         None => "Discover".into(),
     };
