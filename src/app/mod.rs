@@ -696,10 +696,10 @@ impl App {
                 .with_always_on_top()
                 .with_taskbar(false)
                 .with_resizable(false)
-                // Like the card preview and board windows: a click-through window must also be transparent,
-                // else Windows can show it as an empty box (the app clears to transparent).
+                // Not click-through: on Windows a click-through window is a "layered" window, which shows as
+                // an empty box when drawn with OpenGL. Only the invisible host is click-through. The banner
+                // sits at the game's top edge, where there is nothing to click.
                 .with_transparent(true)
-                .with_mouse_passthrough(true)
                 .with_visible(odds_on)
                 .with_active(false),
             |ui, class| {
@@ -722,7 +722,7 @@ impl App {
                 .with_always_on_top()
                 .with_taskbar(false)
                 .with_resizable(false)
-                .with_mouse_passthrough(true)
+                .with_transparent(true)
                 .with_visible(badge_on)
                 .with_active(false),
             |ui, class| {
@@ -770,7 +770,6 @@ impl App {
                 .with_taskbar(false)
                 .with_resizable(false)
                 .with_transparent(true)
-                .with_mouse_passthrough(true)
                 .with_visible(shown.is_some())
                 .with_active(false),
             |ui, class| {
@@ -815,7 +814,6 @@ impl App {
                 .with_taskbar(false)
                 .with_resizable(false)
                 .with_transparent(true)
-                .with_mouse_passthrough(true)
                 .with_visible(on)
                 .with_active(false),
             |ui, class| {

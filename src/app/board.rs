@@ -6,7 +6,8 @@
 //!   leaderboard place, 1st at the top). `leaderboard_slot` turns a cursor position into a place.
 //! - A small thread reads the cursor 20 times a second and wakes the window only when the place under it
 //!   changes, so the overlay costs nothing while the mouse is elsewhere.
-//! - The board window lets clicks through, and sits right of the game's own tooltip for the portrait.
+//! - The board window sits right of the game's own tooltip for the portrait (hero powers included), at the
+//!   right of the play area, 4 cards per row.
 
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::{Arc, Mutex};
@@ -53,21 +54,29 @@ pub fn leaderboard_slot(game: (f32, f32, f32, f32), cursor: (f32, f32)) -> Optio
     Some(((cy - top) / slot_h) as i64 + 1)
 }
 
+/// Cards per row in the board window (7 minions = 2 rows).
+pub const PER_ROW: usize = 4;
+
 /// Where the board window goes for the portrait of `place` with `n` cards (points): (x, y, w, h), and the
-/// width of one card. Right of the game's own tooltip, level with the portrait, inside the game.
+/// width of one card. The game's own tooltip for a portrait (hero, hero powers, trinkets) reaches about
+/// 0.98 heights right of the play area's left edge, so the window sits in the strip after it, at the
+/// right of the play area, level with the portrait.
 pub fn board_geometry(game: (f32, f32, f32, f32), place: i64, n: usize) -> ((f32, f32, f32, f32), f32) {
     let (x, y, w, h) = game;
     let area_left = x + (w - h * AREA_RATIO) / 2.0;
-    let x0 = (area_left + h * 0.50).max(x);
+    let x0 = (area_left + h * 1.0).max(x);
     let x1 = (area_left + h * 1.37).min(x + w);
-    let n = n.max(1) as f32;
-    let card_w = (h * 0.115).min(((x1 - x0) - 2.0 * PAD) / n).max(40.0);
-    let width = (card_w * n + 2.0 * PAD).max(260.0);
-    let height = HEADER_H + card_w * CARD_ASPECT + 2.0 * PAD;
+    let n = n.max(1);
+    let cols = n.min(PER_ROW) as f32;
+    let rows = n.div_ceil(PER_ROW) as f32;
+    let zone = (x1 - x0).max(120.0);
+    let card_w = (h * 0.095).min((zone - 2.0 * PAD) / cols).max(30.0);
+    let width = (card_w * cols + 2.0 * PAD).max(zone.min(260.0));
+    let height = HEADER_H + card_w * CARD_ASPECT * rows + 2.0 * PAD;
     let slot_h = h * COLUMN_H / SLOTS as f32;
     let centre = y + h * TOP + slot_h * (place as f32 - 0.5);
     let top = (centre - height / 2.0).clamp(y + h * 0.02, (y + h - height).max(y));
-    ((x0.round(), top.round(), width.round(), height.round()), card_w)
+    (((x1 - width).max(x).round(), top.round(), width.round(), height.round()), card_w)
 }
 
 /// Follows the cursor over the leaderboard in the background.
@@ -160,7 +169,8 @@ pub fn show(ui: &mut egui::Ui, p: &PlayerLine, card_w: f32, images: &mut super::
         let painter = ui.painter().clone();
         let card_h = card_w * CARD_ASPECT;
         for (i, m) in fight.board.iter().enumerate() {
-            let rect = Rect::from_min_size(pos2(left + i as f32 * card_w, top), vec2(card_w, card_h));
+            let (col, row) = ((i % PER_ROW) as f32, (i / PER_ROW) as f32);
+            let rect = Rect::from_min_size(pos2(left + col * card_w, top + row * card_h), vec2(card_w, card_h));
             let card = db.base(&m.card_id);
             let tex = if art { images.card(&m.card_id) } else { None };
             match &tex {
@@ -219,16 +229,18 @@ mod tests {
     }
 
     #[test]
-    fn board_stays_in_the_game_right_of_the_portraits() {
+    fn board_stays_in_the_game_right_of_the_tooltip() {
         for place in 1..=8 {
             for n in [1, 4, 7] {
                 let ((x, y, w, h), card_w) = board_geometry(FHD, place, n);
-                assert!(x > 344.0 + 150.0, "leaves room for the game's own tooltip");
-                assert!(x + w <= 1920.0 && y >= 0.0 && y + h <= 1080.0, "place {place}, {n} cards: {x},{y},{w},{h}");
-                assert!(card_w * n as f32 <= w);
+                // The game's tooltip ends near 204 + 0.98 * 1080 = 1262; the right panel starts at 1690.
+                assert!(x >= 1262.0 && x + w <= 1690.0, "place {place}, {n} cards: {x},{y},{w},{h}");
+                assert!(y >= 0.0 && y + h <= 1080.0, "place {place}, {n} cards: {x},{y},{w},{h}");
+                assert!(card_w * n.min(PER_ROW) as f32 <= w);
             }
         }
-        // Seven cards still readable on a full HD screen.
-        assert!(board_geometry(FHD, 1, 7).1 >= 110.0);
+        // Seven cards on two rows, still readable on a full HD screen.
+        let ((_, _, _, h), card_w) = board_geometry(FHD, 1, 7);
+        assert!(card_w >= 90.0 && h > 2.0 * card_w * CARD_ASPECT);
     }
 }
