@@ -27,6 +27,7 @@ pub enum Action {
     Show,
     Stats,
     Odds,
+    Boards,
     Narrower,
     Wider,
     News,
@@ -71,6 +72,12 @@ fn entries(app: &App) -> Vec<Entry> {
         item(Action::Show, "Show window (turns off auto-hide)"),
         item(Action::Stats, "My stats"),
         Entry::Item { action: Action::Odds, label: "Win chance at the top".into(), enabled: true, checked: Some(app.top_odds()) },
+        Entry::Item {
+            action: Action::Boards,
+            label: "Opponent board on portrait hover".into(),
+            enabled: true,
+            checked: Some(app.settings.board_on_hover()),
+        },
         item(Action::Narrower, "Side panels narrower"),
         item(Action::Wider, "Side panels wider"),
         item(Action::News, "What's new"),
@@ -110,6 +117,11 @@ pub fn apply(app: &mut App, action: Action) {
         Action::Odds => {
             let on = !app.top_odds();
             app.settings.set_flag("top_odds", on);
+            app.save_settings();
+        }
+        Action::Boards => {
+            let on = !app.settings.board_on_hover();
+            app.settings.set_flag("board_on_hover", on);
             app.save_settings();
         }
         Action::Narrower => app.resize_panels(-super::PANEL_STEP),
