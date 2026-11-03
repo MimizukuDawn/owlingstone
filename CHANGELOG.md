@@ -2,6 +2,12 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.1.6
+- Up to date with Hearthstone patch 37.0.2 (November 3): new card stats and texts, Expert Aviator out of the pool, Murcules back, Harbinger Aph'lass now Tier 5 and Hot-Air Surveyor Tier 5.
+- Trinkets: the new prices are used in the advice, Weighted Gauntlet is now a Greater Trinket, and Spell-powered Wrench, Quilligraphy Set (Greater), Fridge Magnet and Writhing Tentacles are no longer offered. The trinket and comp stats are still from the last patch until there are enough games on the new one.
+- Comps: Murloc Scam now runs on Diremuck Forager instead of Expert Aviator; Murcules joins Murloc Hand Buff.
+- Win chance: Ship Master Eudora gives +8/+8, Stalwart Kodo gives double its stats (triple when golden), The Last One Standing gives +10/+10 and grows after each Rally, Sanguine Refiner's Blood Gem bonus is +1/+1.
+
 ## 2.1.5
 - Fixed: the card preview, the opponent board on portrait hover, the win chance banner and the "running" badge no longer show as an empty grey box. Windows doesn't draw click-through windows made this way, so these windows no longer let clicks through (none of them sits over anything you click).
 - The opponent board now opens at the right of the game, past the game's own portrait tooltip (hero powers and trinkets included) instead of under it, with 4 cards per row.

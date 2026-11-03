@@ -22,7 +22,9 @@ HEADER = """\
 # hand: edit tools/bgbuddy_trinkets.txt then run the tool again).
 #
 # Stats source: https://bgbuddy.gg/trinkets (Firestone community data, Solo, all ranks, current patch,
-# read on 2026-11-02, season 14, patch 36.6.x).
+# read on 2026-11-02, season 14, patch 36.6.x). Costs, kinds and pool from patch 37.0.2 (2026-11-03):
+# the stats are still the 36.6.x ones until bgbuddy has games on the new patch (Weighted Gauntlet,
+# now Greater, has none yet).
 #   avg   = average place of the players who took it (lower = better)
 #   pick  = % of times it is picked when offered
 #   games = number of games (under 500 = not very reliable)

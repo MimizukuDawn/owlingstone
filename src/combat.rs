@@ -31,6 +31,8 @@ const MAX_BOARD: usize = 7;
 /// Safety: a stuck fight (only 0-attack minions left) ends in a tie.
 const MAX_ATTACKS: u32 = 400;
 const BEETLE: &str = "BG28_603t";
+/// The Last One Standing: +10/+10 per Rally, improving by as much each time (patch 37.0.2).
+const LAST_ONE_STEP: i64 = 10;
 /// Fights are split into chunks run in parallel; each chunk has its own random stream.
 const CHUNK: u32 = 250;
 
@@ -181,6 +183,8 @@ struct M {
     killer: Option<usize>,
     /// Already triggered once (Scarlet Survivor...).
     flag: bool,
+    /// The card's own counter (TAG_SCRIPT_DATA_NUM_1), e.g. The Last One Standing's current buff.
+    counter: i64,
 }
 
 impl M {
@@ -211,6 +215,7 @@ impl M {
             dead: false,
             killer: None,
             flag: false,
+            counter: d.data.0,
         }
     }
 
@@ -583,11 +588,12 @@ impl<'a, 'r> Fight<'a, 'r> {
                     self.ms[m].atk += 3 * og;
                 }
                 "BG34_322" => {
-                    // Stalwart Kodo
+                    // Stalwart Kodo: double its maximum stats (golden: triple), 3 times per fight.
                     let left = *self.kodo_left.entry(o).or_insert(3);
                     if left > 0 {
                         self.kodo_left.insert(o, left - 1);
-                        let (a, h) = (self.ms[o].atk * og, self.ms[o].max_hp * og);
+                        let k = og + 1;
+                        let (a, h) = (self.ms[o].atk * k, self.ms[o].max_hp * k);
                         self.buff(m, a, h);
                     }
                 }
@@ -938,7 +944,6 @@ impl<'a, 'r> Fight<'a, 'r> {
 
     // ---------------------------------------------------------------- Rally
     fn rally(&mut self, kind: Rally, side: usize, m: usize, target: usize) {
-        let g = self.ms[m].g();
         let after = |f: &Self| f.pos(m).map(|p| p + 1);
         match kind {
             Rally::Summon(card_id, golden_id) => {
@@ -998,7 +1003,7 @@ impl<'a, 'r> Fight<'a, 'r> {
             }
             Rally::Refiner => {
                 self.gem[side].0 += 1;
-                self.gem[side].1 += 2;
+                self.gem[side].1 += 1;
             }
             Rally::Dragonbreath => {
                 let sp = self.ctx.spell[side];
@@ -1009,13 +1014,17 @@ impl<'a, 'r> Fight<'a, 'r> {
                 }
             }
             Rally::LastOne => {
+                // +10/+10 each, and the amount improves after each Rally (golden: Rally twice).
+                // The game shows the amount reached so far in TAG_SCRIPT_DATA_NUM_1.
+                let amount = self.ms[m].counter.max(LAST_ONE_STEP);
+                self.ms[m].counter = amount + LAST_ONE_STEP;
                 let mask = self.alive(side).iter().fold(0u16, |acc, &o| acc | self.ms[o].races) & !ALL;
                 for (bit, race) in RACES.iter().enumerate() {
                     if mask & (1 << bit) == 0 {
                         continue;
                     }
                     if let Some(o) = self.pick(side, None, |x| x.has_race(race)) {
-                        self.buff(o, 15 * g, 15 * g);
+                        self.buff(o, amount, amount);
                     }
                 }
             }
@@ -1091,7 +1100,7 @@ fn deathrattle_of(base: &str) -> Option<Dr> {
         "BG28_309" => Dr::Mummifier,                                           // Mummifier
         "BGS_008" => Dr::Ghastcoiler,                                          // Ghastcoiler
         "BGS_018" => Dr::BuffAll(7, 7, Some("BEAST")),                         // Goldrinn
-        "BG33_828" => Dr::BuffAll(6, 6, None),                                 // Ship Master Eudora
+        "BG33_828" => Dr::BuffAll(8, 8, None),                                 // Ship Master Eudora
         "BG34_690" => Dr::Plaguerunner,                                        // Plaguerunner
         "BGS_040" => Dr::Nadina,                                               // Nadina the Red
         "BG25_009" => Dr::Knight,                                              // Eternal Summoner

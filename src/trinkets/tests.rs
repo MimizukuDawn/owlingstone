@@ -48,7 +48,7 @@ fn offer_read_from_log_state() {
     ent(&mut g, 3215, "BG36_MagicItem_202", &[trinket.as_slice(), &[("CREATOR", "392"), ("COST", "2")]].concat()); // pivot
     ent(&mut g, 5000, "BG32_MagicItem_366", &[trinket.as_slice(), &[("CREATOR", "0")]].concat()); // seen in combat
     let offer: Vec<(String, i64)> = g.trinket_offer().iter().map(|(e, c)| (e.name(), *c)).collect();
-    assert_eq!(offer, [("Hoggy Bank".to_string(), 0), ("Warcry Totem".to_string(), 2)]);
+    assert_eq!(offer, [("Hoggy Bank".to_string(), 1), ("Warcry Totem".to_string(), 2)]);
     assert!(g.my_trinkets().is_empty());
     g.set_card_id(392, "BG30_MagicItem_411");
     for eid in [3214, 3215] {
@@ -99,7 +99,7 @@ fn portrait_giving_a_core_card_wins() {
 #[test]
 fn unaffordable_goes_last() {
     let k = know();
-    let offer = vec![(trinket(&k, "Weighted Gauntlet", "lesser"), 3), (trinket(&k, "Ornate Clock", "lesser"), 0)];
+    let offer = vec![(trinket(&k, "Training Certificate", "lesser"), 4), (trinket(&k, "Ornate Clock", "lesser"), 0)];
     let picks = rank_offer(&k, &offer, &[], &[], &[], &[], &[], Some(2));
     assert_eq!(picks[0].card.name, "Ornate Clock");
     assert!(!picks[1].affordable);
