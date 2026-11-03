@@ -1,12 +1,14 @@
 """The release signing key: make it once, then sign each release with it. Runs on the maintainer's PC only.
 
     python tools/release_key.py new  --key <file>                 make the secret key (refuses to overwrite)
-    python tools/release_key.py pub  --key <file>                 print its public key (goes in update.py)
+    python tools/release_key.py pub  --key <file>                 print its public key (goes in src/update.rs)
     python tools/release_key.py sign --key <file> --version 1.9.0 (--sha256 <hex> | --exe Owlingstone.exe)
                                                                    write signatures/v1.9.0.sig
+    python tools/release_key.py verify --sig signatures/v1.9.0.sig --version 1.9.0
+                                                                   check it with the app's public keys
 
 Why: every installed Owlingstone checks an update's signature with the public key built into it
-(update.PUBLIC_KEYS) before replacing itself. The secret key never goes to GitHub, so even someone who
+(PUBLIC_KEYS in src/update.rs) before replacing itself. The secret key never goes to GitHub, so even someone who
 took over the GitHub account or the build could not ship an update players would accept.
 
 The secret key file is 32 random bytes written as hex. Keep a copy offline (a USB stick): without it,
@@ -27,8 +29,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
-from bgtracker import ed25519  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ed25519  # noqa: E402
 
 HEADER = "owlingstone-release-key 1"
 
@@ -44,15 +46,43 @@ def signed_text(version, sha):
     return f"owlingstone-release 1\nversion {version}\nsha256 {sha}\n"
 
 
+def app_public_keys():
+    """The public keys built into the app (PUBLIC_KEYS in src/update.rs)."""
+    src = (ROOT / "src" / "update.rs").read_text(encoding="utf-8")
+    m = re.search(r"PUBLIC_KEYS: &\[&str\] = &\[([^\]]*)\]", src)
+    return [bytes.fromhex(k) for k in re.findall(r'"([0-9a-f]{64})"', m.group(1) if m else "")]
+
+
+def verify(sig_text, version):
+    """The SHA-256 a signature file signs for this version; SystemExit if it is not valid."""
+    lines = sig_text.split("\n")
+    m = re.fullmatch(r"signature ([0-9a-f]{128})", lines[3] if len(lines) > 3 else "")
+    sha = lines[2][len("sha256 "):] if len(lines) > 2 else ""
+    text = signed_text(version, sha)
+    if not m or "\n".join(lines[:3]) + "\n" != text or not re.fullmatch(r"[0-9a-f]{64}", sha):
+        raise SystemExit(f"not a signature for version {version}")
+    if not any(ed25519.verify(k, text.encode("ascii"), bytes.fromhex(m.group(1))) for k in app_public_keys()):
+        raise SystemExit("the signature does not match the app's public key")
+    return sha
+
+
 def main(argv):
     ap = argparse.ArgumentParser()
-    ap.add_argument("action", choices=["new", "pub", "sign"])
-    ap.add_argument("--key", required=True)
+    ap.add_argument("action", choices=["new", "pub", "sign", "verify"])
+    ap.add_argument("--key")
+    ap.add_argument("--sig")
     ap.add_argument("--version")
     ap.add_argument("--sha256")
     ap.add_argument("--exe")
     ap.add_argument("--out-dir", default=str(ROOT / "signatures"))
     a = ap.parse_args(argv)
+    if a.action == "verify":
+        if not a.sig or not a.version:
+            raise SystemExit("--sig <file> and --version are required")
+        print(verify(Path(a.sig).read_text(encoding="ascii"), a.version))
+        return 0
+    if not a.key:
+        raise SystemExit("--key <file> is required")
     key = Path(a.key)
     if a.action == "new":
         if key.exists():

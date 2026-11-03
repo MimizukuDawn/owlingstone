@@ -6,20 +6,25 @@
 //!   `--import` first adds the games of old Power.log files (default: the game's Logs folder).
 //! - `snapshot <file.log> [--turn N]`: what the window would show at that turn, as text (tests).
 
+#![cfg_attr(windows, windows_subsystem = "windows")]
+
+mod app;
+
 use std::path::PathBuf;
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
 
 use owlingstone::powerlog::PowerLogParser;
-use owlingstone::{cards, errlog, history, hslogs, knowledge, snapshot, watcher};
+use owlingstone::{errlog, history, hslogs, knowledge, snapshot, watcher};
 
-const USAGE: &str = "Usage: Owlingstone [replay <log> | live | history [--import [path]] | snapshot <log> [--turn N]]";
+const USAGE: &str = "Usage: Owlingstone [ui [--replay <log> [--turn N]] | replay <log> | live | history [--import [path]] | snapshot <log> [--turn N]]";
 
 fn main() {
     errlog::install_panic_hook();
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if !matches!(args.first().map(String::as_str), None | Some("ui")) {
+        attach_console();
+    }
     let code = match args.first().map(String::as_str) {
-        None | Some("ui") => run_ui(),
+        None | Some("ui") => run_ui(&args),
         Some("replay") => args.get(1).map(|p| replay(&PathBuf::from(p))).unwrap_or_else(usage),
         Some("live") => live(),
         Some("history") => history(&args[1..]),
@@ -39,15 +44,28 @@ fn main() {
     std::process::exit(code);
 }
 
+/// The exe is a window app, so a console command run from cmd / PowerShell prints into that console.
+#[cfg(windows)]
+fn attach_console() {
+    use windows_sys::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole};
+    // SAFETY: plain Win32 call; failure (no parent console, or output already redirected) is harmless.
+    unsafe { AttachConsole(ATTACH_PARENT_PROCESS) };
+}
+
+#[cfg(not(windows))]
+fn attach_console() {}
+
 fn usage() -> i32 {
     eprintln!("{USAGE}");
     2
 }
 
-/// The window comes with the next step of the Rust version.
-fn run_ui() -> i32 {
-    eprintln!("The window is not built into this version yet.\n{USAGE}");
-    2
+/// The window over the game. `ui --replay <log> [--turn N]`: an old log instead of the live game.
+fn run_ui(args: &[String]) -> i32 {
+    let value = |flag: &str| args.iter().position(|a| a == flag).and_then(|i| args.get(i + 1));
+    let replay = value("--replay").map(|p| (PathBuf::from(p), value("--turn").and_then(|t| t.parse().ok())));
+    let smoke = std::env::var_os("OWLINGSTONE_SMOKE").is_some_and(|v| v == "1");
+    app::run(app::Options { replay, smoke })
 }
 
 fn replay(path: &std::path::Path) -> i32 {
@@ -162,13 +180,4 @@ fn print_snapshot(path: &std::path::Path, turn: Option<i64>) -> i32 {
             1
         }
     }
-}
-
-#[allow(dead_code)]
-fn start_reader(sink: snapshot::Sink) -> Arc<AtomicBool> {
-    let stop = Arc::new(AtomicBool::new(false));
-    let s = stop.clone();
-    cards::refresh_in_background(false);
-    std::thread::Builder::new().name("log reader".into()).spawn(move || snapshot::run_live(sink, s)).ok();
-    stop
 }

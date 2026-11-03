@@ -2,7 +2,7 @@
 
 Who does what:
 - verify(public_key, message, signature) -> True only if the signature was made with the matching
-  secret key. The app uses it to check every update before installing it (see update.py).
+  secret key. The tools use it to check every update before installing it (see src/update.rs).
 - sign(secret_seed, message) and public_key(secret_seed) are used only by tools/release_key.py, on the
   maintainer's PC, where the secret key lives (never in the repository, never on GitHub).
 

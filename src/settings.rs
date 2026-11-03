@@ -88,13 +88,23 @@ impl Settings {
     pub fn last_version(&self) -> Option<String> {
         self.text("last_version")
     }
-    /// Right panel tab: "comps" or "lobby".
+    /// Right panel tab: "Comps" or "Lobby" (as the Python versions wrote it).
     pub fn hud_tab(&self) -> String {
-        self.text("hud_tab").unwrap_or_else(|| "comps".into())
+        match self.text("hud_tab") {
+            Some(t) if t.eq_ignore_ascii_case("lobby") => "Lobby".into(),
+            _ => "Comps".into(),
+        }
     }
-    /// Right panel folded to a thin strip.
-    pub fn folded(&self) -> bool {
-        self.flag("folded", false)
+    /// Keys of the right panel's folded sections (e.g. "buy", "turn plan").
+    pub fn folded(&self) -> std::collections::BTreeSet<String> {
+        self.values
+            .get("folded")
+            .and_then(Value::as_array)
+            .map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect())
+            .unwrap_or_default()
+    }
+    pub fn set_folded(&mut self, keys: &std::collections::BTreeSet<String>) {
+        self.values.insert("folded".into(), Value::from(keys.iter().cloned().collect::<Vec<_>>()));
     }
 }
 
@@ -110,6 +120,11 @@ mod tests {
         let mut s2 = s.clone();
         s2.set_flag("lobby_panel", false);
         assert!(s2.values.contains_key("future"));
-        assert_eq!(s.hud_tab(), "comps");
+        assert_eq!(s.hud_tab(), "Comps");
+        let mut f = Settings { values: serde_json::from_str(r#"{"folded": ["buy", "turn plan"], "hud_tab": "Lobby"}"#).unwrap() };
+        assert_eq!(f.folded().into_iter().collect::<Vec<_>>(), ["buy", "turn plan"]);
+        assert_eq!(f.hud_tab(), "Lobby");
+        f.set_folded(&["comps".to_string()].into());
+        assert_eq!(f.values["folded"], serde_json::json!(["comps"]));
     }
 }

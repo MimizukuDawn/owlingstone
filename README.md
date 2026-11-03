@@ -51,17 +51,19 @@ for exactly what is shared when you opt in and how to delete it.
 
 Right-click the Owlingstone icon near the clock > **Send feedback…** to send an idea or a bug report.
 
-## Run from source
+## Build from source
+
+Install [Rust](https://rustup.rs/), then:
 
 ```powershell
-py -3.12 -m venv .venv
-.venv\Scripts\python -m pip install -r requirements.txt
-.venv\Scripts\python -m bgtracker          # the overlay
-.venv\Scripts\python -m pytest -q -m "not slow"
+cargo run --release              # the overlay
+cargo test                       # the tests
+cargo run --release -- history   # your stats in the console
 ```
 
-`update.bat` tests the code, builds `dist\Owlingstone\Owlingstone.exe` and starts it. The comps, heroes, hero
-curves, economy and rules are plain YAML files in `data/`: edit them and the app reloads them.
+The exe is `target\release\Owlingstone.exe`. The comps, heroes, hero curves, economy and rules are plain
+YAML files in `data/`, built into the exe; when the exe runs from the project (a `data/` folder above it),
+it reads that folder instead and reloads a file when you edit it.
 
 ## Data sources and credits
 
