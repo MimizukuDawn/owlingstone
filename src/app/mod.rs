@@ -120,6 +120,8 @@ pub struct App {
     pub dialogs: dialogs::Dialogs,
     pub toasts: Vec<Toast>,
     tray: Option<tray::Tray>,
+    /// The tray menu, while it is open (tray.rs).
+    pub tray_menu: Option<tray::OpenMenu>,
     asked_sharing: bool,
     history_cache: (Option<SystemTime>, Arc<Vec<Record>>),
 }
@@ -348,13 +350,14 @@ impl App {
             dialogs: dialogs::Dialogs::default(),
             toasts: Vec::new(),
             tray: None,
+            tray_menu: None,
             asked_sharing: false,
             history_cache: (None, Arc::new(Vec::new())),
         };
         if replay || opts.smoke {
             return app;
         }
-        app.tray = tray::Tray::new(&app);
+        app.tray = tray::Tray::new(&app, ctx);
         // Other trackers show their own win chance at the same place: ours is off by default then.
         app.other_tracker = win::other_tracker_running();
         cards::refresh_in_background(false);
@@ -683,7 +686,8 @@ impl eframe::App for App {
         }
         self.images.receive(ctx);
         if let Some(mut t) = self.tray.take() {
-            t.poll(self);
+            let ppp = self.ppp(ctx);
+            t.poll(self, ppp);
             self.tray = Some(t);
         }
         self.place(ctx);
@@ -691,6 +695,7 @@ impl eframe::App for App {
         egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |_| {});
         self.show_panels(ctx);
         dialogs::show(self, ctx);
+        tray::show_menu(self, ctx);
         if self.dialogs.quit || self.smoke_until.is_some_and(|t| Instant::now() >= t) {
             self.stop.store(true, Ordering::Relaxed);
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
