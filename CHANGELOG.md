@@ -2,6 +2,9 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.1.3
+- In Hearthstone's menus, a small gold badge ("Owlingstone · running, waiting for a game") now shows where the left panel goes, so you can see the app is on. After a game it shows where you finished. The panels themselves still appear only during a game (with auto-hide on).
+
 ## 2.1.1
 - The tray menu closes as soon as you click anywhere else (the game, the desktop, the taskbar), instead of staying open for several seconds.
 - New in the tray menu: **Check for updates now**. It asks GitHub right away instead of waiting for the check every 6 hours, and says if you already have the latest version.

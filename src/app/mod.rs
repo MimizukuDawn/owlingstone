@@ -62,6 +62,18 @@ pub fn side_panel_geometry(rect: (f32, f32, f32, f32), left: bool, delta: f32) -
 }
 
 /// Centred at the top of the game, just above the opponent's portrait.
+/// Size of the badge shown in the menus (Hearthstone in front, no game going on).
+pub const IDLE_W: f32 = 300.0;
+pub const IDLE_H: f32 = 30.0;
+
+/// What the menu badge says after "Owlingstone": waiting, or the place of the game just finished.
+pub fn idle_badge_text(snap: &Snapshot) -> String {
+    match (snap.over, snap.placement) {
+        (true, Some(p)) => format!("· last game #{p} · waiting"),
+        _ => "· running, waiting for a game".to_string(),
+    }
+}
+
 pub fn odds_geometry(rect: (f32, f32, f32, f32)) -> (f32, f32) {
     let (x, y, w, h) = rect;
     ((x + (w - ODDS_W) / 2.0).round(), (y + h * 0.005).round())
@@ -116,6 +128,8 @@ pub struct App {
     // --- placement
     game_rect: Option<win::Rect>,
     visible: bool,
+    /// Hearthstone is in front but no game is going on (menus): a small badge says the app is running.
+    idle_badge: bool,
     last_place: Option<Instant>,
     /// Set by the watcher thread as soon as the window in front changes: show / hide right away.
     front_changed: Arc<AtomicBool>,
@@ -356,6 +370,7 @@ impl App {
             board_watch: board::Watch::start(ctx),
             game_rect: None,
             visible: replay,
+            idle_badge: false,
             last_place: None,
             front_changed: Arc::new(AtomicBool::new(false)),
             host_pos: pos2(0.0, 0.0),
@@ -583,6 +598,10 @@ impl App {
             let exe = win::foreground_exe();
             let focused = exe == "hearthstone.exe" || exe == win::own_exe();
             self.visible = focused && self.snap.in_game && self.game_rect.is_some();
+            self.idle_badge = focused && !self.snap.in_game && self.game_rect.is_some();
+        }
+        if !self.settings.hide_when_unfocused() {
+            self.idle_badge = false; // the panels themselves show then
         }
         // The host sits inside the game's corner, so its scale is the one of the game's screen.
         if let Some((x, y, _, _)) = self.game_rect {
@@ -685,6 +704,41 @@ impl App {
                     return;
                 }
                 right::odds_banner(ui, odds.as_ref());
+            },
+        );
+        // In the menus: a small badge where the left panel goes, so the player sees the app is running.
+        let badge_on = self.idle_badge && !self.replay;
+        let badge_text = idle_badge_text(&self.snap);
+        ctx.show_viewport_immediate(
+            ViewportId::from_hash_of("idle"),
+            ViewportBuilder::default()
+                .with_title("Owlingstone – running")
+                .with_position([left_geo.0, left_geo.1])
+                .with_inner_size([IDLE_W, IDLE_H])
+                .with_decorations(false)
+                .with_always_on_top()
+                .with_taskbar(false)
+                .with_resizable(false)
+                .with_mouse_passthrough(true)
+                .with_visible(badge_on)
+                .with_active(false),
+            |ui, class| {
+                if class == ViewportClass::EmbeddedWindow {
+                    return;
+                }
+                let frame = egui::Frame::NONE
+                    .fill(draw::PANEL)
+                    .stroke(egui::Stroke::new(1.0, draw::GOLD))
+                    .corner_radius(egui::CornerRadius::same(5))
+                    .inner_margin(egui::Margin { left: 8, right: 8, top: 4, bottom: 4 });
+                egui::CentralPanel::default().frame(frame).show(ui, |ui| {
+                    ui.horizontal_centered(|ui| {
+                        ui.spacing_mut().item_spacing.x = 6.0;
+                        ui.label(egui::RichText::new("●").color(draw::GREEN).font(draw::font(11.0)));
+                        ui.label(egui::RichText::new("Owlingstone").color(draw::GOLD).font(draw::bold(13.0)));
+                        ui.label(egui::RichText::new(&badge_text).color(draw::GRAY).font(draw::font(12.0)));
+                    });
+                });
             },
         );
         self.show_preview(ctx, hover);
@@ -851,4 +905,16 @@ pub fn choose_hearthstone_dir(app: &mut App) {
 
 pub fn open_data_folder() {
     win::open_folder(&owlingstone::paths::user_dir());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn menu_badge_says_waiting_or_last_place() {
+        assert_eq!(idle_badge_text(&Snapshot::default()), "· running, waiting for a game");
+        let done = Snapshot { over: true, placement: Some(3), ..Default::default() };
+        assert_eq!(idle_badge_text(&done), "· last game #3 · waiting");
+    }
 }
