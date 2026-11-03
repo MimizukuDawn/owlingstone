@@ -119,3 +119,75 @@ fn effect_tables_are_consistent() {
         }
     }
 }
+
+/// Runs `f` on a fight set up with these boards (nothing played yet).
+fn with_fight(mine: Vec<MinionSnap>, theirs: Vec<MinionSnap>, f: impl FnOnce(&mut Fight)) {
+    let db = cards::test_db();
+    let ctx = Ctx {
+        db: &db,
+        beetle: [(2, 2); 2],
+        lobster: [(0, 0); 2],
+        deathrattle_pool: vec![],
+        deity_id: None,
+        deity_stats: [(0, 0); 2],
+        knights: [0; 2],
+        undead: [0; 2],
+        gem: [(1, 1); 2],
+        spell: [(0, 0); 2],
+    };
+    let protos = [
+        mine.iter().map(|d| M::new(d, 0, &db)).collect::<Vec<_>>(),
+        theirs.iter().map(|d| M::new(d, 1, &db)).collect::<Vec<_>>(),
+    ];
+    let mut rng = Rng::new(1);
+    let mut fight = Fight::new(&protos, &ctx, &mut rng);
+    f(&mut fight);
+}
+
+#[test]
+fn patch_37_0_2_cards() {
+    // Ship Master Eudora: Deathrattle +8/+8 (was +6/+6).
+    let r = odds(
+        vec![MinionSnap { taunt: true, ..m("BG33_828", 0, 1) }, plain(1, 1)],
+        vec![plain(1, 9), plain(1, 9), plain(1, 9)],
+    );
+    assert_eq!(r.win, 100.0);
+    // Stalwart Kodo: double its maximum stats (golden: triple), 3 times per fight.
+    with_fight(vec![m("BG34_322", 2, 10)], vec![], |f| {
+        let t = f.token("", 0).stats(1, 1);
+        let i = f.summon(0, t, None, true).unwrap();
+        assert_eq!((f.ms[i].atk, f.ms[i].hp), (5, 21));
+        for _ in 0..3 {
+            let t = f.token("", 0).stats(1, 1);
+            f.summon(0, t, None, true);
+        }
+        let last = *f.sides[0].last().unwrap();
+        assert_eq!(f.ms[last].atk, 1); // 4th summon: no more
+    });
+    with_fight(vec![MinionSnap { golden: true, ..m("BG34_322_G", 2, 10) }], vec![], |f| {
+        let t = f.token("", 0).stats(1, 1);
+        let i = f.summon(0, t, None, true).unwrap();
+        assert_eq!((f.ms[i].atk, f.ms[i].hp), (7, 31));
+    });
+    // The Last One Standing: +10/+10, improving after each Rally.
+    let beast = MinionSnap { races: vec!["BEAST".into()], ..plain(1, 1) };
+    with_fight(vec![m("BG34_320", 10, 10), beast.clone()], vec![plain(0, 99)], |f| {
+        let (me, b, target) = (f.sides[0][0], f.sides[0][1], f.sides[1][0]);
+        f.rally(Rally::LastOne, 0, me, target);
+        assert_eq!(f.ms[b].atk, 11);
+        f.rally(Rally::LastOne, 0, me, target);
+        assert_eq!(f.ms[b].atk, 31);
+    });
+    // ... starting from the amount the game shows.
+    with_fight(vec![MinionSnap { data: (30, 0), ..m("BG34_320", 10, 10) }, beast], vec![plain(0, 99)], |f| {
+        let (me, b, target) = (f.sides[0][0], f.sides[0][1], f.sides[1][0]);
+        f.rally(Rally::LastOne, 0, me, target);
+        assert_eq!(f.ms[b].atk, 31);
+    });
+    // Sanguine Refiner: Blood Gems +1/+1 more (was +1/+2).
+    with_fight(vec![m("BG33_885", 4, 9)], vec![plain(0, 99)], |f| {
+        let (me, target) = (f.sides[0][0], f.sides[1][0]);
+        f.rally(Rally::Refiner, 0, me, target);
+        assert_eq!(f.gem[0], (2, 2));
+    });
+}

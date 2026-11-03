@@ -14,7 +14,7 @@
 Accord-o-Tron: {value: 3, kind: gold, when: board, note: "+1 gold each turn"}
 Malchezaar, Prince of Dance: {value: 3, kind: gold, when: board, note: "2 free rolls each turn"}
 Snare Trapper: {value: 3, kind: gold, when: play, note: "+1 max gold for the game"}
-Enterprising Escapee: {value: 2, kind: gold, when: board, note: "Lockbox every 6 gold spent"}
+Enterprising Escapee: {value: 2.4, kind: gold, when: board, note: "Lockbox every 5 gold spent"}
 Sky Admiral Rogers: {value: 2, kind: gold, when: board, note: "Bounty every 9 gold spent"}
 Twisted Wrathguard: {value: 2, kind: gold, when: board, note: "Fodder after each sell"}
 Laboratory Assistant: {value: 1.5, kind: gold, when: play, note: "Fodder in your next 3 rolls"}

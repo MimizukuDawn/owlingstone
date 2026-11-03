@@ -17,6 +17,11 @@
 # (Firestone community data, Solo, all MMR). A comp is counted only once built, so all have an
 # average better than 4.5: compare comps with each other, not with 4.5.
 # No "stats" = a comp without public numbers (opinion only).
+#
+# Patch 37.0.2 (2026-11-03): Expert Aviator left the pool (Murloc Scam now runs on Diremuck Forager) and
+# Living Azerite went down to +3/+3, so Murloc Scam and the Azerite comps will likely do worse than these
+# 36.6.3 numbers; Quilboar and Demons were nerfed, Pirates, Murloc hand and Elemental Tempest buffed.
+# Refresh the stats from bgbuddy once the new patch has games.
 # A test checks that each card name exists in the current Solo pool (no Duos, no rotated-out tribe).
 
 # ---------------------------------------------------------------- Aberrations
@@ -210,17 +215,17 @@
   name: Murloc Hand Buff
   races: [MURLOC]
   core: [Choral Mrrrglr, Twilight Tidehunter, Flighty Scout, Diremuck Forager, Brann Bronzebeard]
-  addons: [Magicfin Mycologist, Balinda Stonehearth, Expert Aviator, Primalfin Lookout, Bile Spitter, Costume Enthusiast, Bream Counter, Kelp Keeper, Shamanic Tidecaller, Tad]
+  addons: [Magicfin Mycologist, Balinda Stonehearth, Murcules, Primalfin Lookout, Bile Spitter, Costume Enthusiast, Bream Counter, Kelp Keeper, Shamanic Tidecaller, Tad]
   difficulty: hard
   when_to_commit: Twilight Tidehunter + Brann + Flighty Scout.
-  how_to_play: Buff Flighty Scout in hand with Tidehunter, Balinda and Brann; Diremuck Forager or Expert Aviator summon it in combat, Choral adds the hand's stats.
+  how_to_play: Buff Flighty Scout in hand with Tidehunter, Balinda and Brann; Diremuck Forager summons it in combat, Choral adds the hand's stats. Murcules and Shamanic Tidecaller (buffed in 37.0.2) feed the hand too.
   stats: {avg: 3.55, games: 15500}
 
 - id: murloc-scam
   name: Murloc Scam
   races: [MURLOC]
-  core: [Expert Aviator, Sewer Escapee, Bile Spitter]
-  addons: [Leeroy the Reckless, Deadly Spore, Bubble Gunner, Heroic Underdog, Diremuck Forager]
+  core: [Diremuck Forager, Sewer Escapee, Bile Spitter]
+  addons: [Leeroy the Reckless, Deadly Spore, Bubble Gunner, Heroic Underdog]
   difficulty: medium
   when_to_commit: Sewer Escapee + Bile Spitter.
   how_to_play: Play Sewer Escapee on Bile Spitter for Reborn and a Venomous Shield, then add Leeroy, Deadly Spore and Heroic Underdog.

@@ -2,7 +2,6 @@ Copper Coil|G|2.43|60.5|153
 Sludge Portrait|G|3.06|63.5|24100
 Eternal Portrait|G|3.09|24.5|5530
 Assembler Portrait|G|3.14|31.1|7500
-Weighted Gauntlet|L|3.16|30.5|33700
 Blessing Portrait|L|3.17|28.6|3850
 Tiger Carving|G|3.19|44.3|2760
 Eternal Portrait|L|3.19|28.0|6560
@@ -194,17 +193,14 @@ Floating Candle Set|L|4.01|15.8|16800
 Warcry Totem|L|4.01|14.8|24100
 Inductive Gyroblade|L|4.01|24.7|8440
 Baller Portrait|G|4.01|29.4|2370
-Quilligraphy Set|G|4.02|17.1|10300
 Trusty Crowbar|G|4.02|22.0|7090
 Sunken Anchor|L|4.02|15.7|14900
 Fish Portrait|L|4.02|17.7|10400
 Bluegill Flippers|L|4.02|20.7|4420
 Lava Lamp|G|4.02|23.3|5510
 Accord-o-Tron Portrait|G|4.03|49.4|16100
-Spell-powered Wrench|L|4.03|26.2|8920
 Explorer's Binoculars|L|4.03|24.9|27400
 Amplifying Essence|G|4.03|31.2|8510
-Fridge Magnet|G|4.03|17.4|5920
 Transcribing Typewriter|L|4.04|17.0|38400
 Inductive Gyroblade|G|4.04|18.7|6410
 Lens Case|L|4.04|19.4|16900
@@ -257,7 +253,6 @@ Herding Horn|L|4.23|18.9|2130
 Replica Cathedral|L|4.24|10.3|11100
 Token of the Old Gods|L|4.24|18.9|20900
 Portable Factory|G|4.25|12.1|20600
-Writhing Tentacles|G|4.25|6.6|2600
 Frigid Blossom|L|4.27|20.4|21900
 Quartermaster's Hook|L|4.29|31.2|11600
 Alliance Keychain|L|4.35|7.5|7090
