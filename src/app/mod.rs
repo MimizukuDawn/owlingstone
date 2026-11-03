@@ -25,7 +25,7 @@ mod win;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver, channel};
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 
@@ -62,6 +62,18 @@ pub fn side_panel_geometry(rect: (f32, f32, f32, f32), left: bool, delta: f32) -
 }
 
 /// Centred at the top of the game, just above the opponent's portrait.
+/// Size of the badge shown in the menus (Hearthstone in front, no game going on).
+pub const IDLE_W: f32 = 300.0;
+pub const IDLE_H: f32 = 30.0;
+
+/// What the menu badge says after "Owlingstone": waiting, or the place of the game just finished.
+pub fn idle_badge_text(snap: &Snapshot) -> String {
+    match (snap.over, snap.placement) {
+        (true, Some(p)) => format!("· last game #{p} · waiting"),
+        _ => "· running, waiting for a game".to_string(),
+    }
+}
+
 pub fn odds_geometry(rect: (f32, f32, f32, f32)) -> (f32, f32) {
     let (x, y, w, h) = rect;
     ((x + (w - ODDS_W) / 2.0).round(), (y + h * 0.005).round())
@@ -70,6 +82,10 @@ pub fn odds_geometry(rect: (f32, f32, f32, f32)) -> (f32, f32) {
 /// What the update checker says.
 enum UpdateMsg {
     Ready(String),
+    /// Answer to "Check for updates now" when nothing newer is published.
+    UpToDate,
+    /// Answer to "Check for updates now" when GitHub could not be reached or the release was refused.
+    Failed(String),
 }
 
 /// A short message near the bottom right of the screen (what Qt showed as a tray balloon).
@@ -112,6 +128,8 @@ pub struct App {
     // --- placement
     game_rect: Option<win::Rect>,
     visible: bool,
+    /// Hearthstone is in front but no game is going on (menus): a small badge says the app is running.
+    idle_badge: bool,
     last_place: Option<Instant>,
     /// Set by the watcher thread as soon as the window in front changes: show / hide right away.
     front_changed: Arc<AtomicBool>,
@@ -122,12 +140,18 @@ pub struct App {
     // --- updates, dialogs, messages
     updater: Arc<Mutex<Updater>>,
     upd_rx: Receiver<UpdateMsg>,
+    upd_tx: Sender<UpdateMsg>,
+    repaint: Context,
+    /// A "Check for updates now" is running.
+    pub checking_update: bool,
     pub update_ready: Option<String>,
     pub dialogs: dialogs::Dialogs,
     pub toasts: Vec<Toast>,
     tray: Option<tray::Tray>,
     /// The tray menu, while it is open (tray.rs).
     pub tray_menu: Option<tray::OpenMenu>,
+    /// When an outside click last closed the tray menu (tray.rs: the same click must not reopen it).
+    pub tray_menu_closed: Option<Instant>,
     asked_sharing: bool,
     history_cache: (Option<SystemTime>, Arc<Vec<Record>>),
 }
@@ -346,6 +370,7 @@ impl App {
             board_watch: board::Watch::start(ctx),
             game_rect: None,
             visible: replay,
+            idle_badge: false,
             last_place: None,
             front_changed: Arc::new(AtomicBool::new(false)),
             host_pos: pos2(0.0, 0.0),
@@ -354,11 +379,15 @@ impl App {
             smoke_until: opts.smoke.then(|| Instant::now() + Duration::from_secs(4)),
             updater: updater.clone(),
             upd_rx,
+            upd_tx: upd_tx.clone(),
+            repaint: ctx.clone(),
+            checking_update: false,
             update_ready: None,
             dialogs: dialogs::Dialogs::default(),
             toasts: Vec::new(),
             tray: None,
             tray_menu: None,
+            tray_menu_closed: None,
             asked_sharing: false,
             history_cache: (None, Arc::new(Vec::new())),
         };
@@ -484,6 +513,33 @@ impl App {
         }
     }
 
+    /// Tray menu "Check for updates now": asks GitHub at once (not waiting for the 6-hour check) and
+    /// says the result in a notice. A newer signed version is downloaded and offered as usual.
+    pub fn check_updates_now(&mut self) {
+        if self.checking_update || self.update_ready.is_some() {
+            return;
+        }
+        self.checking_update = true;
+        let (updater, tx, ctx) = (self.updater.clone(), self.upd_tx.clone(), self.repaint.clone());
+        let spawned = std::thread::Builder::new().name("update-now".into()).spawn(move || {
+            let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map(|d| d.as_secs_f64()).unwrap_or(0.0);
+            let found = updater.lock().unwrap_or_else(|e| e.into_inner()).check_now(&update::github_get, now);
+            let msg = match found {
+                Ok(Some(info)) => UpdateMsg::Ready(info.version),
+                Ok(None) => UpdateMsg::UpToDate,
+                Err(e) => {
+                    owlingstone::errlog::note("update check", &e);
+                    UpdateMsg::Failed(e)
+                }
+            };
+            let _ = tx.send(msg);
+            ctx.request_repaint();
+        });
+        if spawned.is_err() {
+            self.checking_update = false;
+        }
+    }
+
     pub fn run_update(&mut self) {
         let result = self.updater.lock().unwrap_or_else(|e| e.into_inner()).install();
         match result {
@@ -542,6 +598,10 @@ impl App {
             let exe = win::foreground_exe();
             let focused = exe == "hearthstone.exe" || exe == win::own_exe();
             self.visible = focused && self.snap.in_game && self.game_rect.is_some();
+            self.idle_badge = focused && !self.snap.in_game && self.game_rect.is_some();
+        }
+        if !self.settings.hide_when_unfocused() {
+            self.idle_badge = false; // the panels themselves show then
         }
         // The host sits inside the game's corner, so its scale is the one of the game's screen.
         if let Some((x, y, _, _)) = self.game_rect {
@@ -646,6 +706,41 @@ impl App {
                 right::odds_banner(ui, odds.as_ref());
             },
         );
+        // In the menus: a small badge where the left panel goes, so the player sees the app is running.
+        let badge_on = self.idle_badge && !self.replay;
+        let badge_text = idle_badge_text(&self.snap);
+        ctx.show_viewport_immediate(
+            ViewportId::from_hash_of("idle"),
+            ViewportBuilder::default()
+                .with_title("Owlingstone – running")
+                .with_position([left_geo.0, left_geo.1])
+                .with_inner_size([IDLE_W, IDLE_H])
+                .with_decorations(false)
+                .with_always_on_top()
+                .with_taskbar(false)
+                .with_resizable(false)
+                .with_mouse_passthrough(true)
+                .with_visible(badge_on)
+                .with_active(false),
+            |ui, class| {
+                if class == ViewportClass::EmbeddedWindow {
+                    return;
+                }
+                let frame = egui::Frame::NONE
+                    .fill(draw::PANEL)
+                    .stroke(egui::Stroke::new(1.0, draw::GOLD))
+                    .corner_radius(egui::CornerRadius::same(5))
+                    .inner_margin(egui::Margin { left: 8, right: 8, top: 4, bottom: 4 });
+                egui::CentralPanel::default().frame(frame).show(ui, |ui| {
+                    ui.horizontal_centered(|ui| {
+                        ui.spacing_mut().item_spacing.x = 6.0;
+                        ui.label(egui::RichText::new("●").color(draw::GREEN).font(draw::font(11.0)));
+                        ui.label(egui::RichText::new("Owlingstone").color(draw::GOLD).font(draw::bold(13.0)));
+                        ui.label(egui::RichText::new(&badge_text).color(draw::GRAY).font(draw::font(12.0)));
+                    });
+                });
+            },
+        );
         self.show_preview(ctx, hover);
         self.show_board(ctx, game);
     }
@@ -746,7 +841,16 @@ impl eframe::App for App {
         }
         while let Ok(msg) = self.upd_rx.try_recv() {
             match msg {
+                UpdateMsg::UpToDate => {
+                    self.checking_update = false;
+                    self.toast("Owlingstone", &format!("You have the latest version (v{VERSION})."));
+                }
+                UpdateMsg::Failed(e) => {
+                    self.checking_update = false;
+                    self.toast("Owlingstone", &format!("Could not check for updates: {e}"));
+                }
                 UpdateMsg::Ready(v) => {
+                    self.checking_update = false;
                     if self.update_ready.as_deref() != Some(&v) {
                         self.toast("Owlingstone", &format!("Version {v} is ready. Click \"Update to v{v}\" in the window or the tray menu."));
                         self.update_ready = Some(v);
@@ -801,4 +905,16 @@ pub fn choose_hearthstone_dir(app: &mut App) {
 
 pub fn open_data_folder() {
     win::open_folder(&owlingstone::paths::user_dir());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn menu_badge_says_waiting_or_last_place() {
+        assert_eq!(idle_badge_text(&Snapshot::default()), "· running, waiting for a game");
+        let done = Snapshot { over: true, placement: Some(3), ..Default::default() };
+        assert_eq!(idle_badge_text(&done), "· last game #3 · waiting");
+    }
 }
