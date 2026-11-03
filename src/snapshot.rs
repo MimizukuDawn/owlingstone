@@ -529,6 +529,7 @@ pub fn send_in_background(share: Share) {
 
 /// Follows the live game until `stop` is set. Sends a snapshot when something changed.
 pub fn run_live(sink: Sink, stop: Arc<AtomicBool>) {
+    crate::background::lower_priority(); // reading and advice never take the CPU from the game
     let mut watcher = LogWatcher::new(None);
     let mut state = State::default();
     let mut last: Option<Arc<Snapshot>> = None;

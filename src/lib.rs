@@ -1,6 +1,7 @@
 //! Owlingstone: a standalone Hearthstone Battlegrounds helper that reads the game's Power.log.
 
 pub mod advice;
+pub mod background;
 pub mod cards;
 pub mod combat;
 pub mod comps;
