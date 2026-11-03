@@ -433,6 +433,7 @@ pub struct Plan {
 #[derive(Default)]
 pub struct Caches {
     plan: Option<(String, Arc<Plan>)>,
+    choice: Option<(String, Arc<OptionFights>)>,
     preview: Option<(String, Odds)>,
 }
 
@@ -603,6 +604,65 @@ pub fn fight_plan(k: &Knowledge, game: &Game, caches: &mut Caches) -> Option<Arc
     });
     caches.plan = Some((key, plan.clone()));
     Some(plan)
+}
+
+/// Next fight with each option of a choice (Discover) added to my board, against the same expected board
+/// as the turn plan.
+#[derive(Debug, Clone, PartialEq)]
+pub struct OptionFights {
+    pub turn: i64,
+    pub tier: i64,
+    pub health: Option<i64>,
+    pub base: SimResult,
+    /// Per option (same order): odds with it added, and attack + health it adds to my team.
+    pub with: Vec<(SimResult, i64)>,
+    pub team: Vec<String>,
+}
+
+/// Simulates my next fight with each minion option added (None in combat, or without a next opponent).
+/// `options` = the option entities; non-minions get the base odds and no gain. Kept while nothing changes.
+pub fn option_fights(game: &Game, options: &[&crate::game::Entity], caches: &mut Caches) -> Option<Arc<OptionFights>> {
+    if !game.is_battlegrounds() || game.is_duos() || game.is_over() || game.in_combat() {
+        return None;
+    }
+    let opp = game.next_opponent_id()?;
+    let db = cards::db();
+    let (turn, tier, health) = (game.turn(), game.tavern_tier().unwrap_or(1).max(1), game.my_health());
+    let (opp_tier, last) = opponent_info(game, opp);
+    let mut team: Vec<MinionSnap> = game.my_board().iter().map(|e| snapshot_minion(e, &db)).collect();
+    let room = MAX_BOARD.saturating_sub(team.len());
+    team.extend(game.my_hand().iter().filter(|e| e.is_minion()).take(room).map(|e| snapshot_minion(e, &db)));
+    let snaps: Vec<Option<MinionSnap>> = options.iter().map(|e| e.is_minion().then(|| snapshot_minion(e, &db))).collect();
+    let cap = game.damage_cap();
+    let key = format!("{team:?}|{snaps:?}|{opp}|{opp_tier}|{turn}|{cap:?}|{health:?}|{:?}|{}", last.map(|f| f.turn), cards::generation());
+    if let Some((k0, f)) = &caches.choice {
+        if *k0 == key {
+            return Some(f.clone());
+        }
+    }
+    let (theirs, _) = expected_board(turn, opp_tier, last);
+    let counters = [
+        game.player_counters(game.local_player_id()),
+        last.and_then(|f| f.frozen.as_ref()).map(|fr| fr.counters.1.clone()).unwrap_or_default(),
+    ];
+    let sim = |mine: &[MinionSnap]| {
+        let input = sim_input(game, mine.to_vec(), theirs.clone(), tier, opp_tier, opp, cap, counters.clone());
+        combat::simulate_with(&db, &input, PLAN_RUNS.0, PLAN_RUNS.1, None)
+    };
+    let base = sim(&team);
+    let with = snaps
+        .iter()
+        .map(|m| match m {
+            Some(m) => {
+                let board = add_minion(&team, m);
+                (sim(&board), board_power(&board) - board_power(&team))
+            }
+            None => (base.clone(), 0),
+        })
+        .collect();
+    let f = Arc::new(OptionFights { turn, tier, health, base, with, team: team.iter().map(|m| db.base_id(&m.card_id).to_string()).collect() });
+    caches.choice = Some((key, f.clone()));
+    Some(f)
 }
 
 /// My board, weakest first; golden ones last.

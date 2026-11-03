@@ -17,6 +17,7 @@ use std::time::Duration;
 
 use crate::advice::{self, ShopPick};
 use crate::cards::{self, Card};
+use crate::choices::{self, ChoiceAdvice};
 use crate::combat::MinionSnap;
 use crate::comps;
 use crate::game::{Bonuses, Entity, Game};
@@ -173,6 +174,8 @@ pub struct Snapshot {
     pub trinkets: Vec<String>,
     pub combat: Option<CombatInfo>,
     pub advice: Advice,
+    /// The choice on screen (hero pick, Trinket offer, Discover) with the chance of each option.
+    pub choice: Option<ChoiceAdvice>,
     /// Problems in the data files (shown in red; the rest still works).
     pub data_errors: Vec<String>,
 }
@@ -343,7 +346,51 @@ pub fn make_snapshot(game: Option<&mut Game>, state: &mut State) -> Snapshot {
         ..Default::default()
     };
     snap.advice = make_advice(&k, &snap, plan, state);
+    snap.choice = choice_advice(&k, game, &snap, state);
     snap
+}
+
+/// The choice on screen: heroes first (start of the game), then a pick the log names (Discover,
+/// Trinkets...), then a Trinket offer seen without its choice lines.
+fn choice_advice(k: &Knowledge, game: &Game, s: &Snapshot, state: &mut State) -> Option<ChoiceAdvice> {
+    if !s.advice.heroes.is_empty() {
+        return choices::for_heroes(&s.advice.heroes, &s.hero_option_ids);
+    }
+    let offer = s.advice.trinkets.as_ref().filter(|t| !t.offer.is_empty());
+    if let Some((c, options)) = game.open_choice() {
+        let db = cards::db();
+        let ids: Vec<String> = options.iter().map(|e| e.card_id.clone()).collect();
+        if options.iter().all(|e| e.is("CARDTYPE", "BATTLEGROUND_TRINKET")) {
+            if let Some(t) = offer {
+                return choices::for_trinkets(&t.offer, &ids);
+            }
+        }
+        let cards: Vec<Arc<Card>> = ids.iter().filter_map(|id| db.base(id).or_else(|| db.get(id)).cloned()).collect();
+        if cards.len() == options.len() {
+            let board = cards_of(&s.board);
+            let hand = cards_of(&s.hand);
+            let ctx = ctx_of(s);
+            let targets = advice::target_comps(k, &board, &hand, &ctx);
+            let owned = advice::non_golden(&board.iter().chain(&hand).cloned().collect::<Vec<_>>(), &s.golden);
+            let fights = if options.iter().any(|e| e.is_minion()) { planner::option_fights(game, &options, &mut state.caches) } else { None };
+            let source = c.source.and_then(|id| game.entity(id)).map(Entity::name);
+            return choices::for_discover(
+                k,
+                source.as_deref(),
+                &cards,
+                &board,
+                &hand,
+                &owned,
+                &targets,
+                fights.as_deref(),
+                s.turn,
+                s.tier.unwrap_or(1),
+            );
+        }
+    }
+    let t = offer?;
+    let screen: Vec<String> = s.trinket_offer.iter().map(|(id, _)| id.clone()).collect();
+    choices::for_trinkets(&t.offer, &screen)
 }
 
 fn ctx_of(snap: &Snapshot) -> Ctx {

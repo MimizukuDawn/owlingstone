@@ -5,7 +5,8 @@
 //! - Left of the game: the minions of the lobby by tier (`left.rs`). Right of the game: the Comps and
 //!   Lobby tabs (`right.rs`). At the top: the win chance of the fight (`odds`). Next to a panel: the full
 //!   picture of the card under the mouse. Mouse over a hero portrait of the game's leaderboard: that
-//!   player's last board seen (`board.rs`). The tray icon holds the menu (`tray.rs`), small windows the
+//!   player's last board seen (`board.rs`). Over a choice (hero pick, Trinket offer, Discover): the
+//!   chance of each option to be the best pick (`choice.rs`). The tray icon holds the menu (`tray.rs`), small windows the
 //!   dialogs (`dialogs.rs`).
 //! - The main window of the program is an invisible 1x1 "host": the panels are its child windows,
 //!   shown or hidden twice a second like HDT (visible only while Hearthstone or Owlingstone is in front
@@ -14,6 +15,7 @@
 #![cfg_attr(not(windows), allow(dead_code))]
 
 mod board;
+mod choice;
 mod dialogs;
 mod draw;
 mod images;
@@ -125,6 +127,8 @@ pub struct App {
     hover: Option<(Hover, egui::Rect)>,
     /// The cursor over the game's leaderboard.
     board_watch: board::Watch,
+    /// The choice whose odds the player closed (×), by `choice::key`.
+    closed_choice: Option<String>,
     // --- placement
     game_rect: Option<win::Rect>,
     visible: bool,
@@ -368,6 +372,7 @@ impl App {
             settings,
             hover: None,
             board_watch: board::Watch::start(ctx),
+            closed_choice: None,
             game_rect: None,
             visible: replay,
             idle_badge: false,
@@ -746,6 +751,53 @@ impl App {
         );
         self.show_preview(ctx, hover);
         self.show_board(ctx, game);
+        self.show_choice(ctx, game, left_geo);
+    }
+
+    /// Odds over the choice on screen (hero pick, Trinket offer, Discover).
+    fn show_choice(&mut self, ctx: &Context, game: Option<(f32, f32, f32, f32)>, left_geo: (f32, f32, f32, f32)) {
+        let snap = self.snap.clone();
+        let advice = snap.choice.as_ref().filter(|c| {
+            self.visible && snap.in_game && !snap.over && self.settings.choice_odds() && self.closed_choice.as_deref() != Some(choice::key(c).as_str())
+        });
+        let (x, y, w, h) = match (game, advice) {
+            (Some(g), Some(c)) if !self.replay => choice::geometry(g, c.options.len()),
+            (_, Some(c)) => {
+                let (_, _, w, h) = choice::geometry((0.0, 0.0, 1600.0, 900.0), c.options.len());
+                (left_geo.0 + left_geo.2 + 10.0, 80.0, w, h)
+            }
+            _ => (0.0, 0.0, 10.0, 10.0),
+        };
+        let mut closed = false;
+        ctx.show_viewport_immediate(
+            ViewportId::from_hash_of("choice"),
+            ViewportBuilder::default()
+                .with_title("Owlingstone – choice")
+                .with_position([x, y])
+                .with_inner_size([w, h])
+                .with_decorations(false)
+                .with_always_on_top()
+                .with_taskbar(false)
+                .with_resizable(false)
+                // Not click-through (see the odds banner): it sits at the top, over nothing to click.
+                .with_transparent(true)
+                .with_visible(advice.is_some())
+                .with_active(false),
+            |ui, class| {
+                if class == ViewportClass::EmbeddedWindow {
+                    return;
+                }
+                match advice {
+                    Some(c) => closed = choice::show(ui, c),
+                    None => {
+                        egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |_| {});
+                    }
+                }
+            },
+        );
+        if closed {
+            self.closed_choice = advice.map(choice::key);
+        }
     }
 
     /// The last board of the player whose portrait is under the mouse (left of the game's board).

@@ -2,6 +2,11 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.2.0
+- New: odds on the game's choices. When Hearthstone asks you to pick (your hero at the start, a Trinket offer, or any Discover: Triple reward, Tavern spells, hero powers and minions that Discover), a strip at the top of the game shows, over each option, its chance to be the best pick, marks the one to take, and says why in a few words.
+- How it guesses: heroes and Trinkets by their expected place (the same stats as the side panel); minions and spells by what they bring you now: a card of the comp you play, a triple or a pair, stats, gold or extra cards, synergy with your board, and the change in your next fight (simulated against your next opponent's expected board). Options with no data share the odds evenly and the strip says so.
+- Click the × to hide it for that choice, or turn it off in the tray menu ("Odds on choices"). The columns are placed from screenshots: if they sit off the cards on your screen, tell us with "Send feedback".
+
 ## 2.1.6
 - Up to date with Hearthstone patch 37.0.2 (November 3): new card stats and texts, Expert Aviator out of the pool, Murcules back, Harbinger Aph'lass now Tier 5 and Hot-Air Surveyor Tier 5.
 - Trinkets: the new prices are used in the advice, Weighted Gauntlet is now a Greater Trinket, and Spell-powered Wrench, Quilligraphy Set (Greater), Fridge Magnet and Writhing Tentacles are no longer offered. The trinket and comp stats are still from the last patch until there are enough games on the new one.
