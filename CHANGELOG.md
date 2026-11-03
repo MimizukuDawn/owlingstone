@@ -6,6 +6,13 @@ The app shows the lines of its version after an update. Newest version first.
 - Put your mouse on a hero portrait in the game's leaderboard (left of the board): Owlingstone shows that player's last board you fought, with the card pictures, their attack and health in that fight, golden minions, the turn and who won. Players you haven't fought yet say so.
 - Pictures are downloaded once and kept in your data folder, like the card previews. Turn it off in the tray menu ("Opponent board on portrait hover"). Not shown in Duos for now.
 
+## 2.0.2
+- The panels now appear and vanish at once when you switch to or away from Hearthstone: no more slow fade, and no more wait of up to half a second before they react.
+- The "My stats" button no longer gets cut off at the bottom of the left panel: it moved next to the version number.
+
+## 2.0.1
+- The tray menu now has the overlay's look: dark with gold, instead of the plain white Windows menu. Left or right click the owl icon to open it; click outside, press Escape or click the icon again to close it.
+
 ## 2.0.0
 - Rewritten from scratch in Rust: the download is smaller (about 17 MB instead of 27 MB), and the app opens faster and is lighter on your PC while you play.
 - Everything you had is still there: tier list, Comps and Lobby tabs, turn plan, win chance banner, card previews, hero and trinket advice, history and stats, sharing and feedback. Your settings, history and learned data carry over untouched.

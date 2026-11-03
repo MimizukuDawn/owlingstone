@@ -113,6 +113,8 @@ pub struct App {
     game_rect: Option<win::Rect>,
     visible: bool,
     last_place: Option<Instant>,
+    /// Set by the watcher thread as soon as the window in front changes: show / hide right away.
+    front_changed: Arc<AtomicBool>,
     host_pos: Pos2,
     other_tracker: bool,
     replay: bool,
@@ -124,6 +126,8 @@ pub struct App {
     pub dialogs: dialogs::Dialogs,
     pub toasts: Vec<Toast>,
     tray: Option<tray::Tray>,
+    /// The tray menu, while it is open (tray.rs).
+    pub tray_menu: Option<tray::OpenMenu>,
     asked_sharing: bool,
     history_cache: (Option<SystemTime>, Arc<Vec<Record>>),
 }
@@ -343,6 +347,7 @@ impl App {
             game_rect: None,
             visible: replay,
             last_place: None,
+            front_changed: Arc::new(AtomicBool::new(false)),
             host_pos: pos2(0.0, 0.0),
             other_tracker: false,
             replay,
@@ -353,13 +358,31 @@ impl App {
             dialogs: dialogs::Dialogs::default(),
             toasts: Vec::new(),
             tray: None,
+            tray_menu: None,
             asked_sharing: false,
             history_cache: (None, Arc::new(Vec::new())),
         };
         if replay || opts.smoke {
             return app;
         }
-        app.tray = tray::Tray::new(&app);
+        app.tray = tray::Tray::new(&app, ctx);
+        // Watches which window is in front (a cheap check 20 times a second), so the panels show or hide
+        // right when the player switches to or away from Hearthstone instead of at the next placement.
+        {
+            let (ctx, stop, flag) = (ctx.clone(), app.stop.clone(), app.front_changed.clone());
+            let _ = std::thread::Builder::new().name("front window".into()).spawn(move || {
+                let mut last = win::foreground_window();
+                while !stop.load(Ordering::Relaxed) {
+                    std::thread::sleep(Duration::from_millis(50));
+                    let now = win::foreground_window();
+                    if now != last {
+                        last = now;
+                        flag.store(true, Ordering::Relaxed);
+                        ctx.request_repaint();
+                    }
+                }
+            });
+        }
         // Other trackers show their own win chance at the same place: ours is off by default then.
         app.other_tracker = win::other_tracker_running();
         cards::refresh_in_background(false);
@@ -497,12 +520,16 @@ impl App {
         self.snap = snap;
     }
 
-    /// Twice a second: stick to Hearthstone, and show / hide like HDT.
+    /// Twice a second, and right away when the window in front changes: stick to Hearthstone, and show /
+    /// hide like HDT.
     fn place(&mut self, ctx: &Context) {
-        if self.last_place.is_some_and(|t| t.elapsed() < Duration::from_millis(500)) {
+        let front_changed = self.front_changed.swap(false, Ordering::Relaxed);
+        if !front_changed && self.last_place.is_some_and(|t| t.elapsed() < Duration::from_millis(500)) {
             return;
         }
         self.last_place = Some(Instant::now());
+        // Windows fades windows in and out; new windows (dialogs, menu) get the same treatment here.
+        win::no_fade_on_own_windows();
         if self.replay {
             self.visible = true;
             return;
@@ -729,7 +756,8 @@ impl eframe::App for App {
         }
         self.images.receive(ctx);
         if let Some(mut t) = self.tray.take() {
-            t.poll(self);
+            let ppp = self.ppp(ctx);
+            t.poll(self, ppp);
             self.tray = Some(t);
         }
         self.place(ctx);
@@ -737,6 +765,7 @@ impl eframe::App for App {
         egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |_| {});
         self.show_panels(ctx);
         dialogs::show(self, ctx);
+        tray::show_menu(self, ctx);
         if self.dialogs.quit || self.smoke_until.is_some_and(|t| Instant::now() >= t) {
             self.stop.store(true, Ordering::Relaxed);
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
