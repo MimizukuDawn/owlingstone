@@ -109,6 +109,8 @@ pub struct App {
     game_rect: Option<win::Rect>,
     visible: bool,
     last_place: Option<Instant>,
+    /// Set by the watcher thread as soon as the window in front changes: show / hide right away.
+    front_changed: Arc<AtomicBool>,
     host_pos: Pos2,
     other_tracker: bool,
     replay: bool,
@@ -340,6 +342,7 @@ impl App {
             game_rect: None,
             visible: replay,
             last_place: None,
+            front_changed: Arc::new(AtomicBool::new(false)),
             host_pos: pos2(0.0, 0.0),
             other_tracker: false,
             replay,
@@ -358,6 +361,23 @@ impl App {
             return app;
         }
         app.tray = tray::Tray::new(&app, ctx);
+        // Watches which window is in front (a cheap check 20 times a second), so the panels show or hide
+        // right when the player switches to or away from Hearthstone instead of at the next placement.
+        {
+            let (ctx, stop, flag) = (ctx.clone(), app.stop.clone(), app.front_changed.clone());
+            let _ = std::thread::Builder::new().name("front window".into()).spawn(move || {
+                let mut last = win::foreground_window();
+                while !stop.load(Ordering::Relaxed) {
+                    std::thread::sleep(Duration::from_millis(50));
+                    let now = win::foreground_window();
+                    if now != last {
+                        last = now;
+                        flag.store(true, Ordering::Relaxed);
+                        ctx.request_repaint();
+                    }
+                }
+            });
+        }
         // Other trackers show their own win chance at the same place: ours is off by default then.
         app.other_tracker = win::other_tracker_running();
         cards::refresh_in_background(false);
@@ -495,12 +515,16 @@ impl App {
         self.snap = snap;
     }
 
-    /// Twice a second: stick to Hearthstone, and show / hide like HDT.
+    /// Twice a second, and right away when the window in front changes: stick to Hearthstone, and show /
+    /// hide like HDT.
     fn place(&mut self, ctx: &Context) {
-        if self.last_place.is_some_and(|t| t.elapsed() < Duration::from_millis(500)) {
+        let front_changed = self.front_changed.swap(false, Ordering::Relaxed);
+        if !front_changed && self.last_place.is_some_and(|t| t.elapsed() < Duration::from_millis(500)) {
             return;
         }
         self.last_place = Some(Instant::now());
+        // Windows fades windows in and out; new windows (dialogs, menu) get the same treatment here.
+        win::no_fade_on_own_windows();
         if self.replay {
             self.visible = true;
             return;

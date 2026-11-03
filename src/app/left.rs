@@ -271,23 +271,26 @@ fn bottom(app: &mut App, ui: &mut egui::Ui) {
             app.settings.set_flag("lobby_panel", lobby);
             app.save_settings();
         }
-        if ui.button("My stats").clicked() {
-            app.dialogs.stats = Some(String::new());
-        }
     });
+    // On the version's line: the line above has no room left in a narrow panel.
     ui.horizontal(|ui| {
         ui.label(RichText::new(format!("v{}", owlingstone::VERSION)).color(draw::GRAY));
-        if let Some(v) = app.update_ready.clone() {
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let b = egui::Button::new(RichText::new(format!("Update to v{v}")).strong().color(Color32::from_rgb(0x11, 0x11, 0x11))).fill(draw::GOLD);
-                if ui
-                    .add(b)
-                    .on_hover_text("Installs the new version (checked and signed), then restarts Owlingstone. Your history and settings are kept.")
-                    .clicked()
-                {
-                    app.run_update();
-                }
-            });
-        }
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if ui.button("My stats").clicked() {
+                app.dialogs.stats = Some(String::new());
+            }
+        });
     });
+    if let Some(v) = app.update_ready.clone() {
+        let b = egui::Button::new(RichText::new(format!("Update to v{v}")).strong().color(Color32::from_rgb(0x11, 0x11, 0x11)))
+            .fill(draw::GOLD)
+            .min_size(egui::vec2(ui.available_width(), 0.0));
+        if ui
+            .add(b)
+            .on_hover_text("Installs the new version (checked and signed), then restarts Owlingstone. Your history and settings are kept.")
+            .clicked()
+        {
+            app.run_update();
+        }
+    }
 }

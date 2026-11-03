@@ -2,6 +2,10 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.0.2
+- The panels now appear and vanish at once when you switch to or away from Hearthstone: no more slow fade, and no more wait of up to half a second before they react.
+- The "My stats" button no longer gets cut off at the bottom of the left panel: it moved next to the version number.
+
 ## 2.0.1
 - The tray menu now has the overlay's look: dark with gold, instead of the plain white Windows menu. Left or right click the owl icon to open it; click outside, press Escape or click the icon again to close it.
 
