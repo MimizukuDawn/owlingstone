@@ -93,9 +93,9 @@ fn old_board_grows_with_the_turns() {
 fn unknown_opponent_gets_a_typical_board() {
     let (board, basis) = expected_board(8, 4, None);
     assert!(basis.contains("typical"));
-    let t = typical_power(8, 4);
+    let t = typical_power(8, 4) * TYPICAL_BOOST.exp();
     assert!((board_power(&board) as f64 - t).abs() < 0.1 * t);
-    let s = strength_percentile(t.round() as i64, 8, 4);
+    let s = strength_percentile(typical_power(8, 4).round() as i64, 8, 4);
     assert!(49.0 < s && s < 51.0, "{s}");
     assert!((erf(0.5) - 0.520_499_877_8).abs() < 1e-6);
 }
@@ -347,4 +347,14 @@ fn hero_best_comps_and_lobby_order() {
         .collect();
     assert_eq!(with_hero[0], "dragon-shield");
     assert_ne!(plain, with_hero);
+}
+
+#[test]
+fn guessed_board_comes_in_several_strengths() {
+    let (boards, _) = expected_boards(8, 4, None);
+    assert_eq!(boards.len(), 7);
+    assert_eq!(boards[3], expected_board(8, 4, None).0);
+    assert!(boards.windows(2).all(|w| board_power(&w[0]) < board_power(&w[1])));
+    let now = Fight::for_tests(9, 4, vec![mm("", 4, 5)]);
+    assert_eq!(expected_boards(9, 4, Some(&now)).0.len(), 1); // seen during the fight: known
 }

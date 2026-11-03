@@ -2,6 +2,11 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.2.1
+- Fixed: the win chance shown before a fight was almost always 0% or 100%, and often wrong (on 190 recent fights, "100%" fights were really won 63% of the time and "0%" fights 20%). The opponent's board is a guess at that point, and the app simulated a single guess. It now simulates the guess at 7 strengths, from much weaker to much stronger (the real board is often half or twice as strong), and averages them. On the same fights, the odds now match what happened: "about 20%" wins about 24% of the time, "about 80%" about 88%. The turn advice and the odds on choices use the same, more honest odds.
+- The odds during the fight (both boards known) were already right; they are unchanged.
+- Fixed: fights against a dead player's ghost, and a few other fights where the log shows no damage, were counted as ties. The minions left now decide the result, so the game's "expected wins / real wins" line and your history are right.
+
 ## 2.2.0
 - New: odds on the game's choices. When Hearthstone asks you to pick (your hero at the start, a Trinket offer, or any Discover: Triple reward, Tavern spells, hero powers and minions that Discover), a strip at the top of the game shows, over each option, its chance to be the best pick, marks the one to take, and says why in a few words.
 - How it guesses: heroes and Trinkets by their expected place (the same stats as the side panel); minions and spells by what they bring you now: a card of the comp you play, a triple or a pair, stats, gold or extra cards, synergy with your board, and the change in your next fight (simulated against your next opponent's expected board). Options with no data share the odds evenly and the strip says so.
