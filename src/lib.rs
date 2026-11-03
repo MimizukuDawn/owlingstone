@@ -3,6 +3,7 @@
 pub mod advice;
 pub mod background;
 pub mod cards;
+pub mod choices;
 pub mod combat;
 pub mod comps;
 pub mod knowledge;

@@ -202,6 +202,24 @@ fn counter_kind(card_id: &str) -> Option<&'static str> {
     }
 }
 
+/// A choice the game asks me to make (Discover, Trinket offer, hero pick...), from the
+/// "DebugPrintEntityChoices" lines of Power.log. Cleared when "DebugPrintEntitiesChosen" says it is made.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Choice {
+    /// The game's number for this choice (counts up during the game).
+    pub id: i64,
+    /// e.g. "GENERAL" (Discover and other picks) or "MULLIGAN" (hero pick).
+    pub choice_type: String,
+    /// The player name the line names (my BattleTag for my choices).
+    pub player: String,
+    /// Entity that asks (the spell, minion or hero power that Discovers), if known.
+    pub source: Option<i64>,
+    /// The options, in the order the game shows them (left to right).
+    pub options: Vec<i64>,
+    /// Battlegrounds turn when it opened.
+    pub turn: i64,
+}
+
 #[derive(Default)]
 pub struct Game {
     entities: Vec<Entity>,
@@ -233,6 +251,8 @@ pub struct Game {
     pub conceded: bool,
     /// In Duos both teammates are real accounts: the one whose hero choices we can see is me.
     local_override: Option<i64>,
+    /// The last choice offered and not made yet (see `open_choice`).
+    pub choice: Option<Choice>,
 }
 
 impl Game {
@@ -830,6 +850,27 @@ impl Game {
         }
         found.sort_by_key(|(e, _)| e.id);
         found
+    }
+
+    /// The choice on screen now: a "GENERAL" choice of mine (Discover, Trinkets...) opened this turn whose
+    /// options are all still offered (none taken into hand or play yet). Returns the options in screen order.
+    pub fn open_choice(&self) -> Option<(&Choice, Vec<&Entity>)> {
+        let c = self.choice.as_ref()?;
+        if c.choice_type != "GENERAL" || c.turn != self.turn() || c.options.is_empty() || self.is_over() {
+            return None;
+        }
+        // Mine: the line names my player (in Battlegrounds the log only has my choices, but be safe).
+        let me = self.player_entity(self.local_player_id()).map(|e| e.id);
+        if !c.player.is_empty() && me.is_some() && self.entity_by_player_name(&c.player).is_some_and(|id| Some(id) != me) {
+            return None;
+        }
+        let options: Vec<&Entity> = c.options.iter().filter_map(|id| self.entity(*id)).collect();
+        if options.len() != c.options.len()
+            || options.iter().any(|e| e.card_id.is_empty() || matches!(e.text("ZONE"), Some("HAND" | "PLAY" | "GRAVEYARD" | "REMOVEDFROMGAME")))
+        {
+            return None;
+        }
+        Some((c, options))
     }
 
     /// My bought Trinkets (unused "Lesser / Greater Trinket" buttons don't count).

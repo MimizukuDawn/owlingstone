@@ -30,6 +30,7 @@ pub enum Action {
     Stats,
     Odds,
     Boards,
+    Choices,
     Narrower,
     Wider,
     News,
@@ -92,6 +93,12 @@ fn entries(app: &App) -> Vec<Entry> {
             enabled: true,
             checked: Some(app.settings.board_on_hover()),
         },
+        Entry::Item {
+            action: Action::Choices,
+            label: "Odds on choices (heroes, Trinkets, Discover)".into(),
+            enabled: true,
+            checked: Some(app.settings.choice_odds()),
+        },
         item(Action::Narrower, "Side panels narrower"),
         item(Action::Wider, "Side panels wider"),
         item(Action::News, "What's new"),
@@ -136,6 +143,11 @@ pub fn apply(app: &mut App, action: Action) {
         Action::Boards => {
             let on = !app.settings.board_on_hover();
             app.settings.set_flag("board_on_hover", on);
+            app.save_settings();
+        }
+        Action::Choices => {
+            let on = !app.settings.choice_odds();
+            app.settings.set_flag("choice_odds", on);
             app.save_settings();
         }
         Action::Narrower => app.resize_panels(-super::PANEL_STEP),

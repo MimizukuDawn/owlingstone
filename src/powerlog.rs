@@ -4,12 +4,14 @@
 //! - `PowerLogParser` reads these lines one by one (`feed_line`) and keeps a `Game` up to date.
 //! - Only "GameState.DebugPrintPower" lines are read: the "PowerTaskList" lines repeat the same events
 //!   (a bit later, for the animations) and would create duplicates.
+//! - "GameState.DebugPrintEntityChoices" lines say which choice the game offers me (Discover, Trinkets,
+//!   heroes), "GameState.DebugPrintEntitiesChosen" that it is made: they fill `Game::choice`.
 
 use std::sync::LazyLock;
 
 use regex::Regex;
 
-use crate::game::Game;
+use crate::game::{Choice, Game};
 
 fn re(pattern: &str) -> Regex {
     Regex::new(pattern).expect("valid regex")
@@ -17,7 +19,17 @@ fn re(pattern: &str) -> Regex {
 
 // Useful lines. Example:
 // "D 12:00:41.4016168 GameState.DebugPrintPower() -     TAG_CHANGE Entity=10 tag=TURN value=1"
-static PREFIX: LazyLock<Regex> = LazyLock::new(|| re(r"^D ([\d:.]+) GameState\.DebugPrint(Power|Game)\(\) - (.*)$"));
+static PREFIX: LazyLock<Regex> =
+    LazyLock::new(|| re(r"^D ([\d:.]+) GameState\.DebugPrint(Power|Game|EntityChoices|EntitiesChosen)\(\) - (.*)$"));
+// A choice offered: "id=7 Player=Name#1234 TaskList=55 ChoiceType=GENERAL CountMin=1 CountMax=1",
+// then "Source=[entityName=... id=91 ...]" and one "Entities[0]=[entityName=... id=302 ...]" per option.
+static CHOICES: LazyLock<Regex> = LazyLock::new(|| re(r"^id=(\d+) Player=(.*?) TaskList=\S* ChoiceType=(\S+)"));
+static CHOICE_SOURCE: LazyLock<Regex> = LazyLock::new(|| re(r"^Source=(.+)$"));
+static CHOICE_OPTION: LazyLock<Regex> = LazyLock::new(|| re(r"^Entities\[(\d+)\]=(.+)$"));
+// The choice made: "id=7 Player=Name#1234 EntitiesCount=1"
+static CHOSEN: LazyLock<Regex> = LazyLock::new(|| re(r"^id=(\d+) Player=.*? EntitiesCount="));
+// "[... cardId=BG21_005 ...]" -> BG21_005
+static BRACKET_CARD: LazyLock<Regex> = LazyLock::new(|| re(r"\bcardId=(\S+?)[\s\]]"));
 // A tag line inside a block (FULL_ENTITY, SHOW_ENTITY...): "tag=ZONE value=PLAY"
 static TAG: LazyLock<Regex> = LazyLock::new(|| re(r"^tag=(\S+) value=(\S*)"));
 // "FULL_ENTITY - Creating ID=31 CardID=TB_BaconShop_HERO_PH"
@@ -97,10 +109,11 @@ impl PowerLogParser {
         let Some(m) = PREFIX.captures(line) else { return };
         self.time = m[1].to_string();
         let body = m[3].trim();
-        if &m[2] == "Game" {
-            self.read_game_header(body);
-        } else {
-            self.read_power(body);
+        match &m[2] {
+            "Game" => self.read_game_header(body),
+            "EntityChoices" => self.read_choices(body),
+            "EntitiesChosen" => self.read_chosen(body),
+            _ => self.read_power(body),
         }
     }
 
@@ -126,6 +139,55 @@ impl PowerLogParser {
             // PlayerID -> display name (BattleTag for me, Bob's name for the innkeeper)
             if let Ok(pid) = m[1].parse() {
                 g.set_player_name(pid, &m[2]);
+            }
+        }
+    }
+
+    /// A choice offered: its header line, then its source and options (one line each).
+    fn read_choices(&mut self, body: &str) {
+        self.current = None;
+        let Some(g) = self.games.last_mut() else { return };
+        if let Some(m) = CHOICES.captures(body) {
+            let turn = g.turn();
+            g.choice = Some(Choice {
+                id: m[1].parse().unwrap_or(0),
+                player: m[2].to_string(),
+                choice_type: m[3].to_string(),
+                turn,
+                ..Default::default()
+            });
+            return;
+        }
+        let reference = if let Some(m) = CHOICE_SOURCE.captures(body) {
+            (m[1].to_string(), true)
+        } else if let Some(m) = CHOICE_OPTION.captures(body) {
+            (m[2].to_string(), false)
+        } else {
+            return;
+        };
+        let Some(eid) = self.resolve(&reference.0) else { return };
+        let g = self.games.last_mut().expect("a game");
+        // A card the log hid until now but names here.
+        if let Some(card) = BRACKET_CARD.captures(&reference.0) {
+            if g.entity(eid).is_some_and(|e| e.card_id.is_empty()) {
+                g.set_card_id(eid, &card[1]);
+            }
+        }
+        let Some(c) = g.choice.as_mut() else { return };
+        if reference.1 {
+            c.source = Some(eid);
+        } else if !c.options.contains(&eid) {
+            c.options.push(eid);
+        }
+    }
+
+    /// The choice is made: nothing to advise any more.
+    fn read_chosen(&mut self, body: &str) {
+        self.current = None;
+        let Some(g) = self.games.last_mut() else { return };
+        if let Some(m) = CHOSEN.captures(body) {
+            if g.choice.as_ref().is_some_and(|c| m[1].parse() == Ok(c.id)) {
+                g.choice = None;
             }
         }
     }

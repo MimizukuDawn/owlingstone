@@ -75,6 +75,10 @@ impl Settings {
     pub fn board_on_hover(&self) -> bool {
         self.flag("board_on_hover", true)
     }
+    /// Odds over the game's choices (hero pick, Trinket offer, Discover).
+    pub fn choice_odds(&self) -> bool {
+        self.flag("choice_odds", true)
+    }
     pub fn lobby_panel(&self) -> bool {
         self.flag("lobby_panel", true)
     }
