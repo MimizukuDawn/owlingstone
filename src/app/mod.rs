@@ -131,7 +131,8 @@ pub fn run(opts: Options) -> i32 {
     // SAFETY: called on the main thread before any other thread reads the environment.
     unsafe { std::env::remove_var(update::AFTER_UPDATE) };
     // One Owlingstone at a time; right after an update the old one is still closing: wait for it.
-    let _instance = if replay {
+    #[cfg_attr(not(windows), allow(unused_variables))]
+    let instance = if replay {
         None
     } else {
         match win::single_instance(if after_update { Duration::from_secs(20) } else { Duration::from_millis(100) }) {
@@ -151,7 +152,7 @@ pub fn run(opts: Options) -> i32 {
             .with_mouse_passthrough(true)
             .with_resizable(false)
             .with_icon(icon()),
-        renderer: eframe::Renderer::Glow,
+        renderer: renderer(),
         ..Default::default()
     };
     #[cfg(windows)]
@@ -169,6 +170,16 @@ pub fn run(opts: Options) -> i32 {
         Ok(()) => 0,
         Err(e) => {
             owlingstone::errlog::note("window", &e.to_string());
+            // No OpenGL 2 (no graphics driver, virtual machine, remote desktop): Windows can still draw
+            // with Direct3D 12, in software if needed. A window can be opened only once per process,
+            // so the fallback runs in a new one.
+            #[cfg(windows)]
+            if !dx12_fallback() {
+                drop(instance);
+                if let Some(code) = run_with_dx12() {
+                    return code;
+                }
+            }
             eprintln!("Owlingstone could not open its window: {e}");
             #[cfg(windows)]
             if !opts_smoke {
@@ -176,13 +187,43 @@ pub fn run(opts: Options) -> i32 {
                     .set_title("Owlingstone")
                     .set_level(rfd::MessageLevel::Error)
                     .set_description(format!(
-                        "Owlingstone could not open its window ({e}).\n\nIt needs OpenGL 2 or newer: updating your graphics driver usually fixes this."
+                        "Owlingstone could not open its window ({e}).\n\nUpdating your graphics driver usually fixes this."
                     ))
                     .show();
             }
             1
         }
     }
+}
+
+/// Set when this process is the Direct3D fallback started by `run_with_dx12`.
+const RENDERER_ENV: &str = "OWLINGSTONE_RENDERER";
+
+fn dx12_fallback() -> bool {
+    std::env::var_os(RENDERER_ENV).is_some_and(|v| v == "dx12")
+}
+
+#[cfg(windows)]
+fn renderer() -> eframe::Renderer {
+    if dx12_fallback() { eframe::Renderer::Wgpu } else { eframe::Renderer::Glow }
+}
+
+#[cfg(not(windows))]
+fn renderer() -> eframe::Renderer {
+    eframe::Renderer::Glow
+}
+
+/// Starts this exe again with the same arguments, drawing with Direct3D 12; its exit code.
+#[cfg(windows)]
+fn run_with_dx12() -> Option<i32> {
+    let exe = std::env::current_exe().ok()?;
+    let status = std::process::Command::new(exe)
+        .args(std::env::args_os().skip(1))
+        .env(RENDERER_ENV, "dx12")
+        .env(update::AFTER_UPDATE, "1") // wait for this process to let go of the one-instance lock
+        .status()
+        .ok()?;
+    Some(status.code().unwrap_or(1))
 }
 
 fn icon() -> egui::IconData {

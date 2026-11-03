@@ -34,6 +34,9 @@ eframe = { version = "0.37", default-features = false, features = ["glow", "defa
 image = { version = "0.25", default-features = false, features = ["png"] }
 
 [target.'cfg(windows)'.dependencies]
+# Direct3D 12 drawing, used only when OpenGL 2 is missing (see app::run).
+eframe = { version = "0.37", default-features = false, features = ["wgpu_no_default_features"] }
+wgpu = { version = "30", default-features = false, features = ["dx12", "wgsl"] }
 windows-sys = { version = "0.61", features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",

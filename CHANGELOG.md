@@ -3,11 +3,12 @@
 The app shows the lines of its version after an update. Newest version first.
 
 ## 2.0.0
-- Rewritten from scratch in Rust: the download is less than half the size (about 12 MB instead of 27 MB), and the app opens faster and is lighter on your PC while you play.
+- Rewritten from scratch in Rust: the download is less than half the size (about 16 MB instead of 27 MB), and the app opens faster and is lighter on your PC while you play.
 - Everything you had is still there: tier list, Comps and Lobby tabs, turn plan, win chance banner, card previews, hero and trinket advice, history and stats, sharing and feedback. Your settings, history and learned data carry over untouched.
 - The combat simulator is much faster, so the win chance is ready sooner after each fight starts.
 - Duos: the app now checks which player is you before showing anything, instead of guessing.
 - Shared stats: one very active player can no longer tilt the community numbers (each install counts for at most 10 games per comp or hero).
+- Opens even without a working OpenGL driver (virtual machines, remote desktop, old drivers): it then draws with Direct3D instead.
 - Commands for the curious: run `Owlingstone.exe history` in a console to see your stats there.
 
 ## 1.9.1
