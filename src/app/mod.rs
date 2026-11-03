@@ -4,7 +4,8 @@
 //!   advice when something changes: the windows only draw it, so they never freeze.
 //! - Left of the game: the minions of the lobby by tier (`left.rs`). Right of the game: the Comps and
 //!   Lobby tabs (`right.rs`). At the top: the win chance of the fight (`odds`). Next to a panel: the full
-//!   picture of the card under the mouse. The tray icon holds the menu (`tray.rs`), small windows the
+//!   picture of the card under the mouse. Mouse over a hero portrait of the game's leaderboard: that
+//!   player's last board seen (`board.rs`). The tray icon holds the menu (`tray.rs`), small windows the
 //!   dialogs (`dialogs.rs`).
 //! - The main window of the program is an invisible 1x1 "host": the panels are its child windows,
 //!   shown or hidden twice a second like HDT (visible only while Hearthstone or Owlingstone is in front
@@ -12,6 +13,7 @@
 // The tray menu (Windows only) is what calls a few of these.
 #![cfg_attr(not(windows), allow(dead_code))]
 
+mod board;
 mod dialogs;
 mod draw;
 mod images;
@@ -105,6 +107,8 @@ pub struct App {
     pub tab: String,
     /// The card under the mouse this frame, and the screen rect of its window.
     hover: Option<(Hover, egui::Rect)>,
+    /// The cursor over the game's leaderboard.
+    board_watch: board::Watch,
     // --- placement
     game_rect: Option<win::Rect>,
     visible: bool,
@@ -335,6 +339,7 @@ impl App {
             tab: settings.hud_tab(),
             settings,
             hover: None,
+            board_watch: board::Watch::start(ctx),
             game_rect: None,
             visible: replay,
             last_place: None,
@@ -503,6 +508,7 @@ impl App {
             return;
         }
         self.game_rect = win::hearthstone_rect();
+        *self.board_watch.game.lock().unwrap_or_else(|e| e.into_inner()) = self.game_rect;
         if !self.settings.hide_when_unfocused() {
             self.visible = true;
         } else {
@@ -614,6 +620,46 @@ impl App {
             },
         );
         self.show_preview(ctx, hover);
+        self.show_board(ctx, game);
+    }
+
+    /// The last board of the player whose portrait is under the mouse (left of the game's board).
+    fn show_board(&mut self, ctx: &Context, game: Option<(f32, f32, f32, f32)>) {
+        let active = self.visible && self.snap.in_game && !self.snap.over && !self.snap.duos && !self.replay && self.settings.board_on_hover();
+        self.board_watch.active.store(active, Ordering::Relaxed);
+        let snap = self.snap.clone();
+        let shown = match (active, game, self.board_watch.place()) {
+            (true, Some(g), Some(place)) => board::player_at(&snap, place).map(|p| (p, board::board_geometry(g, place, board::card_count(p)))),
+            _ => None,
+        };
+        let ((x, y, w, h), card_w) = shown.as_ref().map(|s| s.1).unwrap_or(((0.0, 0.0, 10.0, 10.0), 0.0));
+        let art = self.settings.card_art();
+        ctx.show_viewport_immediate(
+            ViewportId::from_hash_of("board"),
+            ViewportBuilder::default()
+                .with_title("Owlingstone – board")
+                .with_position([x, y])
+                .with_inner_size([w, h])
+                .with_decorations(false)
+                .with_always_on_top()
+                .with_taskbar(false)
+                .with_resizable(false)
+                .with_transparent(true)
+                .with_mouse_passthrough(true)
+                .with_visible(shown.is_some())
+                .with_active(false),
+            |ui, class| {
+                if class == ViewportClass::EmbeddedWindow {
+                    return;
+                }
+                match &shown {
+                    Some((p, _)) => board::show(ui, p, card_w, &mut self.images, art),
+                    None => {
+                        egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |_| {});
+                    }
+                }
+            },
+        );
     }
 
     /// Full picture of the card under the mouse, beside its window, on the side of the screen's centre.

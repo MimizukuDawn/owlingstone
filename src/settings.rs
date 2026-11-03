@@ -71,6 +71,10 @@ impl Settings {
     pub fn card_art(&self) -> bool {
         self.flag("card_art", true)
     }
+    /// Mouse over a portrait of the game's leaderboard: that player's last board.
+    pub fn board_on_hover(&self) -> bool {
+        self.flag("board_on_hover", true)
+    }
     pub fn lobby_panel(&self) -> bool {
         self.flag("lobby_panel", true)
     }

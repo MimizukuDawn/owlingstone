@@ -15,6 +15,7 @@ mod imp {
         show: MenuItem,
         stats: MenuItem,
         odds: CheckMenuItem,
+        boards: CheckMenuItem,
         narrower: MenuItem,
         wider: MenuItem,
         news: MenuItem,
@@ -35,6 +36,7 @@ mod imp {
             let show = MenuItem::new("Show window (turns off auto-hide)", true, None);
             let stats = MenuItem::new("My stats", true, None);
             let odds = CheckMenuItem::new("Win chance at the top", true, app.top_odds(), None);
+            let boards = CheckMenuItem::new("Opponent board on portrait hover", true, app.settings.board_on_hover(), None);
             let narrower = MenuItem::new("Side panels narrower", true, None);
             let wider = MenuItem::new("Side panels wider", true, None);
             let news = MenuItem::new("What's new", true, None);
@@ -49,7 +51,7 @@ mod imp {
             let menu = Menu::new();
             let sep = PredefinedMenuItem::separator;
             menu.append_items(&[
-                &show, &stats, &odds, &narrower, &wider, &news, &hs_dir, &folder, &update, &sep(), &feedback, &sharing, &sent,
+                &show, &stats, &odds, &boards, &narrower, &wider, &news, &hs_dir, &folder, &update, &sep(), &feedback, &sharing, &sent,
                 &erase, &sep(), &quit,
             ])
             .ok()?;
@@ -64,6 +66,7 @@ mod imp {
                 show,
                 stats,
                 odds,
+                boards,
                 narrower,
                 wider,
                 news,
@@ -96,6 +99,9 @@ mod imp {
                     app.dialogs.stats = Some(String::new());
                 } else if id == *self.odds.id() {
                     app.settings.set_flag("top_odds", self.odds.is_checked());
+                    app.save_settings();
+                } else if id == *self.boards.id() {
+                    app.settings.set_flag("board_on_hover", self.boards.is_checked());
                     app.save_settings();
                 } else if id == *self.narrower.id() {
                     app.resize_panels(-super::super::PANEL_STEP);
