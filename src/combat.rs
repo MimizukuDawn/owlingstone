@@ -1342,6 +1342,22 @@ pub fn simulate(input: &SimInput, runs: u32, seconds: f64, seed: Option<u64>) ->
     simulate_with(&db, input, runs, seconds, seed)
 }
 
+/// The simulator's own threads: half the cores, below the game's priority (see background.rs), so a new
+/// plan after a buy, a sale or a level up never makes Hearthstone stutter.
+fn sim_pool() -> &'static rayon::ThreadPool {
+    static POOL: std::sync::OnceLock<rayon::ThreadPool> = std::sync::OnceLock::new();
+    POOL.get_or_init(|| {
+        let build = |n: usize| {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(n)
+                .thread_name(|i| format!("simulator {i}"))
+                .start_handler(|_| crate::background::lower_priority())
+                .build()
+        };
+        build(crate::background::sim_threads()).or_else(|_| build(1)).expect("could not start a simulator thread")
+    })
+}
+
 pub fn simulate_with(db: &CardDb, input: &SimInput, runs: u32, seconds: f64, seed: Option<u64>) -> SimResult {
     let (b0, l0) = side_ctx(&input.mine, &input.counters[0], db);
     let (b1, l1) = side_ctx(&input.theirs, &input.counters[1], db);
@@ -1364,22 +1380,24 @@ pub fn simulate_with(db: &CardDb, input: &SimInput, runs: u32, seconds: f64, see
     let seed = seed.unwrap_or_else(|| Rng::from_entropy().next_u64());
     let deadline = Instant::now() + Duration::from_secs_f64(seconds.max(0.0));
     let chunks = runs.div_ceil(CHUNK).max(1);
-    let total = (0..chunks)
-        .into_par_iter()
-        .map(|c| {
-            // The first chunk always runs, so there is always a result.
-            if c > 0 && Instant::now() > deadline {
-                return Tally::default();
-            }
-            let mut rng = Rng::new(seed ^ (u64::from(c) + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15));
-            let count = CHUNK.min(runs.saturating_sub(c * CHUNK)).max(if c == 0 { 1 } else { 0 });
-            let mut t = Tally::default();
-            for _ in 0..count {
-                one_run(&protos, &ctx, input, &mut rng, &mut t);
-            }
-            t
-        })
-        .reduce(Tally::default, Tally::add);
+    let total = sim_pool().install(|| {
+        (0..chunks)
+            .into_par_iter()
+            .map(|c| {
+                // The first chunk always runs, so there is always a result.
+                if c > 0 && Instant::now() > deadline {
+                    return Tally::default();
+                }
+                let mut rng = Rng::new(seed ^ (u64::from(c) + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15));
+                let count = CHUNK.min(runs.saturating_sub(c * CHUNK)).max(if c == 0 { 1 } else { 0 });
+                let mut t = Tally::default();
+                for _ in 0..count {
+                    one_run(&protos, &ctx, input, &mut rng, &mut t);
+                }
+                t
+            })
+            .reduce(Tally::default, Tally::add)
+    });
     let n = total.n.max(1);
     let pct = |k: u32| 100.0 * f64::from(k) / f64::from(n);
     let unknown: BTreeSet<String> = input

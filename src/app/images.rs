@@ -21,6 +21,8 @@ pub const CARD_URLS: [&str; 2] = [
 ];
 const WORKERS: usize = 4;
 const MAX_BYTES: u64 = 2_000_000;
+/// Pictures that arrive within this time are drawn by the same repaint.
+const REPAINT_BATCH: std::time::Duration = std::time::Duration::from_millis(60);
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Kind {
@@ -92,6 +94,7 @@ impl Images {
         for i in 0..WORKERS {
             let (rx, tx, ctx) = (rx.clone(), tx.clone(), ctx.clone());
             let _ = std::thread::Builder::new().name(format!("images {i}")).spawn(move || {
+                owlingstone::background::lower_priority();
                 loop {
                     let job = { rx.lock().unwrap_or_else(|e| e.into_inner()).recv() };
                     let Ok((kind, id)) = job else { return };
@@ -99,7 +102,8 @@ impl Images {
                     if tx.send((kind, id, img)).is_err() {
                         return;
                     }
-                    ctx.request_repaint();
+                    // A new tier shows ~20 pictures at once: one repaint for the lot, not one each.
+                    ctx.request_repaint_after(REPAINT_BATCH);
                 }
             });
         }

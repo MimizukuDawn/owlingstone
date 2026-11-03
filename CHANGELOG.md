@@ -2,6 +2,9 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.1.2
+- Less lag when you level up, sell or buy: the fight simulations behind the turn plan and the win chance now run on half of your CPU at most, and Owlingstone's background work always lets Hearthstone go first. The advice may show a split second later on small PCs; the game stays smooth.
+
 ## 2.1.0
 - Put your mouse on a hero portrait in the game's leaderboard (left of the board): Owlingstone shows that player's last board you fought, with the card pictures, their attack and health in that fight, golden minions, the turn and who won. Players you haven't fought yet say so.
 - Pictures are downloaded once and kept in your data folder, like the card previews. Turn it off in the tray menu ("Opponent board on portrait hover"). Not shown in Duos for now.
