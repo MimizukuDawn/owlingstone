@@ -2,6 +2,9 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.0.1
+- The tray menu now has the overlay's look: dark with gold, instead of the plain white Windows menu. Left or right click the owl icon to open it; click outside, press Escape or click the icon again to close it.
+
 ## 2.0.0
 - Rewritten from scratch in Rust: the download is smaller (about 17 MB instead of 27 MB), and the app opens faster and is lighter on your PC while you play.
 - Everything you had is still there: tier list, Comps and Lobby tabs, turn plan, win chance banner, card previews, hero and trinket advice, history and stats, sharing and feedback. Your settings, history and learned data carry over untouched.
