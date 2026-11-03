@@ -1,15 +1,17 @@
-# Every push and pull request: tests, lints, privacy scan, and a build of the exe that is started once
-# to prove it opens.
+# Every push and pull request that changes code: tests, lints and privacy scan, and in parallel a build
+# of the exe that is started once to prove it opens. Text-only changes (*.md, signatures) skip it.
 name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: ["**.md", "signatures/**"]
   pull_request:
+    paths-ignore: ["**.md", "signatures/**"]
 permissions:
   contents: read
 jobs:
   test:
-    # Tests, lints, privacy scan, and a release build that is started once to prove it opens.
+    # Tests, lints and the privacy scan. Compiled libraries are cached between runs (rust-cache).
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -22,19 +24,39 @@ jobs:
           rustup update stable --no-self-update
           rustup default stable
           rustup component add clippy
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: test
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Tests
         env:
           OWLINGSTONE_NO_CARD_DOWNLOAD: "1"
         run: cargo test --locked
       - name: Lints
         run: cargo clippy --locked --all-targets -- -D warnings
-      - name: Release build
-        run: cargo build --locked --release
+
+  build:
+    # At the same time as the tests: the release exe, started once to prove it opens.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: build
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Build (release settings, faster linking)
+        run: cargo build --locked --profile ci
       - name: Start the built exe once
         shell: pwsh
         env:
           OWLINGSTONE_HOME: ${{ runner.temp }}\smoke
-        run: ./tools/smoke.ps1 target\release\Owlingstone.exe
+        run: ./tools/smoke.ps1 target\ci\Owlingstone.exe
 
   server:
     runs-on: ubuntu-latest
