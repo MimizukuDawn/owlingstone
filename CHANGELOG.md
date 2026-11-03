@@ -2,6 +2,10 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.1.5
+- Fixed: the card preview, the opponent board on portrait hover, the win chance banner and the "running" badge no longer show as an empty grey box. Windows doesn't draw click-through windows made this way, so these windows no longer let clicks through (none of them sits over anything you click).
+- The opponent board now opens at the right of the game, past the game's own portrait tooltip (hero powers and trinkets included) instead of under it, with 4 cards per row.
+
 ## 2.1.4
 - Less lag when you level up, sell or buy: the fight simulations behind the turn plan and the win chance now run on half of your CPU at most, and Owlingstone's background work always lets Hearthstone go first. The advice may show a split second later on small PCs; the game stays smooth.
 - Fixed the win chance banner at the top of the game sometimes showing as an empty box.
