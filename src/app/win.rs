@@ -53,6 +53,14 @@ mod imp {
         (unsafe { GetCursorPos(&mut p) } != 0).then_some((p.x, p.y))
     }
 
+    /// True while the left or right mouse button is down, wherever the mouse is (even over other
+    /// programs): the tray menu closes on a click outside it.
+    pub fn mouse_down() -> bool {
+        use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON, VK_RBUTTON};
+        // SAFETY: plain Win32 query, no pointers.
+        unsafe { (GetAsyncKeyState(VK_LBUTTON as i32) as u16 & 0x8000) != 0 || (GetAsyncKeyState(VK_RBUTTON as i32) as u16 & 0x8000) != 0 }
+    }
+
     /// File name of the program whose window is in front, in lower case (e.g. "hearthstone.exe").
     pub fn foreground_exe() -> String {
         // SAFETY: as above; the process handle is closed before returning.
@@ -181,6 +189,9 @@ mod imp {
     }
     pub fn cursor_pos() -> Option<(i32, i32)> {
         None
+    }
+    pub fn mouse_down() -> bool {
+        false
     }
     pub fn running_exes() -> Vec<String> {
         Vec::new()

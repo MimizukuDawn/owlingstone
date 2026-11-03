@@ -21,6 +21,8 @@ const HEADER_H: f32 = 30.0;
 const PAD: f32 = 6.0;
 /// Closed anyway after this long without focus nor mouse over it (if Windows never gave it the focus).
 const STALE: Duration = Duration::from_secs(10);
+/// A click on the tray icon right after an outside click closed the menu is that same click: no reopening.
+pub const REOPEN_GUARD: Duration = Duration::from_millis(500);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Action {
@@ -34,6 +36,7 @@ pub enum Action {
     HsDir,
     Folder,
     Update,
+    CheckNow,
     Feedback,
     Sharing,
     Sent,
@@ -52,13 +55,23 @@ pub struct OpenMenu {
     opened: Instant,
     focused: bool,
     last_hover: Instant,
+    /// A mouse button was down at the last frame (a click is the moment it goes down).
+    was_down: bool,
 }
 
 impl OpenMenu {
     pub fn new(at: Pos2) -> OpenMenu {
         let now = Instant::now();
-        OpenMenu { at, opened: now, focused: false, last_hover: now }
+        OpenMenu { at, opened: now, focused: false, last_hover: now, was_down: super::win::mouse_down() }
     }
+}
+
+/// A click (button going down) with the mouse outside the menu's rect (physical pixels, a 2 px margin).
+pub fn outside_press(was_down: bool, down: bool, cursor: Option<(i32, i32)>, rect: (f32, f32, f32, f32)) -> bool {
+    let Some((x, y)) = cursor else { return false };
+    let (x, y) = (x as f32, y as f32);
+    let (l, t, r, b) = rect;
+    down && !was_down && (x < l - 2.0 || x > r + 2.0 || y < t - 2.0 || y > b + 2.0)
 }
 
 fn entries(app: &App) -> Vec<Entry> {
@@ -66,7 +79,8 @@ fn entries(app: &App) -> Vec<Entry> {
     let sharing = owlingstone::share::Share::default().enabled();
     let update = match &app.update_ready {
         Some(v) => Entry::Item { action: Action::Update, label: format!("Update to v{v}"), enabled: true, checked: None },
-        None => Entry::Item { action: Action::Update, label: "No update ready".into(), enabled: false, checked: None },
+        None if app.checking_update => Entry::Item { action: Action::CheckNow, label: "Checking for updates…".into(), enabled: false, checked: None },
+        None => Entry::Item { action: Action::CheckNow, label: "Check for updates now".into(), enabled: true, checked: None },
     };
     vec![
         item(Action::Show, "Show window (turns off auto-hide)"),
@@ -130,6 +144,7 @@ pub fn apply(app: &mut App, action: Action) {
         Action::HsDir => super::choose_hearthstone_dir(app),
         Action::Folder => super::open_data_folder(),
         Action::Update => app.run_update(),
+        Action::CheckNow => app.check_updates_now(),
         Action::Feedback => app.dialogs.feedback = Some(super::dialogs::new_feedback()),
         Action::Sharing => {
             let share = owlingstone::share::Share::default();
@@ -149,10 +164,10 @@ pub fn show_menu(app: &mut App, ctx: &Context) {
         return;
     }
     let list = entries(app);
-    let Some(open) = app.tray_menu.as_mut() else { return };
+    let Some(at) = app.tray_menu.as_ref().map(|m| m.at) else { return };
     let size = vec2(WIDTH, height(&list));
     let screen = ctx.input(|i| i.viewport().monitor_size).unwrap_or(vec2(1920.0, 1080.0));
-    let origin = menu_origin(open.at, size, screen);
+    let origin = menu_origin(at, size, screen);
     let mut clicked = None;
     let mut close = false;
     let mut hovered = false;
@@ -233,6 +248,17 @@ pub fn show_menu(app: &mut App, ctx: &Context) {
             }
         },
     );
+    // A click anywhere else on screen (the game, the desktop, the taskbar) closes it at once, even when
+    // Windows did not give the menu the focus.
+    let ppp = app.ppp(ctx);
+    let rect = (origin.x * ppp, origin.y * ppp, (origin.x + size.x) * ppp, (origin.y + size.y) * ppp);
+    let Some(open) = app.tray_menu.as_mut() else { return };
+    let down = super::win::mouse_down();
+    if outside_press(open.was_down, down, super::win::cursor_pos(), rect) {
+        close = true;
+        app.tray_menu_closed = Some(Instant::now());
+    }
+    open.was_down = down;
     let now = Instant::now();
     if hovered {
         open.last_hover = now;
@@ -252,7 +278,8 @@ pub fn show_menu(app: &mut App, ctx: &Context) {
     if let Some(a) = clicked {
         apply(app, a);
     }
-    ctx.request_repaint_after(Duration::from_millis(100));
+    // Often while open: an outside click is seen within a few hundredths of a second.
+    ctx.request_repaint_after(Duration::from_millis(30));
 }
 
 #[cfg(test)]
@@ -268,6 +295,16 @@ mod tests {
         assert_eq!(o, pos2(1920.0 - 270.0 - 4.0, 660.0));
         // Taskbar at the top: never above the screen.
         assert_eq!(menu_origin(pos2(100.0, 20.0), size, screen), pos2(100.0, 0.0));
+    }
+
+    #[test]
+    fn only_a_new_click_outside_closes_the_menu() {
+        let rect = (100.0, 100.0, 370.0, 500.0);
+        assert!(outside_press(false, true, Some((50, 50)), rect)); // click on the game
+        assert!(!outside_press(false, true, Some((200, 300)), rect)); // click on an item
+        assert!(!outside_press(true, true, Some((50, 50)), rect)); // button held since before
+        assert!(!outside_press(false, false, Some((50, 50)), rect)); // mouse just moving
+        assert!(!outside_press(false, true, None, rect));
     }
 
     #[test]
@@ -317,11 +354,14 @@ mod imp {
             while let Ok(e) = self.clicks.try_recv() {
                 if let TrayIconEvent::Click { position, button, button_state: MouseButtonState::Up, .. } = e {
                     if matches!(button, MouseButton::Left | MouseButton::Right) {
-                        // A second click on the icon closes the menu, like Windows menus.
-                        app.tray_menu = match app.tray_menu {
-                            Some(_) => None,
-                            None => Some(super::OpenMenu::new(pos2(position.x as f32 / ppp, position.y as f32 / ppp))),
+                        // A second click on the icon closes the menu, like Windows menus. When the press of
+                        // that click already closed it (outside click), this release must not reopen it.
+                        let just_closed = app.tray_menu_closed.is_some_and(|t| t.elapsed() < super::REOPEN_GUARD);
+                        app.tray_menu = match (&app.tray_menu, just_closed) {
+                            (Some(_), _) | (None, true) => None,
+                            (None, false) => Some(super::OpenMenu::new(pos2(position.x as f32 / ppp, position.y as f32 / ppp))),
                         };
+                        app.tray_menu_closed = None;
                     }
                 }
             }
