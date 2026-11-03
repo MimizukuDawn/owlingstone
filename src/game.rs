@@ -169,6 +169,10 @@ pub struct Fight {
     /// The opponent's PLAYER_ID.
     pub opponent: Option<i64>,
     entered: Vec<i64>,
+    /// Ids that went to the graveyard during this fight.
+    died: Vec<i64>,
+    /// My minions in play at the first attack.
+    my_ids: Vec<i64>,
     /// The opponent's board at the first attack; empty if nobody attacked.
     pub board: Option<Vec<MinionSnap>>,
     pub my_hp: Option<i64>,
@@ -365,9 +369,15 @@ impl Game {
             }
             return;
         }
+        let to_graveyard = tag == "ZONE" && ent.is("ZONE", "GRAVEYARD");
         if tag == "ZONE" && ent.is("ZONE", "PLAY") {
             if let Some(f) = self.fight.as_mut() {
                 f.entered.push(eid); // minion put in play during this fight
+            }
+        }
+        if to_graveyard {
+            if let Some(f) = self.fight.as_mut() {
+                f.died.push(eid); // died during this fight
             }
         }
         if matches!(tag, "ZONE" | "CONTROLLER" | "CARDTYPE" | "BACON_HERO_CAN_BE_DRAFTED") {
@@ -440,6 +450,8 @@ impl Game {
             turn: self.turn(),
             opponent: opp,
             entered: Vec::new(),
+            died: Vec::new(),
+            my_ids: Vec::new(),
             board: None,
             my_hp: self.my_health(),
             opp_hp: opp.and_then(|o| self.player_health(o)),
@@ -475,6 +487,7 @@ impl Game {
         board.sort_by_key(|e| e.int("ZONE_POSITION"));
         let opp_board: Vec<MinionSnap> = board.iter().map(|e| snapshot_minion(e, &db)).collect();
         let my_board: Vec<MinionSnap> = self.my_board().iter().map(|e| snapshot_minion(e, &db)).collect();
+        let my_ids: Vec<i64> = self.my_board().iter().map(|e| e.id).collect();
         let opponent = self.fight.as_ref().and_then(|f| f.opponent);
         let opp_tier = opponent
             .and_then(|o| self.hero_of(o))
@@ -504,6 +517,7 @@ impl Game {
         if let Some(f) = self.fight.as_mut() {
             f.board = Some(opp_board);
             f.frozen = Some(frozen);
+            f.my_ids = my_ids;
         }
     }
 
@@ -524,13 +538,47 @@ impl Game {
                 }
             }
         }
-        f.entered = Vec::new();
         let my_loss = f.my_hp.unwrap_or(0) - self.my_health().unwrap_or(0);
         let opp_now = f.opponent.and_then(|o| self.player_health(o));
         let opp_loss = f.opp_hp.unwrap_or(0) - opp_now.unwrap_or(0);
-        f.result = if my_loss > 0 { 'L' } else if opp_loss > 0 { 'W' } else { 'T' };
+        // No damage either way: a ghost (dead player) takes none, nor does a hero whose health the log
+        // does not show changing. The minions left then say who won.
+        let (mine, theirs) = self.survivors(&f);
+        f.result = if my_loss > 0 {
+            'L'
+        } else if opp_loss > 0 || (mine > 0 && theirs == 0) {
+            'W'
+        } else if theirs > 0 && mine == 0 {
+            'L'
+        } else {
+            'T'
+        };
         f.damage = if my_loss > 0 { my_loss } else { opp_loss };
+        f.entered = Vec::new();
+        f.died = Vec::new();
+        f.my_ids = Vec::new();
         self.fights.push(f);
+    }
+
+    /// Minions left at the end of a fight (mine, theirs): in play at the first attack or put in play
+    /// during the fight, and never died. Checked on 225 fights: a win always leaves some of mine and
+    /// none of theirs, a loss the other way round.
+    fn survivors(&self, f: &Fight) -> (usize, usize) {
+        let (me, bob) = (self.local_player_id(), self.bob_player_id());
+        let mut seen = HashSet::new();
+        let (mut mine, mut theirs) = (0, 0);
+        for eid in f.my_ids.iter().chain(&f.entered) {
+            let Some(e) = self.entity(*eid) else { continue };
+            if !seen.insert(*eid) || !e.is_minion() || f.died.contains(eid) {
+                continue;
+            }
+            match e.opt_int("CONTROLLER") {
+                c if c == me && !e.is("ZONE", "PLAY") => mine += 1, // in play now: my board, back after the fight
+                c if c == bob => theirs += 1,
+                _ => {}
+            }
+        }
+        (mine, theirs)
     }
 
     /// Beetle bonus (+atk, +hp), Eternal Knights dead, +attack of Undead for this player.
@@ -925,6 +973,8 @@ impl Fight {
             turn,
             opponent: None,
             entered: Vec::new(),
+            died: Vec::new(),
+            my_ids: Vec::new(),
             board: Some(board),
             my_hp: None,
             opp_hp: None,

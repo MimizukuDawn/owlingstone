@@ -36,6 +36,16 @@ pub const PERSISTENCE: f64 = 0.9;
 /// An old board "grown" stays too weak (new effects, shields, golden cards...): +0.5 in log (×1.65)
 /// fits real results best.
 pub const SEEN_BOOST: f64 = 0.5;
+/// A typical board is made of minions without effects, and real boards of the same attack + health win
+/// more often: +0.3 in log (×1.35) fits real results best (190 fights, 6 days of games).
+pub const TYPICAL_BOOST: f64 = 0.3;
+/// How far the real board's strength is from the expected one (standard deviation of the log of
+/// attack + health): (never fought or seen before turn 4, old board grown). Measured: 0.5 and 0.85 on
+/// 202 fights (patches 36.6.3 and 37.0.2); 0.7 and 1.0 (board makeup varies too) fit results best.
+pub const BOARD_SD: (f64, f64) = (0.7, 1.0);
+/// Strengths tried around the expected board, in standard deviations: the middles of 7 equally likely
+/// slices of a normal curve.
+const SPREAD: [f64; 7] = [-1.465, -0.792, -0.366, 0.0, 0.366, 0.792, 1.465];
 
 /// Average number of minions on the opponent's board by turn.
 fn board_count(turn: i64) -> usize {
@@ -320,14 +330,36 @@ fn filler(attack: i64, health: i64, tier: i64) -> MinionSnap {
 /// multiplied to match the strength expected now, and minions without effect fill the board if they had
 /// fewer than usual at this turn.
 pub fn expected_board(turn: i64, tier: i64, last: Option<&Fight>) -> (Vec<MinionSnap>, String) {
+    board_at(turn, tier, last, 0.0)
+}
+
+/// The same board at several strengths around the expected one (equally likely), because the real
+/// board is often half or twice as strong: one board alone gives 0% or 100% far too often. Simulating
+/// all of them and averaging gives odds that match real fights (see BOARD_SD). Their board this turn
+/// (seen during the fight) is known: one board.
+pub fn expected_boards(turn: i64, tier: i64, last: Option<&Fight>) -> (Vec<Vec<MinionSnap>>, String) {
+    let (board, basis) = board_at(turn, tier, last, 0.0);
+    let seen = last.and_then(|f| f.board.as_ref()).is_some_and(|b| !b.is_empty());
+    if seen && last.is_some_and(|f| f.turn == turn) {
+        return (vec![board], basis);
+    }
+    let sd = if seen && last.is_some_and(|f| f.turn >= 4) { BOARD_SD.1 } else { BOARD_SD.0 };
+    let boards = SPREAD.iter().map(|z| if *z == 0.0 { board.clone() } else { board_at(turn, tier, last, z * sd).0 }).collect();
+    (boards, basis)
+}
+
+/// `shift` is added to the log of the strength aimed for (+0.7 = twice as strong).
+fn board_at(turn: i64, tier: i64, last: Option<&Fight>, shift: f64) -> (Vec<MinionSnap>, String) {
     let tier = tier.max(1);
-    let mut target = typical_power(turn, tier).ln();
+    let mut target = typical_power(turn, tier).ln() + shift;
     let seen: Vec<MinionSnap> = last.and_then(|f| f.board.clone()).unwrap_or_default();
     let last_turn = last.map(|f| f.turn).unwrap_or(0);
     if !seen.is_empty() && last_turn >= 4 {
         let opp_tier = last.and_then(|f| f.frozen.as_ref()).map(|fr| fr.opp_tier).unwrap_or(1);
         let then = (board_power(&seen).max(1) as f64).ln() - typical_power(last_turn, opp_tier).ln();
         target += PERSISTENCE.powf((turn - last_turn) as f64 / 2.0) * then + SEEN_BOOST;
+    } else {
+        target += TYPICAL_BOOST;
     }
     let power = target.exp();
     let fresh = !seen.is_empty() && last_turn == turn; // seen this turn (during a fight): nothing to age
@@ -518,14 +550,15 @@ pub fn fight_plan(k: &Knowledge, game: &Game, caches: &mut Caches) -> Option<Arc
         }
     }
 
-    let (theirs, basis) = expected_board(turn, opp_tier, last);
+    let (theirs, basis) = expected_boards(turn, opp_tier, last);
     let counters = [
         game.player_counters(game.local_player_id()),
         last.and_then(|f| f.frozen.as_ref()).map(|fr| fr.counters.1.clone()).unwrap_or_default(),
     ];
     let sim = |mine: &[MinionSnap]| {
-        let input = sim_input(game, mine.to_vec(), theirs.clone(), tier, opp_tier, opp, cap, counters.clone());
-        combat::simulate_with(&db, &input, PLAN_RUNS.0, PLAN_RUNS.1, None)
+        let inputs: Vec<SimInput> =
+            theirs.iter().map(|t| sim_input(game, mine.to_vec(), t.clone(), tier, opp_tier, opp, cap, counters.clone())).collect();
+        combat::simulate_mix(&db, &inputs, PLAN_RUNS.0, PLAN_RUNS.1, None)
     };
     let base = sim(&team);
     let mut per_card: Vec<(String, SimResult)> = Vec::new();
@@ -582,7 +615,7 @@ pub fn fight_plan(k: &Knowledge, game: &Game, caches: &mut Caches) -> Option<Arc
         opp_tier,
         opp_health: game.player_health(opp),
         basis,
-        opp_power: board_power(&theirs),
+        opp_power: board_power(&theirs[theirs.len() / 2]),
         my_power: board_power(&team),
         strength: strength_percentile(board_power(&team), turn, tier),
         base,
@@ -640,14 +673,15 @@ pub fn option_fights(game: &Game, options: &[&crate::game::Entity], caches: &mut
             return Some(f.clone());
         }
     }
-    let (theirs, _) = expected_board(turn, opp_tier, last);
+    let (theirs, _) = expected_boards(turn, opp_tier, last);
     let counters = [
         game.player_counters(game.local_player_id()),
         last.and_then(|f| f.frozen.as_ref()).map(|fr| fr.counters.1.clone()).unwrap_or_default(),
     ];
     let sim = |mine: &[MinionSnap]| {
-        let input = sim_input(game, mine.to_vec(), theirs.clone(), tier, opp_tier, opp, cap, counters.clone());
-        combat::simulate_with(&db, &input, PLAN_RUNS.0, PLAN_RUNS.1, None)
+        let inputs: Vec<SimInput> =
+            theirs.iter().map(|t| sim_input(game, mine.to_vec(), t.clone(), tier, opp_tier, opp, cap, counters.clone())).collect();
+        combat::simulate_mix(&db, &inputs, PLAN_RUNS.0, PLAN_RUNS.1, None)
     };
     let base = sim(&team);
     let with = snaps
@@ -1083,13 +1117,15 @@ pub fn combat_info(game: &mut Game, caches: &mut Caches) -> Option<CombatInfo> {
     let odds = match cached {
         Some(o) => o,
         None => {
-            let (theirs, basis) = expected_board(game.turn(), opp_tier, last);
+            let (theirs, basis) = expected_boards(game.turn(), opp_tier, last);
             let counters = [
                 game.player_counters(game.local_player_id()),
                 last.and_then(|f| f.frozen.as_ref()).map(|fr| fr.counters.1.clone()).unwrap_or_default(),
             ];
-            let input = sim_input(game, mine, theirs, game.tavern_tier().unwrap_or(1).max(1), opp_tier, opp, cap, counters);
-            let sim = combat::simulate_with(&db, &input, combat::PREVIEW.0, combat::PREVIEW.1, None);
+            let tier = game.tavern_tier().unwrap_or(1).max(1);
+            let inputs: Vec<SimInput> =
+                theirs.into_iter().map(|t| sim_input(game, mine.clone(), t, tier, opp_tier, opp, cap, counters.clone())).collect();
+            let sim = combat::simulate_mix(&db, &inputs, combat::PREVIEW.0, combat::PREVIEW.1, None);
             let o = Odds {
                 sim,
                 live: false,

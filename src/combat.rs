@@ -1433,6 +1433,49 @@ pub fn simulate_with(db: &CardDb, input: &SimInput, runs: u32, seconds: f64, see
     }
 }
 
+/// Odds against several possible boards of the opponent (equally likely): the runs are shared between
+/// them, so it costs the same as one simulation. Used before the fight, when their board is a guess.
+pub fn simulate_mix(db: &CardDb, inputs: &[SimInput], runs: u32, seconds: f64, seed: Option<u64>) -> SimResult {
+    match inputs {
+        [] => SimResult::default(),
+        [one] => simulate_with(db, one, runs, seconds, seed),
+        _ => {
+            let each = runs.div_ceil(inputs.len() as u32).max(1);
+            let results: Vec<SimResult> = sim_pool().install(|| {
+                inputs
+                    .par_iter()
+                    .enumerate()
+                    .map(|(i, input)| simulate_with(db, input, each, seconds, seed.map(|s| s.wrapping_add(i as u64))))
+                    .collect()
+            });
+            mix(&results, inputs[0].first)
+        }
+    }
+}
+
+/// Average of equally likely results.
+fn mix(results: &[SimResult], first: Option<u8>) -> SimResult {
+    let n = results.len().max(1) as f64;
+    let avg = |f: fn(&SimResult) -> f64| results.iter().map(f).sum::<f64>() / n;
+    let (win, loss) = (avg(|r| r.win), avg(|r| r.loss));
+    let (avg_dealt, avg_taken) = (avg(|r| r.avg_dealt), avg(|r| r.avg_taken));
+    let unknown: BTreeSet<String> = results.iter().flat_map(|r| r.unknown.iter().cloned()).collect();
+    SimResult {
+        runs: results.iter().map(|r| r.runs).sum(),
+        win,
+        tie: avg(|r| r.tie),
+        loss,
+        dealt: if win > 0.0 { avg_dealt * 100.0 / win } else { 0.0 },
+        taken: if loss > 0.0 { avg_taken * 100.0 / loss } else { 0.0 },
+        avg_dealt,
+        avg_taken,
+        lethal: avg(|r| r.lethal),
+        lethal_me: avg(|r| r.lethal_me),
+        unknown: unknown.into_iter().collect(),
+        first,
+    }
+}
+
 fn one_run(protos: &[Vec<M>; 2], ctx: &Ctx, input: &SimInput, rng: &mut Rng, t: &mut Tally) {
     let who = match input.first {
         Some(f) => usize::from(f.min(1)),
