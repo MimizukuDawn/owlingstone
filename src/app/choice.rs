@@ -1,9 +1,9 @@
 //! Odds on the choice on screen: when the game asks me to pick (hero, Trinket, Discover), a strip over the
 //! options shows each one's chance to be the best pick, the pick advised and why (`choices.rs`).
 //!
-//! - Where: just under the win chance banner, centred on the game, one column per option in the order
-//!   the game shows them, spaced like the cards below (`COLUMN_H` heights apart, a guess from screenshots
-//!   to fix if the columns sit off the cards). It covers only the top of the screen, where nothing is
+//! - Where: just under the win chance banner (never over it), centred on the game, one column per option
+//!   in the order the game shows them, at most one game height wide in all so it stays clear of the
+//!   leaderboard portraits (`COLUMN_H` heights per column). It covers only the top of the screen, where nothing is
 //!   clicked during a choice.
 //! - The × closes it for this choice; the tray menu turns it off for good ("Odds on choices").
 
@@ -13,21 +13,26 @@ use owlingstone::choices::{ChoiceAdvice, Kind};
 use super::draw;
 
 /// Distance between two option columns, in game heights.
-const COLUMN_H: f32 = 0.28;
-const COLUMN_MAX: f32 = 320.0;
-const COLUMN_MIN: f32 = 150.0;
-/// Top of the strip, in game heights (the win chance banner is above).
-const TOP: f32 = 0.072;
+const COLUMN_H: f32 = 0.25;
+const COLUMN_MAX: f32 = 280.0;
+const COLUMN_MIN: f32 = 140.0;
+/// The strip stays inside the middle of the play area (play area = 1.4 heights wide, centred): it never
+/// reaches the leaderboard portraits on the left nor the buttons on the right.
+const MAX_WIDTH_H: f32 = 1.0;
+/// Gap under the win chance banner.
+const GAP: f32 = 6.0;
 const HEADER_H: f32 = 22.0;
 pub const STRIP_H: f32 = 132.0;
 
-/// (x, y, w, h) of the strip for `n` options over the game area `game` (points).
-pub fn geometry(game: (f32, f32, f32, f32), n: usize) -> (f32, f32, f32, f32) {
-    let (x, y, w, h) = game;
+/// (x, y, w, h) of the strip for `n` options over the game area `game` (points), just under the win
+/// chance banner whose bottom edge is at `below`.
+pub fn geometry(game: (f32, f32, f32, f32), n: usize, below: f32) -> (f32, f32, f32, f32) {
+    let (x, _, w, h) = game;
     let n = n.max(1) as f32;
-    let col = (h * COLUMN_H).clamp(COLUMN_MIN, COLUMN_MAX).min((w - 20.0) / n);
+    let room = (h * MAX_WIDTH_H).min(w - 20.0);
+    let col = (h * COLUMN_H).clamp(COLUMN_MIN, COLUMN_MAX).min(room / n);
     let width = col * n;
-    ((x + (w - width) / 2.0).round(), (y + h * TOP).round(), width.round(), STRIP_H)
+    ((x + (w - width) / 2.0).round(), (below + GAP).round(), width.round(), STRIP_H)
 }
 
 /// What identifies a choice (the × hides this one only).
@@ -112,10 +117,13 @@ mod tests {
 
     #[test]
     fn strip_is_centred_and_fits() {
-        let (x, y, w, h) = geometry((0.0, 0.0, 1920.0, 1080.0), 3);
+        let (x, y, w, h) = geometry((0.0, 0.0, 1920.0, 1080.0), 3, 66.0);
         assert_eq!((x + w / 2.0).round(), 960.0);
-        assert!(w <= 3.0 * COLUMN_MAX && y > 60.0 && h == STRIP_H);
-        let (x, _, w, _) = geometry((100.0, 0.0, 800.0, 600.0), 4);
+        assert!(w <= 3.0 * COLUMN_MAX && y >= 66.0 && h == STRIP_H);
+        // Four Trinkets: within the middle of the play area (leaderboard starts 0.7 heights left of centre).
+        let (x, _, w, _) = geometry((0.0, 0.0, 1920.0, 1080.0), 4, 66.0);
+        assert!(x >= 960.0 - 0.5 * 1080.0 && x + w <= 960.0 + 0.5 * 1080.0, "{x} {w}");
+        let (x, _, w, _) = geometry((100.0, 0.0, 800.0, 600.0), 4, 40.0);
         assert!(x >= 100.0 && x + w <= 900.0);
     }
 }

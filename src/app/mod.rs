@@ -761,9 +761,9 @@ impl App {
             self.visible && snap.in_game && !snap.over && self.settings.choice_odds() && self.closed_choice.as_deref() != Some(choice::key(c).as_str())
         });
         let (x, y, w, h) = match (game, advice) {
-            (Some(g), Some(c)) if !self.replay => choice::geometry(g, c.options.len()),
+            (Some(g), Some(c)) if !self.replay => choice::geometry(g, c.options.len(), odds_geometry(g).1 + ODDS_H),
             (_, Some(c)) => {
-                let (_, _, w, h) = choice::geometry((0.0, 0.0, 1600.0, 900.0), c.options.len());
+                let (_, _, w, h) = choice::geometry((0.0, 0.0, 1600.0, 900.0), c.options.len(), 0.0);
                 (left_geo.0 + left_geo.2 + 10.0, 80.0, w, h)
             }
             _ => (0.0, 0.0, 10.0, 10.0),
