@@ -2,6 +2,9 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.2.2
+- Choice odds: the strip now sits just under the win chance banner instead of over it, and stays in the middle of the board (narrower columns) so it no longer covers the hero portraits on the left.
+
 ## 2.2.1
 - Fixed: the win chance shown before a fight was almost always 0% or 100%, and often wrong (on 190 recent fights, "100%" fights were really won 63% of the time and "0%" fights 20%). The opponent's board is a guess at that point, and the app simulated a single guess. It now simulates the guess at 7 strengths, from much weaker to much stronger (the real board is often half or twice as strong), and averages them. On the same fights, the odds now match what happened: "about 20%" wins about 24% of the time, "about 80%" about 88%. The turn advice and the odds on choices use the same, more honest odds.
 - The odds during the fight (both boards known) were already right; they are unchanged.
