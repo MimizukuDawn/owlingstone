@@ -561,6 +561,18 @@ impl App {
         self.dialogs.quit = true;
     }
 
+    /// Ends the process right away. Closing the window (`ViewportCommand::Close`) is not enough: with the
+    /// panels and the tray icon open, the window loop could keep running and Owlingstone stayed in the
+    /// background after "Quit". The settings are saved and the tray icon removed first; the one-instance
+    /// lock goes with the process, so an update's new exe starts at once.
+    fn exit_now(&mut self) -> ! {
+        self.stop.store(true, Ordering::Relaxed);
+        self.save_settings();
+        self.tray_menu = None;
+        self.tray = None; // removes the icon near the clock (else a ghost icon stays until hovered)
+        std::process::exit(0);
+    }
+
     fn on_snapshot(&mut self, snap: Arc<Snapshot>) {
         if snap.tier != self.snap.tier {
             self.manual_tier = None; // the tier went up: the list follows again
@@ -924,8 +936,7 @@ impl eframe::App for App {
         dialogs::show(self, ctx);
         tray::show_menu(self, ctx);
         if self.dialogs.quit || self.smoke_until.is_some_and(|t| Instant::now() >= t) {
-            self.stop.store(true, Ordering::Relaxed);
-            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            self.exit_now();
         }
         ctx.request_repaint_after(Duration::from_millis(250));
     }

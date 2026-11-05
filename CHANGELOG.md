@@ -2,6 +2,9 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.2.3
+- Fixed: "Quit Owlingstone" in the tray menu now really closes the app. Before, the windows went away but Owlingstone could keep running in the background (still in the Task Manager, and a new start did nothing). The app now saves your settings, removes its tray icon and ends at once. Updating uses the same path, so the new version starts right away.
+
 ## 2.2.2
 - Choice odds: the strip now sits just under the win chance banner instead of over it, and stays in the middle of the board (narrower columns) so it no longer covers the hero portraits on the left.
 
