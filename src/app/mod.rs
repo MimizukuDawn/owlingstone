@@ -131,6 +131,12 @@ pub struct App {
     closed_choice: Option<String>,
     // --- placement
     game_rect: Option<win::Rect>,
+    /// Scale of the screen the game is on (1.5 = 150 %), 0.0 when unknown.
+    game_scale: f32,
+    /// Set twice a second: check that every window still sits where it should (Windows moves windows
+    /// when screens are swapped, plugged or unplugged, and egui only moves a window when its wanted
+    /// position changes).
+    recheck: bool,
     visible: bool,
     /// Hearthstone is in front but no game is going on (menus): a small badge says the app is running.
     idle_badge: bool,
@@ -374,6 +380,8 @@ impl App {
             board_watch: board::Watch::start(ctx),
             closed_choice: None,
             game_rect: None,
+            game_scale: 0.0,
+            recheck: false,
             visible: replay,
             idle_badge: false,
             last_place: None,
@@ -607,7 +615,10 @@ impl App {
             self.visible = true;
             return;
         }
-        self.game_rect = win::hearthstone_rect();
+        let place = win::hearthstone_place();
+        self.game_rect = place.map(|p| p.0);
+        self.game_scale = place.map(|p| p.1).unwrap_or(0.0);
+        self.recheck = true;
         *self.board_watch.game.lock().unwrap_or_else(|e| e.into_inner()) = self.game_rect;
         if !self.settings.hide_when_unfocused() {
             self.visible = true;
@@ -620,15 +631,36 @@ impl App {
         if !self.settings.hide_when_unfocused() {
             self.idle_badge = false; // the panels themselves show then
         }
-        // The host sits inside the game's corner, so its scale is the one of the game's screen.
+        // The host sits inside the game's corner.
         if let Some((x, y, _, _)) = self.game_rect {
-            let ppp = self.ppp(ctx);
-            let p = pos2(x as f32 / ppp, y as f32 / ppp);
+            let g = self.game_ppp(ctx);
+            let p = self.at(ctx, ViewportId::ROOT, (x as f32 / g, y as f32 / g));
             if p != self.host_pos {
                 self.host_pos = p;
                 ctx.send_viewport_cmd_to(ViewportId::ROOT, egui::ViewportCommand::OuterPosition(p));
             }
         }
+    }
+
+    /// Points per pixel of the game's screen (from Windows; else the host's, which sits in the game's corner).
+    fn game_ppp(&self, ctx: &Context) -> f32 {
+        if self.game_scale >= 0.5 { self.game_scale } else { self.ppp(ctx) }
+    }
+
+    /// The position to give window `id` so that it lands at `pos` (points of the game's screen).
+    /// egui turns a window's position into pixels with the scale of the screen the window is on *now*:
+    /// with screens at different scales (100 % and 150 %), a window still on the other screen would land
+    /// at the wrong place, often on that other screen. Twice a second this also puts back a window that
+    /// is not where it should be (Windows moves windows when screens are swapped or unplugged).
+    fn at(&self, ctx: &Context, id: ViewportId, pos: (f32, f32)) -> Pos2 {
+        let game = self.game_ppp(ctx);
+        let (own, now) = ctx.input_for(id, |i| (i.viewport().native_pixels_per_point, i.viewport().outer_rect));
+        let own = own.unwrap_or(game).max(0.5);
+        let wanted = pos2(pos.0 * game / own, pos.1 * game / own);
+        if self.recheck && id != ViewportId::ROOT && now.is_some_and(|r| (r.min - wanted).length() > 2.0) {
+            ctx.send_viewport_cmd_to(id, egui::ViewportCommand::OuterPosition(wanted));
+        }
+        wanted
     }
 
     fn ppp(&self, ctx: &Context) -> f32 {
@@ -637,14 +669,14 @@ impl App {
 
     /// The game's area in points.
     fn game_points(&self, ctx: &Context) -> Option<(f32, f32, f32, f32)> {
-        let ppp = self.ppp(ctx);
+        let ppp = self.game_ppp(ctx);
         self.game_rect.map(|(x, y, w, h)| (x as f32 / ppp, y as f32 / ppp, w as f32 / ppp, h as f32 / ppp))
     }
 
-    fn panel_builder(title: &str, pos: (f32, f32), size: (f32, f32), visible: bool) -> ViewportBuilder {
+    fn panel_builder(title: &str, pos: Pos2, size: (f32, f32), visible: bool) -> ViewportBuilder {
         ViewportBuilder::default()
             .with_title(title)
-            .with_position([pos.0, pos.1])
+            .with_position(pos)
             .with_inner_size([size.0, size.1])
             .with_decorations(false)
             .with_always_on_top()
@@ -665,9 +697,10 @@ impl App {
         let right_geo = right_geo.unwrap_or((left_geo.0 + left_geo.2 + 10.0, left_geo.1, HUD_WIDTH + delta.max(0.0), left_geo.3));
         let visible = self.visible;
         let mut hover: Option<(Hover, egui::Rect)> = None;
+        let left_pos = self.at(ctx, ViewportId::from_hash_of("left"), (left_geo.0, left_geo.1));
         ctx.show_viewport_immediate(
             ViewportId::from_hash_of("left"),
-            Self::panel_builder("Owlingstone", (left_geo.0, left_geo.1), (left_geo.2, left_geo.3), visible),
+            Self::panel_builder("Owlingstone", left_pos, (left_geo.2, left_geo.3), visible),
             |ui, class| {
                 let ctx = &ui.ctx().clone();
                 if class == ViewportClass::EmbeddedWindow {
@@ -681,9 +714,10 @@ impl App {
             },
         );
         let right_on = visible && self.settings.lobby_panel();
+        let right_pos = self.at(ctx, ViewportId::from_hash_of("right"), (right_geo.0, right_geo.1));
         ctx.show_viewport_immediate(
             ViewportId::from_hash_of("right"),
-            Self::panel_builder("Owlingstone – Lobby", (right_geo.0, right_geo.1), (right_geo.2, right_geo.3), right_on),
+            Self::panel_builder("Owlingstone – Lobby", right_pos, (right_geo.2, right_geo.3), right_on),
             |ui, class| {
                 let ctx = &ui.ctx().clone();
                 if class == ViewportClass::EmbeddedWindow {
@@ -703,11 +737,12 @@ impl App {
             Some(g) if !self.replay => odds_geometry(g),
             _ => (left_geo.0 + left_geo.2 + 10.0, 4.0),
         };
+        let pos = self.at(ctx, ViewportId::from_hash_of("odds"), pos);
         ctx.show_viewport_immediate(
             ViewportId::from_hash_of("odds"),
             ViewportBuilder::default()
                 .with_title("Owlingstone – win chance")
-                .with_position([pos.0, pos.1])
+                .with_position(pos)
                 .with_inner_size([ODDS_W, ODDS_H])
                 .with_decorations(false)
                 .with_always_on_top()
@@ -729,11 +764,12 @@ impl App {
         // In the menus: a small badge where the left panel goes, so the player sees the app is running.
         let badge_on = self.idle_badge && !self.replay;
         let badge_text = idle_badge_text(&self.snap);
+        let badge_pos = self.at(ctx, ViewportId::from_hash_of("idle"), (left_geo.0, left_geo.1));
         ctx.show_viewport_immediate(
             ViewportId::from_hash_of("idle"),
             ViewportBuilder::default()
                 .with_title("Owlingstone – running")
-                .with_position([left_geo.0, left_geo.1])
+                .with_position(badge_pos)
                 .with_inner_size([IDLE_W, IDLE_H])
                 .with_decorations(false)
                 .with_always_on_top()
@@ -764,6 +800,7 @@ impl App {
         self.show_preview(ctx, hover);
         self.show_board(ctx, game);
         self.show_choice(ctx, game, left_geo);
+        self.recheck = false;
     }
 
     /// Odds over the choice on screen (hero pick, Trinket offer, Discover).
@@ -781,11 +818,12 @@ impl App {
             _ => (0.0, 0.0, 10.0, 10.0),
         };
         let mut closed = false;
+        let pos = self.at(ctx, ViewportId::from_hash_of("choice"), (x, y));
         ctx.show_viewport_immediate(
             ViewportId::from_hash_of("choice"),
             ViewportBuilder::default()
                 .with_title("Owlingstone – choice")
-                .with_position([x, y])
+                .with_position(pos)
                 .with_inner_size([w, h])
                 .with_decorations(false)
                 .with_always_on_top()
@@ -823,11 +861,12 @@ impl App {
         };
         let ((x, y, w, h), card_w) = shown.as_ref().map(|s| s.1).unwrap_or(((0.0, 0.0, 10.0, 10.0), 0.0));
         let art = self.settings.card_art();
+        let pos = self.at(ctx, ViewportId::from_hash_of("board"), (x, y));
         ctx.show_viewport_immediate(
             ViewportId::from_hash_of("board"),
             ViewportBuilder::default()
                 .with_title("Owlingstone – board")
-                .with_position([x, y])
+                .with_position(pos)
                 .with_inner_size([w, h])
                 .with_decorations(false)
                 .with_always_on_top()
@@ -867,11 +906,12 @@ impl App {
             _ => ((0.0, 0.0), (10.0, 10.0), false),
         };
         self.hover = wanted.clone();
+        let pos = self.at(ctx, ViewportId::from_hash_of("preview"), pos);
         ctx.show_viewport_immediate(
             ViewportId::from_hash_of("preview"),
             ViewportBuilder::default()
                 .with_title("Owlingstone – card")
-                .with_position([pos.0, pos.1])
+                .with_position(pos)
                 .with_inner_size([size.0, size.1])
                 .with_decorations(false)
                 .with_always_on_top()

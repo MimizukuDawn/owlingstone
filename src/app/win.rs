@@ -12,13 +12,14 @@ mod imp {
     use windows_sys::core::BOOL;
     use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, ERROR_ALREADY_EXISTS, HANDLE, HWND, LPARAM, POINT, RECT};
     use windows_sys::Win32::Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_TRANSITIONS_FORCEDISABLED};
-    use windows_sys::Win32::Graphics::Gdi::ClientToScreen;
+    use windows_sys::Win32::Graphics::Gdi::{ClientToScreen, MONITOR_DEFAULTTONEAREST, MonitorFromWindow};
     use windows_sys::Win32::System::Diagnostics::ToolHelp::{
         CreateToolhelp32Snapshot, PROCESSENTRY32W, Process32FirstW, Process32NextW, TH32CS_SNAPPROCESS,
     };
     use windows_sys::Win32::System::Threading::{
         CreateMutexW, GetCurrentThreadId, OpenProcess, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION, QueryFullProcessImageNameW,
     };
+    use windows_sys::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
     use windows_sys::Win32::UI::Shell::ShellExecuteW;
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         EnumThreadWindows, FindWindowW, GetClientRect, GetCursorPos, GetForegroundWindow, GetWindowThreadProcessId, IsIconic, SW_SHOWNORMAL,
@@ -28,8 +29,9 @@ mod imp {
         s.encode_utf16().chain(std::iter::once(0)).collect()
     }
 
-    /// The game area of Hearthstone's window, or None (not running, or minimized).
-    pub fn hearthstone_rect() -> Option<Rect> {
+    /// The game area of Hearthstone's window and the scale of the screen it is on (1.0 = 100 %, 1.5 =
+    /// 150 %; 0.0 when Windows does not say). None when the game is not running or minimized.
+    pub fn hearthstone_place() -> Option<(Rect, f32)> {
         let (class, title) = (wide("UnityWndClass"), wide("Hearthstone"));
         // SAFETY: Win32 calls with NUL-terminated strings and out-structs that live on the stack.
         unsafe {
@@ -42,7 +44,18 @@ mod imp {
             if GetClientRect(hwnd, &mut rc) == 0 || ClientToScreen(hwnd, &mut origin) == 0 {
                 return None;
             }
-            (rc.right > 0 && rc.bottom > 0).then_some((origin.x, origin.y, rc.right, rc.bottom))
+            if rc.right <= 0 || rc.bottom <= 0 {
+                return None;
+            }
+            // The screen that holds most of the game decides its scale.
+            let monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            let (mut dpi_x, mut dpi_y) = (0u32, 0u32);
+            let scale = if !monitor.is_null() && GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &mut dpi_x, &mut dpi_y) == 0 && dpi_x > 0 {
+                dpi_x as f32 / 96.0
+            } else {
+                0.0
+            };
+            Some(((origin.x, origin.y, rc.right, rc.bottom), scale))
         }
     }
 
@@ -181,7 +194,7 @@ mod imp {
 mod imp {
     use super::Rect;
 
-    pub fn hearthstone_rect() -> Option<Rect> {
+    pub fn hearthstone_place() -> Option<(Rect, f32)> {
         None
     }
     pub fn foreground_exe() -> String {
