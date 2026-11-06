@@ -806,8 +806,11 @@ impl App {
     /// Odds over the choice on screen (hero pick, Trinket offer, Discover).
     fn show_choice(&mut self, ctx: &Context, game: Option<(f32, f32, f32, f32)>, left_geo: (f32, f32, f32, f32)) {
         let snap = self.snap.clone();
+        // Not for the hero pick: the top of the screen then shows the lobby's tribes, and the Comps tab
+        // already lists the heroes with their chance.
         let advice = snap.choice.as_ref().filter(|c| {
-            self.visible && snap.in_game && !snap.over && self.settings.choice_odds() && self.closed_choice.as_deref() != Some(choice::key(c).as_str())
+            c.kind != choice::Kind::Hero
+                && self.visible && snap.in_game && !snap.over && self.settings.choice_odds() && self.closed_choice.as_deref() != Some(choice::key(c).as_str())
         });
         let (x, y, w, h) = match (game, advice) {
             (Some(g), Some(c)) if !self.replay => choice::geometry(g, c.options.len(), odds_geometry(g).1 + ODDS_H),

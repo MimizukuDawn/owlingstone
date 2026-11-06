@@ -1,14 +1,17 @@
-//! Odds on the choice on screen: when the game asks me to pick (hero, Trinket, Discover), a strip over the
+//! Odds on the choice on screen: when the game asks me to pick (Trinket, Discover), a strip over the
 //! options shows each one's chance to be the best pick, the pick advised and why (`choices.rs`).
 //!
 //! - Where: just under the win chance banner (never over it), centred on the game, one column per option
 //!   in the order the game shows them, at most one game height wide in all so it stays clear of the
 //!   leaderboard portraits (`COLUMN_H` heights per column). It covers only the top of the screen, where nothing is
 //!   clicked during a choice.
+//! - Not shown for the hero pick (it would cover the lobby's tribes at the top): the Comps tab shows the
+//!   heroes' chances instead.
 //! - The × closes it for this choice; the tray menu turns it off for good ("Odds on choices").
 
 use eframe::egui::{self, Align, Color32, CornerRadius, Layout, RichText, Stroke, vec2};
-use owlingstone::choices::{ChoiceAdvice, Kind};
+pub use owlingstone::choices::Kind;
+use owlingstone::choices::ChoiceAdvice;
 
 use super::draw;
 
