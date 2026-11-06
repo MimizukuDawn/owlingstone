@@ -194,19 +194,26 @@ fn advice(app: &mut App, ui: &mut egui::Ui, s: &Snapshot, owned: &HashSet<&str>,
         }
     }
     if !adv.heroes.is_empty() {
-        if draw::section(ui, "Pick a hero (avg place)", "pick a hero", &mut app.folded) {
+        if draw::section(ui, "Pick a hero (chance best · avg place)", "pick a hero", &mut app.folded) {
             for (i, h) in adv.heroes.iter().enumerate() {
                 let best = i == 0 && h.stat.is_some();
                 let badge = match h.stat {
                     Some(st) => (format!("{:.2}", st.avg), draw::place_color(Some(st.avg))),
                     None => ("?".into(), draw::DARK_GRAY),
                 };
+                // Chance to be the best pick (the strip over the game is not shown for heroes).
+                let chance = s
+                    .choice
+                    .as_ref()
+                    .filter(|c| c.sure)
+                    .and_then(|c| c.options.iter().find(|o| o.card_id == h.card_id))
+                    .map(|o| (format!("{:.0}%", o.chance), if o.best { draw::WIN } else { draw::DARK_GRAY }));
                 Tile {
                     name: h.name.clone(),
                     art: if art_on && !h.card_id.is_empty() { app.images.tile(&h.card_id) } else { None },
                     gem: Some((i + 1).to_string()),
                     gem_color: Some(if best { draw::hex("b8962a") } else { draw::BORDER }),
-                    badges: vec![badge],
+                    badges: chance.into_iter().chain([badge]).collect(),
                     state: if best { State::Playing } else { State::None },
                     height: Some(34.0),
                     card_id: (!h.card_id.is_empty()).then(|| h.card_id.clone()),

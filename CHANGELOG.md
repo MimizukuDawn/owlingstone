@@ -2,6 +2,9 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.2.5
+- Hero pick: the odds box no longer sits at the top of the game, where it hid the lobby's tribes. The chance of each hero to be the best pick now shows in the Comps tab's "Pick a hero" list, next to its average place. The box over Trinket offers and Discovers is unchanged.
+
 ## 2.2.4
 - Fixed: with two screens, the side panels and the other overlays could show on the wrong screen (over your browser instead of the game), for example after swapping, plugging or unplugging a screen, or when the screens use different scales (100 % and 150 %). They now follow the screen Hearthstone is on, and twice a second the app puts back any window that is not where it should be.
 
