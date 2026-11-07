@@ -68,7 +68,9 @@ fn rank_prefers_my_tribe_and_comp_cards() {
         (trinket(&k, "Warcry Totem", "lesser"), 2),
     ];
     let picks = rank_offer(&k, &offer, &quil, &[], &[], &[], &[], Some(10));
-    assert_eq!(picks[0].card.name, "Hoggy Bank");
+    // Ornate Clock (no tribe) may win on its stats; the off-tribe Totem must come after my tribe's Bank.
+    let at = |name: &str| picks.iter().position(|p| p.card.name == name).unwrap();
+    assert!(at("Hoggy Bank") < at("Warcry Totem"));
     let totem = picks.iter().find(|p| p.card.name == "Warcry Totem").unwrap();
     assert!(totem.reasons.iter().any(|r| r.contains("pivot")));
     assert!(totem.reasons.iter().any(|r| r.contains("Dragon/Murloc")), "{:?}", totem.reasons);
