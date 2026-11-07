@@ -13,15 +13,11 @@
 #   how_to_play  play advice in one or two sentences
 #   stats        average place (avg, lower = better) and number of games (games)
 #
-# Source (2026-10-27, patch 36.6.3, season 14): guides and stats from https://bgbuddy.gg/comps
-# (Firestone community data, Solo, all MMR). A comp is counted only once built, so all have an
-# average better than 4.5: compare comps with each other, not with 4.5.
+# Source (2026-11-07, patch 37.0.2, season 14): stats from https://bgbuddy.gg/comps, current patch only
+# (Firestone community data, Solo, all MMR, about 4 days of games, so smaller samples than before);
+# guides first written from the same site on 2026-10-27 (patch 36.6.3). A comp is counted only once
+# built, so all have an average better than 4.5: compare comps with each other, not with 4.5.
 # No "stats" = a comp without public numbers (opinion only).
-#
-# Patch 37.0.2 (2026-11-03): Expert Aviator left the pool (Murloc Scam now runs on Diremuck Forager) and
-# Living Azerite went down to +3/+3, so Murloc Scam and the Azerite comps will likely do worse than these
-# 36.6.3 numbers; Quilboar and Demons were nerfed, Pirates, Murloc hand and Elemental Tempest buffed.
-# Refresh the stats from bgbuddy once the new patch has games.
 # A test checks that each card name exists in the current Solo pool (no Duos, no rotated-out tribe).
 
 # ---------------------------------------------------------------- Aberrations
@@ -33,7 +29,7 @@
   difficulty: medium
   when_to_commit: Nightmare Corroder + Mysterious K'Thir + Harbinger Aph'lass (+ Drakkari Enchanter).
   how_to_play: Corroder gives a Sludge Corrosion each turn and K'Thir discards it (cast twice). Boost Tavern spells with Frostcaller or Felfire Conjurer; Aph'lass grows the Deity on every discard.
-  stats: {avg: 3.23, games: 39600}
+  stats: {avg: 3.23, games: 5380}
 
 - id: aberration-deathrattle
   name: Aberration Deathrattle
@@ -43,7 +39,7 @@
   difficulty: easy
   when_to_commit: Faceless Converter + Titus Rivendare.
   how_to_play: Cast many Tavern spells so Converter's Deathrattle grows, then Titus doubles it in combat to feed the Deity.
-  stats: {avg: 3.56, games: 30900}
+  stats: {avg: 3.58, games: 2190}
 
 - id: aberration-apm
   name: Aberration APM (Pirate bounties)
@@ -64,7 +60,7 @@
   difficulty: medium
   when_to_commit: Headhunter Gryphon + Tasty Lobster + Deathstrider.
   how_to_play: Trigger Tasty Lobster as often as possible (Reborn, Titus); Gryphon + Deathstrider retrigger Deathrattles, Shark and Lionfish give extra attacks.
-  stats: {avg: 3.76, games: 59100}
+  stats: {avg: 3.82, games: 14300}
 
 - id: beast-beetles
   name: Beast Beetles
@@ -74,7 +70,7 @@
   difficulty: medium
   when_to_commit: Scorpid or Skitterer with Headhunter Gryphon.
   how_to_play: Beetle buffs last the whole game; Banana Slamma doubles the Attack of every Beetle summoned in combat.
-  stats: {avg: 3.75, games: 25200}
+  stats: {avg: 3.90, games: 3560}
 
 - id: beast-leviathan
   name: Beast Leviathan
@@ -84,7 +80,7 @@
   difficulty: medium
   when_to_commit: Lurking Leviathan + Sewer Lord + Banana Slamma.
   how_to_play: Cycle Beasts (Shark, Lionfish) to grow Leviathan; protect it with Taunts, losing it usually loses the fight.
-  stats: {avg: 3.93, games: 7830}
+  stats: {avg: 3.94, games: 1250}
 
 # ---------------------------------------------------------------- Demons
 - id: demon-boost-shop
@@ -95,7 +91,7 @@
   difficulty: medium
   when_to_commit: A shop booster (Wrathguard or Distractor) with Imp-lusionist.
   how_to_play: Boost the Tavern, then Imp-lusionist's Methodical Madness with Balinda gives Reborn, Divine Shield or Venomous.
-  stats: {avg: 3.41, games: 36100}
+  stats: {avg: 3.47, games: 6700}
 
 - id: demon-self-damage
   name: Demon Self Damage
@@ -105,7 +101,7 @@
   difficulty: hard
   when_to_commit: Wrath Weaver + Eredar Escapist + Soul Rewinder or Ashen Corruptor.
   how_to_play: Cycle Demons through Weaver and Escapist, then spend Corrupted Cupcakes on Devilish Distractor with Balinda.
-  stats: {avg: 3.80, games: 82200}
+  stats: {avg: 3.96, games: 9220}
 
 # ---------------------------------------------------------------- Dragons
 - id: dragon-shield
@@ -116,7 +112,7 @@
   difficulty: easy
   when_to_commit: Hopebringer with Divine Shield minions.
   how_to_play: Fill the board with Divine Shields to grow Hopebringer; Poet keeps combat stats, Nadina gives the Shields back.
-  stats: {avg: 3.16, games: 23300}
+  stats: {avg: 2.85, games: 5520}
 
 - id: dragon-spell-power
   name: Dragon Spell Power
@@ -126,7 +122,7 @@
   difficulty: easy
   when_to_commit: A Tavern spell boost + Runic Arcanist + Crimson Vindicator.
   how_to_play: Build spell power (Chromadrakes, Felfire Conjurer), then Poet keeps what Vindicator or Arcanist give in combat.
-  stats: {avg: 3.78, games: 20000}
+  stats: {avg: 3.73, games: 4550}
 
 - id: dragon-kalecgos
   name: Dragon Kalecgos
@@ -136,7 +132,7 @@
   difficulty: easy
   when_to_commit: Kalecgos + Brann.
   how_to_play: Cycle strong Battlecries; keep Kelp Keeper to retrigger Draconic Warden.
-  stats: {avg: 3.96, games: 17000}
+  stats: {avg: 4.07, games: 2290}
 
 # ---------------------------------------------------------------- Elementals
 - id: elemental-cycle
@@ -147,7 +143,7 @@
   difficulty: medium
   when_to_commit: Unbound Tempest + Living Azerite with Elemental generators.
   how_to_play: Play many Elementals each turn (Tavern Tempest, Brann) so Unbound Tempest copies the biggest Tavern minion.
-  stats: {avg: 3.46, games: 7370}
+  stats: {avg: 3.57, games: 2670}
 
 - id: elemental-azerite
   name: Elemental Azerite
@@ -157,7 +153,7 @@
   difficulty: hard
   when_to_commit: Living Azerite + Leyline Surfacer + Balinda.
   how_to_play: Cycle spells to buff Tavern Elementals with Azerite, then stack stats with Balinda + Leyline Surfacer.
-  stats: {avg: 3.54, games: 40400}
+  stats: {avg: 3.53, games: 4750}
 
 - id: elemental-tempest
   name: Elemental Tempest
@@ -167,7 +163,7 @@
   difficulty: hard
   when_to_commit: Elemental generation + Brann + Unbound Tempest.
   how_to_play: Scale the shop with Air Revenant and Azerite, then cycle Elementals to grow Unbound Tempest.
-  stats: {avg: 3.83, games: 13600}
+  stats: {avg: 3.60, games: 1490}
 
 # ---------------------------------------------------------------- Mechs
 - id: mech-apm
@@ -178,7 +174,7 @@
   difficulty: hard
   when_to_commit: Auto Reveille + economy.
   how_to_play: Build economy, then buy every cheap minion and spell so Auto Reveille makes Volumizers. With Pirates, Greedy Conniver can find Beatboxer.
-  stats: {avg: 3.38, games: 21700}
+  stats: {avg: 3.29, games: 4910}
 
 - id: mech-volumizer
   name: Mech Volumizer
@@ -188,7 +184,7 @@
   difficulty: easy
   when_to_commit: Resourceful Robot + Utility Drone + Drakkari Enchanter.
   how_to_play: Robot and Conveyor Construct make Volumizers; Utility Drone and Drakkari Enchanter turn them into board-wide stats.
-  stats: {avg: 3.36, games: 46300}
+  stats: {avg: 3.29, games: 7570}
 
 - id: mech-glambot
   name: Mech Glambot
@@ -198,7 +194,7 @@
   difficulty: medium
   when_to_commit: Glambot + Balinda + Utility Drone.
   how_to_play: Pile spells (Blood Gems are best) onto one Mech with Glambot and Balinda. Weakest comp in the data.
-  stats: {avg: 4.23, games: 14300}
+  stats: {avg: 3.90, games: 1510}
 
 # ---------------------------------------------------------------- Murlocs
 - id: murloc-end-of-turn
@@ -209,7 +205,7 @@
   difficulty: hard
   when_to_commit: Young Murk-Eye + Brann + a Magicfin Apprentice with Azerite Empowerment.
   how_to_play: Murk-Eye retriggers the Apprentice next to it each turn; Brann and Drakkari Enchanter multiply it.
-  stats: {avg: 3.32, games: 2950}
+  stats: {avg: 3.43, games: 807}
 
 - id: murloc-hand
   name: Murloc Hand Buff
@@ -219,7 +215,7 @@
   difficulty: hard
   when_to_commit: Twilight Tidehunter + Brann + Flighty Scout.
   how_to_play: Buff Flighty Scout in hand with Tidehunter, Balinda and Brann; Diremuck Forager summons it in combat, Choral adds the hand's stats. Murcules and Shamanic Tidecaller (buffed in 37.0.2) feed the hand too.
-  stats: {avg: 3.55, games: 15500}
+  stats: {avg: 3.69, games: 3760}
 
 - id: murloc-scam
   name: Murloc Scam
@@ -229,7 +225,7 @@
   difficulty: medium
   when_to_commit: Sewer Escapee + Bile Spitter.
   how_to_play: Play Sewer Escapee on Bile Spitter for Reborn and a Venomous Shield, then add Leeroy, Deadly Spore and Heroic Underdog.
-  stats: {avg: 3.69, games: 12500}
+  stats: {avg: 3.06, games: 1620}
 
 # ---------------------------------------------------------------- Pirates
 - id: pirate-discover
@@ -240,7 +236,7 @@
   difficulty: hard
   when_to_commit: Hooktusk with Enterprising Escapee.
   how_to_play: Stack Enterprising Escapees; once Hooktusk is down, cycle gold and Discover cards.
-  stats: {avg: 3.80, games: 33600}
+  stats: {avg: 3.46, games: 6000}
 
 - id: pirate-bounty
   name: Pirate Bounty
@@ -250,7 +246,7 @@
   difficulty: hard
   when_to_commit: Sky Admiral Rogers + Proud Privateer.
   how_to_play: Generate Bounties, boost spell power, and put Selfish Bounty on a strong minion on your left. Better as the gold engine of another tribe.
-  stats: {avg: 4.10, games: 5780}
+  stats: {avg: 3.89, games: 1890}
 
 # ---------------------------------------------------------------- Quilboars
 - id: quilboar-felboar
@@ -261,7 +257,7 @@
   difficulty: hard
   when_to_commit: Balinda + Brann + Felboar + a shop boost.
   how_to_play: Boost the shop (Blood Gem Barrage, Razorfen Flapper, Distractor), then cycle spells with Balinda and Brann to feed Felboar.
-  stats: {avg: 3.50, games: 61000}
+  stats: {avg: 3.63, games: 2610}
 
 - id: quilboar-choose-one
   name: Quilboar Choose One
@@ -271,7 +267,7 @@
   difficulty: medium
   when_to_commit: Turbo Hogrider + Bramble Tunneler.
   how_to_play: Every Choose One card makes Hogrider play 2 Blood Gems on all your Quilboar.
-  stats: {avg: 3.4, games: 20100}
+  stats: {avg: 3.41, games: 3710}
 
 - id: quilboar-gems
   name: Quilboar Gem Spam
@@ -281,7 +277,7 @@
   difficulty: hard
   when_to_commit: Hot-Air Surveyor + Geomagus Roogug + Bramble Tunneler.
   how_to_play: Generate Blood Gems (Tunneler, Mangled Bandit) and play them on Roogug with Surveyor and Balinda.
-  stats: {avg: 3.86, games: 31700}
+  stats: {avg: 3.97, games: 8230}
 
 # ---------------------------------------------------------------- Undead
 - id: undead-apm
@@ -292,7 +288,7 @@
   difficulty: medium
   when_to_commit: Rogers + Privateer + Forsaken Weaver.
   how_to_play: Bounties scale Undead through Forsaken Weaver; Reborn it and copy it with Disguised Graverobber, cycle Dead Bellringer for Snazzy Phantom.
-  stats: {avg: 3.58, games: 3680}
+  stats: {avg: 3.73, games: 1120}
 
 - id: undead-eternal-knight
   name: Undead Eternal Knight
@@ -302,7 +298,7 @@
   difficulty: easy
   when_to_commit: Eternal Knight early with Eternal Summoner.
   how_to_play: Summon and Reborn Eternal Knights as often as you can; Lichling Hoarder finds more Summoners and Tycoons.
-  stats: {avg: 3.60, games: 10300}
+  stats: {avg: 3.63, games: 3300}
 
 - id: undead-butcher
   name: Undead Butcher
@@ -312,7 +308,7 @@
   difficulty: medium
   when_to_commit: Friendly Geist + Drustfallen Butcher + Snazzy Phantom.
   how_to_play: Butcher makes Butchering spells, Geist and Titus boost them; pair with Bellringer and Mummifier for Reborn loops into Snazzy Phantom.
-  stats: {avg: 3.65, games: 39300}
+  stats: {avg: 3.68, games: 5050}
 
 # ---------------------------------------------------------------- No tribe
 - id: neutral-tea-set
@@ -323,4 +319,4 @@
   difficulty: medium
   when_to_commit: Spell power + Gatekeeper Amalgam + Balinda.
   how_to_play: Boost Tavern spells (Chromadrakes, Felfire Conjurer, Dark Puppeteer) and cast them on Gatekeeper Amalgam with Balinda and Brann.
-  stats: {avg: 3.16, games: 33400}
+  stats: {avg: 3.28, games: 4880}

@@ -2,6 +2,10 @@
 
 The app shows the lines of its version after an update. Newest version first.
 
+## 2.2.6
+- Tier list and trinket advice now use games played on patch 37.0.2 (about 4 days of community data) instead of the last patch's numbers. Biggest moves: Dragon Shield is now the best comp (2.85), Murloc Scam jumps to 3.06, Pirate Discover improves to 3.46, while Dragon Kalecgos, Quilboar Gem Spam and Demon Self Damage are now the weakest.
+- Weighted Gauntlet, now a Greater Trinket, has its own numbers again. Hero averages stay on the bigger last-patch sample, as heroes didn't change.
+
 ## 2.2.5
 - Hero pick: the odds box no longer sits at the top of the game, where it hid the lobby's tribes. The chance of each hero to be the best pick now shows in the Comps tab's "Pick a hero" list, next to its average place. The box over Trinket offers and Discovers is unchanged.
 

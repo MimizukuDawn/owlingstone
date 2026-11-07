@@ -106,9 +106,15 @@ fn lobby_comps_sorted_by_preference_then_placement() {
     let ctx = Ctx { races: Some(lobby()), ..Default::default() };
     let ids: Vec<String> = lobby_comps(&k, &ctx).iter().map(|c| c.id.clone()).collect();
     assert!(ids[0] == "dragon-shield" || ids[0] == "neutral-tea-set", "{ids:?}");
-    assert_eq!(ids.last().unwrap(), "mech-glambot");
-    k.rules = prefer("mech-glambot", Effect::PreferIf, Cond::default());
-    assert_eq!(lobby_comps(&k, &ctx)[0].id, "mech-glambot");
+    // Last = the worst average place of the lobby's comps (all have stats).
+    let worst = lobby_comps(&k, &ctx)
+        .into_iter()
+        .max_by(|a, b| a.stats.avg.partial_cmp(&b.stats.avg).unwrap())
+        .map(|c| c.id.clone())
+        .unwrap();
+    assert_eq!(ids.last().unwrap(), &worst);
+    k.rules = prefer(&worst, Effect::PreferIf, Cond::default());
+    assert_eq!(lobby_comps(&k, &ctx)[0].id, worst);
 }
 
 #[test]
